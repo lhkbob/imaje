@@ -4,6 +4,8 @@ package com.lhkbob.imaje.color.icc;
  *
  */
 public final class Signature {
+  public static final Signature NULL = Signature.fromBitField(0L);
+
   private final String text;
   private final long uint32;
 

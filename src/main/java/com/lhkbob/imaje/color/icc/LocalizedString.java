@@ -12,6 +12,10 @@ public final class LocalizedString {
   private final Locale defaultKey;
   private final Map<Locale, String> localizedText;
 
+  public LocalizedString() {
+    this(Collections.singletonMap(Locale.US, ""), Locale.US);
+  }
+
   public LocalizedString(Map<Locale, String> variants, Locale dflt) {
     if (!variants.containsKey(dflt)) {
       throw new IllegalArgumentException("Default locale must be present in the variants map");

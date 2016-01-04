@@ -4,6 +4,7 @@ import com.lhkbob.imaje.color.icc.DeviceAttributes;
 import com.lhkbob.imaje.color.icc.DeviceTechnology;
 import com.lhkbob.imaje.color.icc.LocalizedString;
 import com.lhkbob.imaje.color.icc.ProfileDescription;
+import com.lhkbob.imaje.color.icc.ProfileID;
 import com.lhkbob.imaje.color.icc.Signature;
 
 import java.nio.ByteBuffer;
@@ -38,25 +39,27 @@ public class ProfileSequenceDescriptionTypeParser implements TagParser<List<Prof
       DeviceTechnology tech = (techSig == 0 ? null
           : DeviceTechnology.fromSignature(Signature.fromBitField(techSig)));
 
-      LocalizedString manufacturerDesc = readLocalizedString(header, data);
+      LocalizedString manufacturerDesc = readEmbeddedTextTag(header, data);
       if (manufacturerDesc == null) {
         // unsupported text type in tag
         return null;
       }
-      LocalizedString modelDesc = readLocalizedString(header, data);
+      LocalizedString modelDesc = readEmbeddedTextTag(header, data);
       if (modelDesc == null) {
         // unsupported text type in tag
         return null;
       }
 
-      profiles.add(new ProfileDescription(manufacturerSig, modelSig, attrs, tech, manufacturerDesc,
-          modelDesc));
+      // The profile sequence description tag data doesn't actually contain an id
+      // or text description; it must be combined with the sequenceIdentifier tag type
+      profiles.add(new ProfileDescription(new ProfileID(new byte[16]), new LocalizedString(),
+          manufacturerSig, modelSig, attrs, tech, manufacturerDesc, modelDesc));
     }
 
     return profiles;
   }
 
-  private LocalizedString readLocalizedString(Header header, ByteBuffer data) {
+  static LocalizedString readEmbeddedTextTag(Header header, ByteBuffer data) {
     Signature type = nextSignature(data);
     skip(data, 4); // reserved
 

@@ -1,6 +1,7 @@
 package com.lhkbob.imaje.color.icc.reader;
 
 import com.lhkbob.imaje.color.icc.GenericColorValue;
+import com.lhkbob.imaje.color.icc.LocalizedString;
 import com.lhkbob.imaje.color.icc.Signature;
 import com.lhkbob.imaje.color.icc.StandardIlluminant;
 import com.lhkbob.imaje.color.icc.ViewingCondition;
@@ -28,6 +29,7 @@ public class ViewingConditionTypeParser implements TagParser<ViewingCondition> {
     GenericColorValue surround = nextXYZNumber(data, GenericColorValue.ColorType.CIEXYZ);
     int type = Math.toIntExact(nextUInt32Number(data));
     StandardIlluminant illuminantType = StandardIlluminant.values()[type];
-    return new ViewingCondition(illuminant, illuminantType, surround);
+    // No description is provided in this tag, a separate tag must be combined later
+    return new ViewingCondition(illuminant, illuminantType, surround, new LocalizedString());
   }
 }

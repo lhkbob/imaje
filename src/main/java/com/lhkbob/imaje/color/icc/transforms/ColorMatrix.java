@@ -6,6 +6,7 @@ import java.util.Arrays;
  *
  */
 public class ColorMatrix implements ColorTransform {
+  public static final ColorMatrix IDENTITY_3X3 = new ColorMatrix(3, 3, new double[] { 1, 0, 0, 0, 1, 0, 0, 0, 1});
   private final double[] matrix; // row major
   private final int numColumns;
   private final int numRows;

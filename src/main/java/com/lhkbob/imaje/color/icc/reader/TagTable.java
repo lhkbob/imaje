@@ -41,6 +41,15 @@ public class TagTable {
     }
   }
 
+  public <T> T getTagValue(Tag.Definition<T> tag) {
+    return getTagValue(tag, null);
+  }
+
+  public <T> T getTagValue(Tag.Definition<T> tag, T dflt) {
+    Tag<? extends T> value = getTag(tag);
+    return (value != null ? value.getData() : dflt);
+  }
+
   public Map<Signature, Tag<?>> getTags() {
     return tags;
   }
@@ -73,6 +82,8 @@ public class TagTable {
 
   @SuppressWarnings("unchecked")
   public static TagTable fromBytes(Header header, ByteBuffer data) {
+    int profileStart = data.position() - 128;
+
     int tagCount = Math.toIntExact(nextUInt32Number(data));
     Signature[] tagSigs = new Signature[tagCount];
     ICCDataTypeUtil.PositionNumber[] tagData = new ICCDataTypeUtil.PositionNumber[tagCount];
@@ -91,7 +102,9 @@ public class TagTable {
         System.out.println("Unknown tag: " + tagSigs[i]);
         continue;
       }
-      Tag<?> tag = def.parseTag(header, data, tagData[i]);
+
+      tagData[i].configureBuffer(data, profileStart);
+      Tag<?> tag = def.parseTag(header, data);
       if (tag == null) {
         continue;
       }

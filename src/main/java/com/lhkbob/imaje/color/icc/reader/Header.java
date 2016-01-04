@@ -23,6 +23,8 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skip;
  *
  */
 public final class Header {
+  public static final Signature PROFILE_SIGNATURE = Signature.fromName("acsp");
+
   private final ColorSpace aSide;
   private final DeviceAttributes attributes;
   private final ColorSpace bSide;
@@ -33,7 +35,7 @@ public final class Header {
   private final GenericColorValue illuminant;
   private final Signature manufacturer;
   private final Signature model;
-  private final long preferredCMMType;
+  private final Signature preferredCMMType;
   private final PrimaryPlatform primaryPlatform;
   private final ProfileClass profileClass;
   private final RenderingIntent renderingIntent;
@@ -44,7 +46,7 @@ public final class Header {
   private Header(
       ColorSpace aSide, ColorSpace bSide, ZonedDateTime creationTime, Signature creator,
       Signature manufacturer, Signature model, DeviceAttributes attributes, long flags,
-      ProfileID id, GenericColorValue illuminant, long preferredCMMType,
+      ProfileID id, GenericColorValue illuminant, Signature preferredCMMType,
       PrimaryPlatform primaryPlatform, ProfileClass profileClass, RenderingIntent renderingIntent,
       Signature signature, long size, long version) {
     this.aSide = aSide;
@@ -71,14 +73,25 @@ public final class Header {
       throw new IllegalStateException("Expected 128 bytes for header, not: " + data.remaining());
     }
 
+    // Before parsing the header completely, spot check the signature and fail if it's not the expected.
+    // This will help detect bad data before some index out of bounds or enum not found, etc. obfuscates
+    // the source of the error.
+    int dataStart = data.position();
+    data.limit(dataStart + 40).position(dataStart + 36);
+    Signature signature = nextSignature(data);
+    if (!PROFILE_SIGNATURE.equals(signature))
+      throw new IllegalArgumentException("Header does not contain expected signature ('acsp') at required byte position: " + signature);
+    // Signature is valid, assume header is accurate and resume parsing
+    data.limit(dataStart + 128).position(dataStart);
+
     long size = nextUInt32Number(data);
-    long cmmType = nextUInt32Number(data);
+    Signature cmmType = nextSignature(data);
     long version = nextUInt32Number(data);
     ProfileClass profileClass = ProfileClass.fromSignature(nextSignature(data));
     ColorSpace aSide = ColorSpace.fromSignature(nextSignature(data));
     ColorSpace bSide = ColorSpace.fromSignature(nextSignature(data));
     ZonedDateTime creation = nextDateTimeNumber(data);
-    Signature signature = nextSignature(data);
+    skip(data, 4); // This is the signature field, but it's already been read
     PrimaryPlatform platform = PrimaryPlatform.fromSignature(nextSignature(data));
     long flags = nextUInt32Number(data);
     Signature manufacturer = nextSignature(data);
@@ -138,15 +151,7 @@ public final class Header {
     return model;
   }
 
-  public int getMajorVersion() {
-    return (int) ((version >> 24) & 0xff);
-  }
-
-  public int getMinorVersion() {
-    return (int) ((version >> 20) & 0xf);
-  }
-
-  public long getPreferredCMMType() {
+  public Signature getPreferredCMMType() {
     return preferredCMMType;
   }
 
@@ -170,16 +175,7 @@ public final class Header {
     return signature;
   }
 
-  public long getRawVersion() {
+  public long getVersion() {
     return version;
-  }
-
-  public int getBugFixVersion() {
-    return (int) ((version >> 16) & 0xf);
-  }
-
-
-  public String getVersion() {
-    return String.format("%d.%d.%d.0", getMajorVersion(), getMinorVersion(), getBugFixVersion());
   }
 }

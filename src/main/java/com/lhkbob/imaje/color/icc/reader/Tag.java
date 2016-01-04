@@ -103,8 +103,7 @@ public final class Tag<T> {
       return parsers.get(dataType);
     }
 
-    public Tag<T> parseTag(Header header, ByteBuffer data, ICCDataTypeUtil.PositionNumber pos) {
-      pos.configureBuffer(data, 0);
+    public Tag<T> parseTag(Header header, ByteBuffer data) {
       Signature type = nextSignature(data);
       TagParser<? extends T> parser = getTagParser(type);
 

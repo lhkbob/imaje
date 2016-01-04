@@ -11,6 +11,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.PositionNumber;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextPositionNumber;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt32Number;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.require;
+import static com.lhkbob.imaje.color.icc.reader.ProfileSequenceDescriptionTypeParser.readEmbeddedTextTag;
 
 /**
  *
@@ -26,8 +27,6 @@ public class ProfileSequenceIdentifierTypeParser implements TagParser<LinkedHash
   @Override
   public LinkedHashMap<ProfileID, LocalizedString> parse(
       Header header, ByteBuffer data) {
-    MultiLocalizedUnicodeTypeParser textParser = new MultiLocalizedUnicodeTypeParser();
-
     int dataStart = data.position() - 8;
 
     int count = Math.toIntExact(nextUInt32Number(data));
@@ -38,6 +37,8 @@ public class ProfileSequenceIdentifierTypeParser implements TagParser<LinkedHash
 
     byte[] id = new byte[16];
     int dataEnd = data.position();
+
+    // FIXME this type won't work if the profile sequence contains multiple profiles with the same id.
     LinkedHashMap<ProfileID, LocalizedString> seq = new LinkedHashMap<>();
     for (int i = 0; i < count; i++) {
       PositionNumber p = table[i];
@@ -52,7 +53,7 @@ public class ProfileSequenceIdentifierTypeParser implements TagParser<LinkedHash
       }
 
       ProfileID key = new ProfileID(id);
-      LocalizedString value = textParser.parse(header, data);
+      LocalizedString value = readEmbeddedTextTag(header, data);
       seq.put(key, value);
     }
 

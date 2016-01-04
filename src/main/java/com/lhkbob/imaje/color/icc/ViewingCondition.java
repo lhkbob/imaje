@@ -4,12 +4,14 @@ package com.lhkbob.imaje.color.icc;
  *
  */
 public final class ViewingCondition {
+  private final LocalizedString description;
   private final GenericColorValue illuminant;
   private final StandardIlluminant illuminantType;
   private final GenericColorValue surround;
 
   public ViewingCondition(
-      GenericColorValue illuminant, StandardIlluminant illuminantType, GenericColorValue surround) {
+      GenericColorValue illuminant, StandardIlluminant illuminantType, GenericColorValue surround,
+      LocalizedString description) {
     if (illuminant.getType() != GenericColorValue.ColorType.CIEXYZ) {
       throw new IllegalArgumentException(
           "Illuminant color values  must be specified as un-normalized CIEXYZ");
@@ -19,6 +21,7 @@ public final class ViewingCondition {
           "Surround color values must be specified as un-normalized CIEXYZ");
     }
 
+    this.description = description;
     this.illuminant = illuminant;
     this.illuminantType = illuminantType;
     this.surround = surround;
@@ -33,8 +36,8 @@ public final class ViewingCondition {
       return false;
     }
     ViewingCondition c = (ViewingCondition) o;
-    return c.illuminantType.equals(illuminantType) && c.illuminant.equals(illuminant) && c.surround
-        .equals(surround);
+    return c.description.equals(description) && c.illuminantType.equals(illuminantType)
+        && c.illuminant.equals(illuminant) && c.surround.equals(surround);
   }
 
   public GenericColorValue getIlluminant() {
@@ -55,13 +58,14 @@ public final class ViewingCondition {
     result = 31 * result + illuminantType.hashCode();
     result = 31 * result + illuminant.hashCode();
     result = 31 * result + surround.hashCode();
+    result = 31 * result + description.hashCode();
     return result;
   }
 
   @Override
   public String toString() {
     return String
-        .format("ViewingCondition (illuminant: %s (%s), surround: %s)", illuminant, illuminantType,
-            surround);
+        .format("ViewingCondition (desc: %s, illuminant: %s (%s), surround: %s)", description,
+            illuminant, illuminantType, surround);
   }
 }
