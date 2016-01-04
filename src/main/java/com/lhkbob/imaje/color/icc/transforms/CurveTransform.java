@@ -1,4 +1,4 @@
-package com.lhkbob.imaje.color.icc;
+package com.lhkbob.imaje.color.icc.transforms;
 
 import com.lhkbob.imaje.color.icc.curves.Curve;
 
