@@ -6,6 +6,27 @@ import java.time.ZonedDateTime;
  *
  */
 public final class Profile {
+  public Profile(
+      ColorSpace aSide, ColorSpace bSide, ZonedDateTime creationTime, Signature creator,
+      ProfileDescription description, long flags, ProfileID id, GenericColorValue illuminant,
+      long preferredCMMType, PrimaryPlatform primaryPlatform, ProfileClass profileClass,
+      RenderingIntent renderingIntent, Signature signature, long version) {
+    this.aSide = aSide;
+    this.bSide = bSide;
+    this.creationTime = creationTime;
+    this.creator = creator;
+    this.description = description;
+    this.flags = flags;
+    this.id = id;
+    this.illuminant = illuminant;
+    this.preferredCMMType = preferredCMMType;
+    this.primaryPlatform = primaryPlatform;
+    this.profileClass = profileClass;
+    this.renderingIntent = renderingIntent;
+    this.signature = signature;
+    this.version = version;
+  }
+
   private final ColorSpace aSide;
   private final ColorSpace bSide;
   private final ZonedDateTime creationTime;

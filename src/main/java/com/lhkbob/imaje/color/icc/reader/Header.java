@@ -17,6 +17,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextSignature;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt32Number;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt64Number;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextXYZNumber;
+import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skip;
 
 /**
  *
@@ -92,6 +93,7 @@ public final class Header {
     data.get(idBits);
     ProfileID id = new ProfileID(idBits);
 
+    skip(data, 28); // Skip empty header content
     return new Header(aSide, bSide, creation, creator, manufacturer, model, attrs, flags, id,
         illuminant, cmmType, platform, profileClass, intent, signature, size, version);
   }
@@ -136,6 +138,14 @@ public final class Header {
     return model;
   }
 
+  public int getMajorVersion() {
+    return (int) ((version >> 24) & 0xff);
+  }
+
+  public int getMinorVersion() {
+    return (int) ((version >> 20) & 0xf);
+  }
+
   public long getPreferredCMMType() {
     return preferredCMMType;
   }
@@ -160,7 +170,16 @@ public final class Header {
     return signature;
   }
 
-  public long getVersion() {
+  public long getRawVersion() {
     return version;
+  }
+
+  public int getBugFixVersion() {
+    return (int) ((version >> 16) & 0xf);
+  }
+
+
+  public String getVersion() {
+    return String.format("%d.%d.%d.0", getMajorVersion(), getMinorVersion(), getBugFixVersion());
   }
 }

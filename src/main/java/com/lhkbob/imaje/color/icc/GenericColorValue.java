@@ -7,11 +7,37 @@ import java.util.Arrays;
  */
 public class GenericColorValue {
   public enum ColorType {
+    /**
+     * XYZ tristimulus values where Y is in candelas per square meter.
+     */
     CIEXYZ,
+    /**
+     * XYZ values that have been scaled so that nY = 1.0 for the adopted white point.
+     * This is for ICC-absolute colorimetric data (although the term ICC-absolute
+     * is actually more appropriately considered as colorimetry relative to the
+     * reference adopted white).
+     */
     NORMALIZED_CIEXYZ,
+    /**
+     * Normalized XYZ values that have been linearly transformed or chromatically
+     * adapted so that the media white point is `(0.9642, 1.0, 0.8249)` in PCSXYZ space.
+     * This is for media-relative colorimetric data.
+     */
     PCSXYZ,
+    /**
+     * CIE1976 L*, a*, b* values calculated from normalized XYZ values.
+     */
     CIELAB,
+    /**
+     * CIE1976 L*, a*, b* values calculated from PCS XYZ values.
+     */
     PCSLAB,
+    /**
+     * Any other color representation, such as RGB, HSV, CMYK. This can also be used to
+     * represent unknown colorimetry. Unlike the other color types, which are restricted
+     * to 3 channels, this may have any number of channels. Two colors values of type GENERIC
+     * do not necessarily come from the same color space.
+     */
     GENERIC
   }
 
@@ -35,27 +61,8 @@ public class GenericColorValue {
     return new GenericColorValue(ColorType.CIELAB, new double[] { l, a, b }, true);
   }
 
-  public static GenericColorValue cieLABtoPCSLAB(
-      GenericColorValue cielab, ColorMatrix chromaticAdaptation) {
-
-  }
-
   public static GenericColorValue cieXYZ(double x, double y, double z) {
     return new GenericColorValue(ColorType.CIEXYZ, new double[] { x, y, z }, true);
-  }
-
-  public static GenericColorValue denormalizeCIEXYZ(
-      GenericColorValue nciexyz, double whitepointLuminance) {
-    if (nciexyz.type != ColorType.NORMALIZED_CIEXYZ) {
-      throw new IllegalArgumentException(
-          "Color must be of type NORMALIZED_CIEXYZ, not: " + nciexyz.type);
-    }
-    // This copies the ciexyz values array into a new array that can then be modified
-    GenericColorValue ciexyz = new GenericColorValue(ColorType.CIEXYZ, nciexyz.values);
-    for (int i = 0; i < ciexyz.values.length; i++) {
-      ciexyz.values[i] *= whitepointLuminance;
-    }
-    return ciexyz;
   }
 
   public static GenericColorValue genericColor(double... channelValues) {
@@ -66,48 +73,12 @@ public class GenericColorValue {
     return new GenericColorValue(ColorType.NORMALIZED_CIEXYZ, new double[] { x, y, z }, true);
   }
 
-  public static GenericColorValue normalizeCIEXYZ(
-      GenericColorValue ciexyz, double whitepointLuminance) {
-    if (ciexyz.type != ColorType.CIEXYZ) {
-      throw new IllegalArgumentException("Color must be of type CIEXYZ, not: " + ciexyz.type);
-    }
-    // This copies the ciexyz values array into a new array that can then be modified
-    GenericColorValue nciexyz = new GenericColorValue(ColorType.NORMALIZED_CIEXYZ, ciexyz.values);
-    for (int i = 0; i < nciexyz.values.length; i++) {
-      nciexyz.values[i] /= whitepointLuminance;
-    }
-    return nciexyz;
-  }
-
-  public static GenericColorValue normalizedCIEXYZtoPCSXYZ(
-      GenericColorValue nciexyz, ColorMatrix chromaticAdaptation) {
-
-  }
-
   public static GenericColorValue pcsLAB(double l, double a, double b) {
     return new GenericColorValue(ColorType.PCSLAB, new double[] { l, a, b }, true);
   }
 
-  public static GenericColorValue pcsLABToNormalizedCIEXYZ(GenericColorValue lab) {
-
-  }
-
-  public static GenericColorValue pcsLABtoCIELAB(
-      GenericColorValue pcslab, ColorMatrix invChromaticAdaptation) {
-
-  }
-
   public static GenericColorValue pcsXYZ(double x, double y, double z) {
     return new GenericColorValue(ColorType.PCSXYZ, new double[] { x, y, z }, true);
-  }
-
-  public static GenericColorValue pcsXYZToCIELAB(GenericColorValue xyz) {
-
-  }
-
-  public static GenericColorValue pcsXYZtoNormalizedCIEXYZ(
-      GenericColorValue pcsxyz, ColorMatrix invChromaticAdaptation) {
-
   }
 
   @Override

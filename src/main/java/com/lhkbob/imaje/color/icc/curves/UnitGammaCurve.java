@@ -33,6 +33,7 @@ public class UnitGammaCurve implements Curve {
     this.linearThreshold = linearThreshold;
   }
 
+  // FIXME fix naming of these to not rely on underscores for clarity
   public static UnitGammaCurve newCIE122_1996Curve(double gamma, double a, double b) {
     return new UnitGammaCurve(gamma, a, b, 0.0, 0.0, 0.0, -b / a);
   }

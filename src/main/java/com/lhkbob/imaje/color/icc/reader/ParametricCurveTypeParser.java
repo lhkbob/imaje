@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextS15Fixed16Number;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt16Number;
+import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skip;
 
 /**
  *
@@ -23,6 +24,8 @@ public class ParametricCurveTypeParser implements TagParser<Curve> {
   @Override
   public Curve parse(Header header, ByteBuffer data) {
     int functionType = nextUInt16Number(data);
+    skip(data, 2);
+
     switch (functionType) {
     case 0: {
       double gamma = nextS15Fixed16Number(data);

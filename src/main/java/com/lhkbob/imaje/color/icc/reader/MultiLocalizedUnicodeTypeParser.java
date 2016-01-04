@@ -4,7 +4,7 @@ import com.lhkbob.imaje.color.icc.LocalizedString;
 import com.lhkbob.imaje.color.icc.Signature;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -39,9 +39,9 @@ public class MultiLocalizedUnicodeTypeParser implements TagParser<LocalizedStrin
     Locale defaultKey = null;
     for (int i = 0; i < recordCount; i++) {
       data.get(code);
-      String language = new String(code, ASCII);
+      String language = new String(code, StandardCharsets.US_ASCII);
       data.get(code);
-      String country = new String(code, ASCII);
+      String country = new String(code, StandardCharsets.US_ASCII);
 
       Locale key = new Locale(language, country);
       if (defaultKey == null) {
@@ -55,14 +55,15 @@ public class MultiLocalizedUnicodeTypeParser implements TagParser<LocalizedStrin
         textBytes[j] = data.get(tagStart + tagOffset + j);
       }
       tagEnd = Math.max(tagEnd, tagStart + tagOffset + length);
-      String text = new String(textBytes, UNICODE);
+      String text = new String(textBytes, StandardCharsets.UTF_16BE);
       records.put(key, text);
     }
 
     // skip to the end if necessary
     skip(data, tagEnd - data.position());
+    if (records.isEmpty()) {
+      records.put(Locale.US, "");
+    }
     return new LocalizedString(records, defaultKey);
   }
-  private static final Charset ASCII = Charset.forName("ASCII");
-  private static final Charset UNICODE = Charset.forName("UTF-16BE");
 }

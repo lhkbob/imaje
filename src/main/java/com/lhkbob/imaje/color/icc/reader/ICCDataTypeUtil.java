@@ -43,9 +43,9 @@ public class ICCDataTypeUtil {
     }
 
     StringBuilder sb = new StringBuilder();
-    int i = 0;
+    int i = 1;
     char c;
-    while ((c = (char) data.get()) != '\0' && (maxStringLength < 0 || i < maxStringLength)) {
+    while ((maxStringLength < 0 || i < maxStringLength) && (c = (char) data.get()) != '\0') {
       sb.append(c);
       i++;
     }
@@ -54,7 +54,7 @@ public class ICCDataTypeUtil {
       // If a maximum number of bytes is provided then this is a string within a fixed-length
       // byte field so advance to the end of the field even if the null character was found
       // before the limit was reached.
-      skip(data, maxStringLength - sb.length());
+      skip(data, maxStringLength - i);
     }
 
     return sb.toString();

@@ -1,10 +1,10 @@
 package com.lhkbob.imaje.color.icc.reader;
 
-import com.lhkbob.imaje.color.icc.ColorLookupTable;
-import com.lhkbob.imaje.color.icc.ColorMatrix;
-import com.lhkbob.imaje.color.icc.ColorTransform;
-import com.lhkbob.imaje.color.icc.CurveTransform;
-import com.lhkbob.imaje.color.icc.SequentialTransform;
+import com.lhkbob.imaje.color.icc.transforms.ColorLookupTable;
+import com.lhkbob.imaje.color.icc.transforms.ColorMatrix;
+import com.lhkbob.imaje.color.icc.transforms.ColorTransform;
+import com.lhkbob.imaje.color.icc.transforms.CurveTransform;
+import com.lhkbob.imaje.color.icc.transforms.SequentialTransform;
 import com.lhkbob.imaje.color.icc.Signature;
 import com.lhkbob.imaje.color.icc.curves.Curve;
 import com.lhkbob.imaje.color.icc.curves.DomainWindow;

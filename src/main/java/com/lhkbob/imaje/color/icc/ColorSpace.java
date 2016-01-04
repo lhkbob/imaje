@@ -10,7 +10,7 @@ public enum ColorSpace {
   YCbCr("YCbr", 3),
   CIEYxy("Yxy", 3),
   RGB("RGB", 3),
-  GRAY("GRAY", 1), // FIXME is gray a single channel?
+  GRAY("GRAY", 1),
   HSV("HSV", 3),
   HLS("HLS", 3),
   CMYK("CMYK", 4),
