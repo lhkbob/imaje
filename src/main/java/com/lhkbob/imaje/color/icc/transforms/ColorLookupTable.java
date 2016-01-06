@@ -132,7 +132,7 @@ public class ColorLookupTable implements ColorTransform {
     int power = 1;
     weights[0] = 1.0;
     for (int i = 0; i < inputChannels; i++) {
-      for (int j = 0; j < i; j++) {
+      for (int j = 0; j < power; j++) {
         weights[power + j] = weights[j] * axisAlphas[i];
         weights[j] *= (1.0 - axisAlphas[i]);
       }
