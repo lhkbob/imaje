@@ -63,4 +63,23 @@ public class XYZToLuvTransform implements ColorTransform {
   static double vPrime(double x, double y, double z) {
     return 9.0 * y / (x + 15.0 * y + 3.0 * z);
   }
+
+  @Override
+  public int hashCode() {
+    return referenceWhitepoint.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this)
+      return true;
+    if (!(o instanceof XYZToLuvTransform))
+      return false;
+    return ((XYZToLuvTransform) o).referenceWhitepoint.equals(referenceWhitepoint);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("XYZ -> L*u*v* Transform (whitepoint: %s)", referenceWhitepoint);
+  }
 }

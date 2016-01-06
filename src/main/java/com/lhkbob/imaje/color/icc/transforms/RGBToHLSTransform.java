@@ -7,7 +7,7 @@ public class RGBToHLSTransform extends AbstractRGBToHueTransform {
   private static final double EPS = 1e-8;
 
   @Override
-  public ColorTransform inverted() {
+  public HLSToRGBTransform inverted() {
     return new HLSToRGBTransform();
   }
 
@@ -32,5 +32,20 @@ public class RGBToHLSTransform extends AbstractRGBToHueTransform {
     output[0] = hue;
     output[1] = lightness;
     output[2] = saturation;
+  }
+
+  @Override
+  public int hashCode() {
+    return RGBToHLSTransform.class.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o instanceof RGBToHLSTransform;
+  }
+
+  @Override
+  public String toString() {
+    return "RGB -> HLS Transform";
   }
 }

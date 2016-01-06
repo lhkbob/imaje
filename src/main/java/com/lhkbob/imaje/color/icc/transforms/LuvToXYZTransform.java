@@ -64,4 +64,23 @@ public class LuvToXYZTransform implements ColorTransform {
     // Z from Y, X, and denom
     output[2] = (denom - output[0] - 15.0 * output[1]) / 3.0;
   }
+
+  @Override
+  public int hashCode() {
+    return referenceWhitepoint.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this)
+      return true;
+    if (!(o instanceof LuvToXYZTransform))
+      return false;
+    return ((LuvToXYZTransform) o).referenceWhitepoint.equals(referenceWhitepoint);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("L*u*v* -> XYZ Transform (whitepoint: %s)", referenceWhitepoint);
+  }
 }

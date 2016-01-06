@@ -67,4 +67,23 @@ public class LabToXYZTransform implements ColorTransform {
       return LINEAR_SLOPE * (t - LINEAR_OFFSET);
     }
   }
+
+  @Override
+  public int hashCode() {
+    return referenceWhitepoint.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this)
+      return true;
+    if (!(o instanceof LabToXYZTransform))
+      return false;
+    return ((LabToXYZTransform) o).referenceWhitepoint.equals(referenceWhitepoint);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("L*a*b* -> XYZ Transform (whitepoint: %s)", referenceWhitepoint);
+  }
 }

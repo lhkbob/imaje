@@ -6,7 +6,8 @@ import java.util.Arrays;
  *
  */
 public class ColorMatrix implements ColorTransform {
-  public static final ColorMatrix IDENTITY_3X3 = new ColorMatrix(3, 3, new double[] { 1, 0, 0, 0, 1, 0, 0, 0, 1});
+  public static final ColorMatrix IDENTITY_3X3 = new ColorMatrix(
+      3, 3, new double[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 });
   private final double[] matrix; // row major
   private final int numColumns;
   private final int numRows;
@@ -41,6 +42,68 @@ public class ColorMatrix implements ColorTransform {
   }
 
   @Override
+  public int hashCode() {
+    int result = 17;
+    result = 31 * result + Arrays.hashCode(matrix);
+    result = 31 * result + Arrays.hashCode(translation);
+    result = 31 * result + numRows;
+    result = 31 * result + numColumns;
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof ColorMatrix)) {
+      return false;
+    }
+    ColorMatrix c = (ColorMatrix) o;
+    return c.numColumns == numColumns && c.numRows == numRows && Arrays
+        .equals(c.translation, translation) && Arrays.equals(c.matrix, matrix);
+  }
+
+  @Override
+  public String toString() {
+    boolean hasTranslation = false;
+    for (int i = 0; i < translation.length; i++) {
+      if (translation[i] != 0.0) {
+        hasTranslation = true;
+      }
+    }
+
+    StringBuilder sb = new StringBuilder("Color Matrix (").append(numRows).append(" x ")
+        .append(numColumns).append("):\n");
+    sb.append("  matrix: [");
+    for (int i = 0; i < numRows; i++) {
+      if (i > 0) {
+        sb.append("\n           "); // padding for alignment
+      }
+      for (int j = 0; j < numColumns; j++) {
+        if (j > 0) {
+          sb.append(", ");
+        }
+        sb.append(String.format("%.3f", matrix[i * numColumns + j]));
+      }
+    }
+    sb.append("]");
+
+    if (hasTranslation) {
+      sb.append("\n  with offset: [");
+      for (int i = 0; i < numColumns; i++) {
+        if (i > 0) {
+          sb.append(", ");
+        }
+        sb.append(String.format("%.3f", translation[i]));
+      }
+      sb.append("]");
+    }
+
+    return sb.toString();
+  }
+
+  @Override
   public int getInputChannels() {
     return numColumns;
   }
@@ -52,6 +115,7 @@ public class ColorMatrix implements ColorTransform {
 
   @Override
   public ColorTransform inverted() {
+    // FIXME implement explicit 3x3 inverse
     return null;
   }
 

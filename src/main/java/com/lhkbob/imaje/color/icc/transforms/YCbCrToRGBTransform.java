@@ -58,4 +58,48 @@ public class YCbCrToRGBTransform implements ColorTransform {
     // G from Y, R, and B
     output[1] = (input[0] - kr * output[0] - kb * output[2]) / (1.0 - kr - kb);
   }
+
+  @Override
+  public int hashCode() {
+    int result = 17;
+    result = 31 * result + Double.hashCode(kr);
+    result = 31 * result + Double.hashCode(kb);
+    result = 31 * result + Double.hashCode(umax);
+    result = 31 * result + Double.hashCode(vmax);
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof YCbCrToRGBTransform)) {
+      return false;
+    }
+    YCbCrToRGBTransform c = (YCbCrToRGBTransform) o;
+    return Double.compare(c.kr, kr) == 0 && Double.compare(c.kb, kb) == 0
+        && Double.compare(c.umax, umax) == 0 && Double.compare(c.vmax, vmax) == 0;
+  }
+
+  @Override
+  public String toString() {
+    if (YCbCr_BT_601.equals(this)) {
+      return "YCbCr (ITU Rec BT 601) -> RGB Transform";
+    } else if (YCbCr_BT_709.equals(this)) {
+      return "YCbCr (ITU Rec BT 709) -> RGB Transform";
+    } else if (YCbCr_BT_2020.equals(this)) {
+      return "YCbCr (ITU Rec BT 2020) -> RGB Transform";
+    } else if (YUV_BT_601.equals(this)) {
+      return "YUV (ITU Rec BT 601) -> RGB Transform";
+    } else if (YUV_BT_709.equals(this)) {
+      return "YUV (ITU Rec BT 709) -> RGB Transform";
+    } else if (YUV_BT_2020.equals(this)) {
+      return "YUV (ITU Rec BT 2020) -> RGB Transform";
+    } else {
+      return String
+          .format("Yb*r* -> RGB (kb: %.3f, kr: %.3f, b-max: %.3f, r-max: %.3f)", kb, kr, umax,
+              vmax);
+    }
+  }
 }

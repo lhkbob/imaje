@@ -7,7 +7,7 @@ public class HLSToRGBTransform extends AbstractHueToRGBTransform {
   private final double[] work = new double[3];
 
   @Override
-  public ColorTransform inverted() {
+  public RGBToHLSTransform inverted() {
     return new RGBToHLSTransform();
   }
 
@@ -20,5 +20,20 @@ public class HLSToRGBTransform extends AbstractHueToRGBTransform {
     work[2] = input[1] - 0.5 * work[1]; // m
 
     super.transform(work, output);
+  }
+
+  @Override
+  public int hashCode() {
+    return HLSToRGBTransform.class.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o instanceof HLSToRGBTransform;
+  }
+
+  @Override
+  public String toString() {
+    return "HLS -> RGB Transform";
   }
 }

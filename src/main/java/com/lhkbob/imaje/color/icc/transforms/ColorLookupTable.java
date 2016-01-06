@@ -62,6 +62,21 @@ public class ColorLookupTable implements ColorTransform {
   }
 
   @Override
+  public int hashCode() {
+    return System.identityHashCode(this);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o == this;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("CLUT (in: %d, out: %d,  grid: %s,)", inputChannels, outputChannels, Arrays.toString(gridSizes));
+  }
+
+  @Override
   public int getInputChannels() {
     return inputChannels;
   }

@@ -37,4 +37,19 @@ public class YyxToXYZTransform implements ColorTransform {
     // Z from Y, y, and x
     output[2] = input[0] * (1.0 - input[1] - input[2]) / input[2];
   }
+
+  @Override
+  public int hashCode() {
+    return YyxToXYZTransform.class.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o instanceof YyxToXYZTransform;
+  }
+
+  @Override
+  public String toString() {
+    return "Yyx -> XYZ Transform";
+  }
 }

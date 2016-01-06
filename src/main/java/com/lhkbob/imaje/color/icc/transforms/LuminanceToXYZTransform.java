@@ -46,4 +46,23 @@ public class LuminanceToXYZTransform implements ColorTransform {
     output[1] = whitepoint.getChannel(1) * input[0];
     output[2] = whitepoint.getChannel(2) * input[0];
   }
+
+  @Override
+  public int hashCode() {
+    return whitepoint.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this)
+      return true;
+    if (!(o instanceof LuminanceToXYZTransform))
+      return false;
+    return ((LuminanceToXYZTransform) o).whitepoint.equals(whitepoint);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("Luminance -> XYZ Transform (whitepoint: %s)", whitepoint);
+  }
 }

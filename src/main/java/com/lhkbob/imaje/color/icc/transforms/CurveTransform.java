@@ -4,7 +4,6 @@ import com.lhkbob.imaje.color.icc.curves.Curve;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -27,8 +26,15 @@ public class CurveTransform implements ColorTransform {
   }
 
   @Override
-  public ColorTransform inverted() {
-    List<Curve> inverted = curves.stream().map(Curve::inverted).collect(Collectors.toList());
+  public CurveTransform inverted() {
+    List<Curve> inverted = new ArrayList<>();
+    for (Curve c: curves) {
+      Curve invC = c.inverted();
+      if (invC == null)
+        return null;
+      else
+        inverted.add(invC);
+    }
     return new CurveTransform(inverted);
   }
 
@@ -44,7 +50,32 @@ public class CurveTransform implements ColorTransform {
     }
 
     for (int i = 0; i < input.length; i++) {
-      output[i] = curves.get(i).evaluate(input[i]);
+      Curve c = curves.get(i);
+      double inDomain = Math.max(c.getDomainMin(), Math.min(input[i], c.getDomainMax()));
+      output[i] = c.evaluate(inDomain);
     }
+  }
+
+  @Override
+  public int hashCode() {
+    return curves.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this)
+      return true;
+    if (!(o instanceof CurveTransform))
+      return false;
+    return ((CurveTransform) o).curves.equals(curves);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("Curve Transform (dim: ").append(curves.size()).append("):");
+    for (int i = 0; i < curves.size(); i++) {
+      sb.append("\n  channel ").append(i + 1).append(": ").append(curves.get(i).toString());
+    }
+    return sb.toString();
   }
 }

@@ -7,7 +7,7 @@ public class RGBToHSVTransform extends AbstractRGBToHueTransform {
   private static final double EPS = 1e-8;
 
   @Override
-  public ColorTransform inverted() {
+  public HSVToRGBTransform inverted() {
     return new HSVToRGBTransform();
   }
 
@@ -32,5 +32,20 @@ public class RGBToHSVTransform extends AbstractRGBToHueTransform {
     output[0] = hue;
     output[1] = saturation;
     output[2] = value;
+  }
+
+  @Override
+  public int hashCode() {
+    return RGBToHSVTransform.class.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o instanceof RGBToHSVTransform;
+  }
+
+  @Override
+  public String toString() {
+    return "RGB -> HSV Transform";
   }
 }
