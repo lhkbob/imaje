@@ -10,6 +10,5 @@ import java.nio.ByteBuffer;
 public interface TagParser<T> {
   Signature getSignature();
 
-  // FIXME provide current tag as context as well
-  T parse(Header header, ByteBuffer data);
+  T parse(Signature tag, Header header, ByteBuffer data);
 }

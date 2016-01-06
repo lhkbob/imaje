@@ -19,7 +19,7 @@ public class DateTimeTypeParser implements TagParser<ZonedDateTime> {
   }
 
   @Override
-  public ZonedDateTime parse(Header header, ByteBuffer data) {
+  public ZonedDateTime parse(Signature tag, Header header, ByteBuffer data) {
     return nextDateTimeNumber(data);
   }
 }

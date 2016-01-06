@@ -20,7 +20,7 @@ public class ColorantOrderTypeParser implements TagParser<int[]> {
   }
 
   @Override
-  public int[] parse(Header header, ByteBuffer data) {
+  public int[] parse(Signature tag, Header header, ByteBuffer data) {
     int colorantCount = Math.toIntExact(nextUInt32Number(data));
     int[] colorants = new int[colorantCount];
 

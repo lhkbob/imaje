@@ -18,7 +18,7 @@ public class TextTypeParser implements TagParser<String> {
   }
 
   @Override
-  public String parse(Header header, ByteBuffer data) {
+  public String parse(Signature tag, Header header, ByteBuffer data) {
     // Length of the string is encoded in what's remaining of the tag
     // this assumes that the data's limit has been appropriately set.
     return nextASCIIString(data, data.remaining());

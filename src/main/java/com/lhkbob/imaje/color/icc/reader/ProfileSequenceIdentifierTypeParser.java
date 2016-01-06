@@ -26,7 +26,7 @@ public class ProfileSequenceIdentifierTypeParser implements TagParser<LinkedHash
 
   @Override
   public LinkedHashMap<ProfileID, LocalizedString> parse(
-      Header header, ByteBuffer data) {
+      Signature tag, Header header, ByteBuffer data) {
     int dataStart = data.position() - 8;
 
     int count = Math.toIntExact(nextUInt32Number(data));
@@ -53,7 +53,7 @@ public class ProfileSequenceIdentifierTypeParser implements TagParser<LinkedHash
       }
 
       ProfileID key = new ProfileID(id);
-      LocalizedString value = readEmbeddedTextTag(header, data);
+      LocalizedString value = readEmbeddedTextTag(tag, header, data);
       seq.put(key, value);
     }
 

@@ -18,7 +18,7 @@ public class U16Fixed16ArrayTypeParser implements TagParser<double[]> {
   }
 
   @Override
-  public double[] parse(Header header, ByteBuffer data) {
+  public double[] parse(Signature tag, Header header, ByteBuffer data) {
     int count = data.remaining() / 4;
     double[] values = new double[count];
     for (int i = 0; i < count; i++) {

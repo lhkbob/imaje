@@ -20,7 +20,7 @@ public class ChromaticityTypeParser implements TagParser<Colorant> {
   }
 
   @Override
-  public Colorant parse(Header header, ByteBuffer data) {
+  public Colorant parse(Signature tag, Header header, ByteBuffer data) {
     int channels = nextUInt16Number(data);
     int colorant = nextUInt16Number(data);
 

@@ -28,7 +28,7 @@ public class NamedColorTypeParser implements TagParser<List<NamedColor>> {
   }
 
   @Override
-  public List<NamedColor> parse(Header header, ByteBuffer data) {
+  public List<NamedColor> parse(Signature tag, Header header, ByteBuffer data) {
     long vendorFlags = nextUInt32Number(data); // ignored for now
     int colorCount = Math.toIntExact(nextUInt32Number(data));
     int deviceCoords = Math.toIntExact(nextUInt32Number(data));
@@ -49,8 +49,6 @@ public class NamedColorTypeParser implements TagParser<List<NamedColor>> {
         device[j] = nextUInt16Number(data);
       }
 
-      // FIXME could we be more specific than device? and switch to a XYZ or LAB, etc. depending on the A side color space?
-      // is that really useful?
       colors.add(new NamedColor(finalName, pcs, GenericColorValue.genericColor(device)));
     }
 

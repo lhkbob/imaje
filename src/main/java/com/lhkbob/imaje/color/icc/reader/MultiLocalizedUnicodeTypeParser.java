@@ -25,7 +25,7 @@ public class MultiLocalizedUnicodeTypeParser implements TagParser<LocalizedStrin
   }
 
   @Override
-  public LocalizedString parse(Header header, ByteBuffer data) {
+  public LocalizedString parse(Signature tag, Header header, ByteBuffer data) {
     int tagStart = data.position() - 8;
 
     int recordCount = Math.toIntExact(nextUInt32Number(data));

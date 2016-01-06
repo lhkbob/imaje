@@ -21,7 +21,7 @@ public class XYZTypeParser implements TagParser<List<GenericColorValue>> {
   }
 
   @Override
-  public List<GenericColorValue> parse(Header header, ByteBuffer data) {
+  public List<GenericColorValue> parse(Signature tag, Header header, ByteBuffer data) {
     int count = data.remaining() / 12;
     List<GenericColorValue> colors = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {

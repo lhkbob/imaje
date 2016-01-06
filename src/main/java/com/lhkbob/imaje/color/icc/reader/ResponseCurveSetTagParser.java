@@ -27,7 +27,7 @@ public class ResponseCurveSetTagParser implements TagParser<ResponseCurveSet> {
   }
 
   @Override
-  public ResponseCurveSet parse(Header header, ByteBuffer data) {
+  public ResponseCurveSet parse(Signature tag, Header header, ByteBuffer data) {
     int tagStart = data.position() - 8;
     int channelCount = nextUInt16Number(data);
     int measurementCount = nextUInt16Number(data);

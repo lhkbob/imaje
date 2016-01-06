@@ -27,7 +27,7 @@ public class ColorantTableTypeParser implements TagParser<List<NamedColor>> {
   }
 
   @Override
-  public List<NamedColor> parse(Header header, ByteBuffer data) {
+  public List<NamedColor> parse(Signature tag, Header header, ByteBuffer data) {
     boolean pcsIsXYZ = header.getBSideColorSpace() == ColorSpace.CIEXYZ;
     int colorantCount = Math.toIntExact(nextUInt32Number(data));
 

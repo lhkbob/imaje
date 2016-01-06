@@ -28,7 +28,7 @@ public class ProfileSequenceDescriptionTypeParser implements TagParser<List<Prof
   }
 
   @Override
-  public List<ProfileDescription> parse(Header header, ByteBuffer data) {
+  public List<ProfileDescription> parse(Signature tag, Header header, ByteBuffer data) {
     int descCount = Math.toIntExact(nextUInt32Number(data));
     List<ProfileDescription> profiles = new ArrayList<>();
     for (int i = 0; i < descCount; i++) {
@@ -39,12 +39,12 @@ public class ProfileSequenceDescriptionTypeParser implements TagParser<List<Prof
       DeviceTechnology tech = (techSig == 0 ? null
           : DeviceTechnology.fromSignature(Signature.fromBitField(techSig)));
 
-      LocalizedString manufacturerDesc = readEmbeddedTextTag(header, data);
+      LocalizedString manufacturerDesc = readEmbeddedTextTag(tag, header, data);
       if (manufacturerDesc == null) {
         // unsupported text type in tag
         return null;
       }
-      LocalizedString modelDesc = readEmbeddedTextTag(header, data);
+      LocalizedString modelDesc = readEmbeddedTextTag(tag, header, data);
       if (modelDesc == null) {
         // unsupported text type in tag
         return null;
@@ -59,14 +59,14 @@ public class ProfileSequenceDescriptionTypeParser implements TagParser<List<Prof
     return profiles;
   }
 
-  static LocalizedString readEmbeddedTextTag(Header header, ByteBuffer data) {
+  static LocalizedString readEmbeddedTextTag(Signature tag, Header header, ByteBuffer data) {
     Signature type = nextSignature(data);
     skip(data, 4); // reserved
 
     if (type.equals(TextDescriptionTagParser.SIGNATURE)) {
-      return new TextDescriptionTagParser().parse(header, data);
+      return new TextDescriptionTagParser().parse(tag, header, data);
     } else if (type.equals(MultiLocalizedUnicodeTypeParser.SIGNATURE)) {
-      return new MultiLocalizedUnicodeTypeParser().parse(header, data);
+      return new MultiLocalizedUnicodeTypeParser().parse(tag, header, data);
     } else {
       return null;
     }

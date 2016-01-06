@@ -24,8 +24,8 @@ public class StringToLocalizedStringAdapter implements TagParser<LocalizedString
   }
 
   @Override
-  public LocalizedString parse(Header header, ByteBuffer data) {
-    String text = parser.parse(header, data);
+  public LocalizedString parse(Signature tag, Header header, ByteBuffer data) {
+    String text = parser.parse(tag, header, data);
     // This assumes that the text parser is reading an ASCII text so the locale should be US
     Map<Locale, String> options = Collections.singletonMap(Locale.US, text);
     return new LocalizedString(options, Locale.US);

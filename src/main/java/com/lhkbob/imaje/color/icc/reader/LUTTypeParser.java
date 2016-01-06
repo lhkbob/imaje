@@ -1,12 +1,12 @@
 package com.lhkbob.imaje.color.icc.reader;
 
+import com.lhkbob.imaje.color.icc.Signature;
+import com.lhkbob.imaje.color.icc.curves.Curve;
 import com.lhkbob.imaje.color.icc.transforms.ColorLookupTable;
 import com.lhkbob.imaje.color.icc.transforms.ColorMatrix;
 import com.lhkbob.imaje.color.icc.transforms.ColorTransform;
 import com.lhkbob.imaje.color.icc.transforms.CurveTransform;
 import com.lhkbob.imaje.color.icc.transforms.SequentialTransform;
-import com.lhkbob.imaje.color.icc.Signature;
-import com.lhkbob.imaje.color.icc.curves.Curve;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -51,9 +51,14 @@ public class LUTTypeParser implements TagParser<ColorTransform> {
   }
 
   @Override
-  public ColorTransform parse(Header header, ByteBuffer data) {
+  public ColorTransform parse(Signature tag, Header header, ByteBuffer data) {
     int tagStart = data.position() - 8;
     List<ColorTransform> transformStages = new ArrayList<>();
+
+    // Push on a normalizing function for the start space, or if in reverse mode push on
+    // the denormalizing function since the stages are reversed at the very end
+    transformStages.add(reverse ? header.getASideColorSpace().getNormalizingFunction().inverted()
+        : header.getASideColorSpace().getNormalizingFunction());
 
     int inputChannels = nextUInt8Number(data);
     int outputChannels = nextUInt8Number(data);
@@ -84,7 +89,7 @@ public class LUTTypeParser implements TagParser<ColorTransform> {
     // Read in inputChannels count "A" curves for the start of the transform, if they are present
     if (aCurveOffset != 0) {
       transformStages.add(
-          readCurveBlock(header, data, tagStart + aCurveOffset, inputChannels, curveCache,
+          readCurveBlock(tag, header, data, tagStart + aCurveOffset, inputChannels, curveCache,
               curveSizes));
       tagEnd = Math.max(tagEnd, data.position());
     }
@@ -99,7 +104,7 @@ public class LUTTypeParser implements TagParser<ColorTransform> {
     // Read in "M" curves if they are present
     if (mCurveOffset != 0) {
       transformStages.add(
-          readCurveBlock(header, data, tagStart + mCurveOffset, outputChannels, curveCache,
+          readCurveBlock(tag, header, data, tagStart + mCurveOffset, outputChannels, curveCache,
               curveSizes));
       tagEnd = Math.max(tagEnd, data.position());
     }
@@ -113,12 +118,16 @@ public class LUTTypeParser implements TagParser<ColorTransform> {
     // Read in the "B" curves if they are present
     if (bCurveOffset != 0) {
       transformStages.add(
-          readCurveBlock(header, data, tagStart + bCurveOffset, outputChannels, curveCache,
+          readCurveBlock(tag, header, data, tagStart + bCurveOffset, outputChannels, curveCache,
               curveSizes));
       tagEnd = Math.max(tagEnd, data.position());
     }
 
     data.position(tagEnd);
+
+    // Push on a denormalizing function, or if we're in reverse mode, push on a normalizing function
+    transformStages.add(reverse ? header.getBSideColorSpace().getNormalizingFunction()
+        : header.getBSideColorSpace().getNormalizingFunction().inverted());
 
     if (reverse) {
       // Reorder the AtoB order the code above creates to have the desired BtoA order
@@ -164,8 +173,8 @@ public class LUTTypeParser implements TagParser<ColorTransform> {
   }
 
   private CurveTransform readCurveBlock(
-      Header header, ByteBuffer data, int start, int curveCount, Map<Integer, Curve> cache,
-      Map<Integer, Integer> sizes) {
+      Signature tag, Header header, ByteBuffer data, int start, int curveCount,
+      Map<Integer, Curve> cache, Map<Integer, Integer> sizes) {
     // There are inputChannels count curves stored sequentially as a fully formed tag type
     // Each curve ends with 0-3 bytes to align it with a 4 byte boundary
     data.position(start);
@@ -182,8 +191,9 @@ public class LUTTypeParser implements TagParser<ColorTransform> {
         data.position(currentOffset + size);
       } else {
         Signature type = nextSignature(data);
+        skip(data, 4); // reserved
+
         TagParser<Curve> curveParser;
-        // FIXME this ought to be replaced by some sort of automated tag lookup helper
         if (type.equals(CurveTypeParser.SIGNATURE)) {
           curveParser = new CurveTypeParser();
         } else if (type.equals(ParametricCurveTypeParser.SIGNATURE)) {
@@ -192,7 +202,7 @@ public class LUTTypeParser implements TagParser<ColorTransform> {
           throw new IllegalStateException("Unsupported signature for curve: " + type);
         }
 
-        curve = curveParser.parse(header, data);
+        curve = curveParser.parse(tag, header, data);
         // Advance position to 4 byte boundary
         skipToBoundary(data);
 

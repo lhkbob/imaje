@@ -22,7 +22,7 @@ public class ParametricCurveTypeParser implements TagParser<Curve> {
   }
 
   @Override
-  public Curve parse(Header header, ByteBuffer data) {
+  public Curve parse(Signature tag, Header header, ByteBuffer data) {
     int functionType = nextUInt16Number(data);
     skip(data, 2);
 

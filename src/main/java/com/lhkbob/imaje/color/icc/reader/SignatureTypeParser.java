@@ -18,7 +18,7 @@ public class SignatureTypeParser implements TagParser<Signature> {
   }
 
   @Override
-  public Signature parse(Header header, ByteBuffer data) {
+  public Signature parse(Signature tag, Header header, ByteBuffer data) {
     return nextSignature(data);
   }
 }

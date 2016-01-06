@@ -18,7 +18,7 @@ public class UInt16ArrayTypeParser implements TagParser<int[]> {
   }
 
   @Override
-  public int[] parse(Header header, ByteBuffer data) {
+  public int[] parse(Signature tag, Header header, ByteBuffer data) {
     int count = data.remaining() / 2;
     int[] values = new int[count];
     for (int i = 0; i < count; i++) {

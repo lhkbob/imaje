@@ -30,7 +30,7 @@ public class LUT8TypeParser implements TagParser<ColorTransform> {
   }
 
   @Override
-  public ColorTransform parse(Header header, ByteBuffer data) {
+  public ColorTransform parse(Signature tag, Header header, ByteBuffer data) {
     List<ColorTransform> transformStages = new ArrayList<>();
 
     int inputChannels = nextUInt8Number(data);
@@ -43,9 +43,15 @@ public class LUT8TypeParser implements TagParser<ColorTransform> {
     for (int i = 0; i < matrix.length; i++) {
       matrix[i] = nextS15Fixed16Number(data);
     }
-    // FIXME this needs to be based on how the LUT is being used since if it's a reverse
-    // tag, then we care about B-side's color space
-    if (header.getASideColorSpace() == ColorSpace.CIEXYZ) {
+
+    Tag.Definition<?> def = Tag.fromSignature(tag);
+    boolean forward = def == Tag.A_TO_B0 || def == Tag.A_TO_B1 || def == Tag.A_TO_B2;
+    // Add a normalizing stage using either A or B's normalizing function
+    transformStages.add(forward ? header.getASideColorSpace().getNormalizingFunction()
+        : header.getBSideColorSpace().getNormalizingFunction());
+
+    if ((forward && header.getASideColorSpace() == ColorSpace.CIEXYZ) || (!forward
+        && header.getBSideColorSpace() == ColorSpace.CIEXYZ)) {
       // The matrix can be used
       if (inputChannels != 3) {
         throw new IllegalStateException(
@@ -87,6 +93,9 @@ public class LUT8TypeParser implements TagParser<ColorTransform> {
     }
     transformStages.add(new CurveTransform(outputTable));
 
+    // Add a denormalizing stage
+    transformStages.add(forward ? header.getBSideColorSpace().getNormalizingFunction().inverted()
+        : header.getASideColorSpace().getNormalizingFunction().inverted());
     return new SequentialTransform(transformStages);
   }
 }

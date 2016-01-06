@@ -26,7 +26,7 @@ public class MeasurementTypeParser implements TagParser<Measurement> {
   }
 
   @Override
-  public Measurement parse(Header header, ByteBuffer data) {
+  public Measurement parse(Signature tag, Header header, ByteBuffer data) {
     int observer = Math.toIntExact(nextUInt32Number(data));
     GenericColorValue measure = nextXYZNumber(data, GenericColorValue.ColorType.NORMALIZED_CIEXYZ);
     int geometry = Math.toIntExact(nextUInt32Number(data));

@@ -113,7 +113,7 @@ public final class Tag<T> {
         return null;
       }
       skip(data, 4);
-      T value = parser.parse(header, data);
+      T value = parser.parse(tagSignature, header, data);
       if (value == null) {
         // Unsupported tag data configuration (really only will happen for undefined multiprocess
         // elements, which mandates skipping the multiprocesselement tag)

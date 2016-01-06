@@ -41,7 +41,7 @@ public class MultiProcessElementsTypeParser implements TagParser<ColorTransform>
   }
 
   @Override
-  public ColorTransform parse(Header header, ByteBuffer data) {
+  public ColorTransform parse(Signature tag, Header header, ByteBuffer data) {
     int tagStart = data.position() - 8;
     int tagLimit = data.limit();
 
@@ -61,6 +61,9 @@ public class MultiProcessElementsTypeParser implements TagParser<ColorTransform>
 
     // The ICC spec says that elements may be shared
     Map<ICCDataTypeUtil.PositionNumber, ColorTransform> elementCache = new HashMap<>();
+    // Note that unlike the LUTx parsers, there is no need to add normalizing functions to the start/end
+    // because the elements here except the full range of floats or perform clipping (e.g. CLUT),
+    // which is handled already by the individual ColorTransform instances.
     List<ColorTransform> elements = new ArrayList<>();
 
     // Read all elements based on the table

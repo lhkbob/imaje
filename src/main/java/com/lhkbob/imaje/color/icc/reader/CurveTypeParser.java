@@ -25,7 +25,7 @@ public class CurveTypeParser implements TagParser<Curve> {
   }
 
   @Override
-  public Curve parse(Header header, ByteBuffer data) {
+  public Curve parse(Signature tag, Header header, ByteBuffer data) {
     int tableLength = Math.toIntExact(nextUInt32Number(data));
     if (tableLength == 0) {
       // Identity response, but limited to a 0-1 range

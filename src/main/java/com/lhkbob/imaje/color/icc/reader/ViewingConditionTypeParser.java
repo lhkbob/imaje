@@ -24,7 +24,7 @@ public class ViewingConditionTypeParser implements TagParser<ViewingCondition> {
   }
 
   @Override
-  public ViewingCondition parse(Header header, ByteBuffer data) {
+  public ViewingCondition parse(Signature tag, Header header, ByteBuffer data) {
     GenericColorValue illuminant = nextXYZNumber(data, GenericColorValue.ColorType.CIEXYZ);
     GenericColorValue surround = nextXYZNumber(data, GenericColorValue.ColorType.CIEXYZ);
     int type = Math.toIntExact(nextUInt32Number(data));

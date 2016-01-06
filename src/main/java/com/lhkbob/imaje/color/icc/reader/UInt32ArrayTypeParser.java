@@ -18,7 +18,7 @@ public class UInt32ArrayTypeParser implements TagParser<long[]> {
   }
 
   @Override
-  public long[] parse(Header header, ByteBuffer data) {
+  public long[] parse(Signature tag, Header header, ByteBuffer data) {
     int count = data.remaining() / 4;
     long[] values = new long[count];
     for (int i = 0; i < count; i++) {

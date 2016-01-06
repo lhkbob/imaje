@@ -24,7 +24,7 @@ public class TextDescriptionTagParser implements TagParser<LocalizedString> {
   }
 
   @Override
-  public LocalizedString parse(Header header, ByteBuffer data) {
+  public LocalizedString parse(Signature tag, Header header, ByteBuffer data) {
     // First read in the ASCII invariant
     int asciiLength = Math.toIntExact(nextUInt32Number(data));
     String ascii = nextASCIIString(data, asciiLength);
