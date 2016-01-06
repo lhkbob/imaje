@@ -131,7 +131,11 @@ public class ColorMatrix implements ColorTransform {
   @Override
   public ColorTransform inverted() {
     // To avoid importing a general matrix library for this single function, only a 3x3 matrix
-    // inversion is implemented since it can be coded explicitly.
+    // inversion is implemented since it can be coded explicitly. Lastly, the vast majority of
+    // color matrix use in an ICC profile is tied to the XYZ color space so should be a 3x3.
+    //
+    // If the matrix comes from one of the newer multiprocess element transforms, then it's likely
+    // the profile builder provided an inverse transform tag as well.
     if (numColumns != 3 || numRows != 3) {
       return null;
     }
