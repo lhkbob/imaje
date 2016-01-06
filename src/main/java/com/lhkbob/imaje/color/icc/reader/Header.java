@@ -99,7 +99,7 @@ public final class Header {
     DeviceAttributes attrs = new DeviceAttributes(nextUInt64Number(data));
     RenderingIntent intent = RenderingIntent.values()[Math.toIntExact(nextUInt32Number(data))];
     GenericColorValue illuminant = nextXYZNumber(
-        data, GenericColorValue.ColorType.NORMALIZED_CIEXYZ);
+        data, GenericColorValue.ColorType.PCSXYZ);
     Signature creator = nextSignature(data);
 
     byte[] idBits = new byte[16];
