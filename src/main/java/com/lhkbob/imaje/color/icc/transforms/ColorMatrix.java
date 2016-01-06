@@ -41,6 +41,21 @@ public class ColorMatrix implements ColorTransform {
     this.translation = Arrays.copyOf(translation, translation.length);
   }
 
+  private ColorMatrix(int numRows, int numColumns) {
+    this.numRows = numRows;
+    this.numColumns = numColumns;
+    this.matrix = new double[numRows * numColumns];
+    this.translation = new double[numRows];
+  }
+
+  public double get(int i, int j) {
+    if (j == numColumns) {
+      return translation[i];
+    } else {
+      return matrix[i * numColumns + j];
+    }
+  }
+
   @Override
   public int hashCode() {
     int result = 17;
@@ -115,8 +130,52 @@ public class ColorMatrix implements ColorTransform {
 
   @Override
   public ColorTransform inverted() {
-    // FIXME implement explicit 3x3 inverse
-    return null;
+    // To avoid importing a general matrix library for this single function, only a 3x3 matrix
+    // inversion is implemented since it can be coded explicitly.
+    if (numColumns != 3 || numRows != 3) {
+      return null;
+    }
+    // If the translation part of the transform is non-zero the matrix is technically not
+    // 3x3 anymore and can't be inverted with this code
+    for (int i = 0; i < numRows; i++) {
+      if (Math.abs(translation[i]) > 1e-8) {
+        return null;
+      }
+    }
+
+    return invert3x3();
+  }
+
+  private double det3x3() {
+    double t1 = get(1, 1) * get(2, 2) - get(1, 2) * get(2, 1);
+    double t2 = get(1, 0) * get(2, 2) - get(1, 2) * get(2, 0);
+    double t3 = get(1, 0) * get(2, 1) - get(1, 1) * get(2, 0);
+    return get(0, 0) * t1 - get(0, 1) * t2 + get(0, 2) * t3;
+  }
+
+  private ColorMatrix invert3x3() {
+    double invDet = det3x3(); // not inverted yet
+    if (Math.abs(invDet) < 1e-8) {
+      return null; // singular matrix can't be inverted
+    }
+    invDet = 1 / invDet;
+
+    // Fill in the matrix values in place, which is fine since the object hasn't been published yet
+    ColorMatrix m = new ColorMatrix(3, 3);
+
+    m.matrix[0] = invDet * (get(2, 2) * get(1, 1) - get(2, 1) * get(1, 2));
+    m.matrix[1] = invDet * (get(2, 1) * get(0, 2) - get(2, 2) * get(0, 1));
+    m.matrix[2] = invDet * (get(1, 2) * get(0, 1) - get(1, 1) * get(0, 2));
+
+    m.matrix[3] = invDet * (get(2, 0) * get(1, 2) - get(2, 2) * get(1, 0));
+    m.matrix[4] = invDet * (get(2, 2) * get(0, 0) - get(2, 0) * get(0, 2));
+    m.matrix[5] = invDet * (get(1, 0) * get(0, 2) - get(1, 2) * get(0, 0));
+
+    m.matrix[6] = invDet * (get(2, 1) * get(1, 0) - get(2, 0) * get(1, 1));
+    m.matrix[7] = invDet * (get(2, 0) * get(0, 1) - get(2, 1) * get(0, 0));
+    m.matrix[8] = invDet * (get(1, 1) * get(0, 0) - get(1, 0) * get(0, 1));
+
+    return m;
   }
 
   @Override
