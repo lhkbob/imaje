@@ -35,7 +35,10 @@ public class ColorantTableTypeParser implements TagParser<List<NamedColor>> {
     for (int i = 0; i < colorantCount; i++) {
       String name = nextASCIIString(data, 32);
       GenericColorValue pcs = (pcsIsXYZ ? nextXYZNumber16(data) : nextLABNumber16(data));
-      colorants.add(new NamedColor(name, pcs, null));
+
+      double[] device = new double[colorantCount];
+      device[i] = 1.0;
+      colorants.add(new NamedColor(name, pcs, GenericColorValue.genericColor(device)));
     }
     return colorants;
   }

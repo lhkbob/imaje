@@ -1,12 +1,14 @@
 package com.lhkbob.imaje.color.icc;
 
 import com.lhkbob.imaje.color.icc.transforms.ColorMatrix;
+import com.lhkbob.imaje.color.icc.transforms.ColorTransform;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -22,7 +24,6 @@ public final class Profile {
     private ColorMatrix chromaticAdaptation;
     private Colorant chromaticity;
     private List<NamedColor> colorantInTable;
-    private int[] colorantOrder;
     private List<NamedColor> colorantOutTable;
     private ColorimetricIntent colorimetricIntent;
     private LocalizedString copyright;
@@ -31,7 +32,7 @@ public final class Profile {
     private ProfileDescription description;
     private long flags;
     private GenericColorValue illuminant;
-    private GenericColorValue luminance;
+    private Double luminance;
     private Measurement measurement;
     private GenericColorValue mediaWhitePoint;
     private List<NamedColor> namedColors;
@@ -44,9 +45,16 @@ public final class Profile {
     private RenderingIntentGamut saturationGamut;
     private ViewingCondition viewingCondition;
 
+    private final Map<RenderingIntent, ColorTransform> transforms;
+    private final Map<RenderingIntent, ColorTransform> inverseTransforms;
+    private ColorTransform defaultTransform;
+    private ColorTransform gamutTest;
+
     private Builder(ProfileClass profileClass, long version) {
       this.profileClass = profileClass;
       this.version = version;
+      transforms = new HashMap<>();
+      inverseTransforms = new HashMap<>();
     }
 
     public Profile build() {
@@ -54,13 +62,24 @@ public final class Profile {
       validate();
       return new Profile(aSide, bSide, calibrationTime, charTarget, chromaticAdaptation,
           chromaticity, Collections.unmodifiableList(new ArrayList<>(colorantInTable)),
-          Arrays.copyOf(colorantOrder, colorantOrder.length),
           Collections.unmodifiableList(new ArrayList<>(colorantOutTable)), colorimetricIntent,
-          copyright, creationTime, creator, description, flags, illuminant, luminance, measurement,
-          mediaWhitePoint, Collections.unmodifiableList(new ArrayList<>(namedColors)),
+          copyright, creationTime, creator, description, flags, gamutTest, illuminant, luminance,
+          measurement, mediaWhitePoint, Collections.unmodifiableList(new ArrayList<>(namedColors)),
           outputResponse, perceptualGamut, preferredCMMType, primaryPlatform, profileClass,
           Collections.unmodifiableList(new ArrayList<>(profileSequence)), renderingIntent,
-          saturationGamut, version, viewingCondition);
+          saturationGamut, version, viewingCondition,
+          Collections.unmodifiableMap(new HashMap<>(transforms)),
+          Collections.unmodifiableMap(new HashMap<>(inverseTransforms)));
+    }
+
+    public Builder setDefaultTransform(ColorTransform transform) {
+      defaultTransform = transform;
+      return this;
+    }
+
+    public Builder setGamutTest(ColorTransform gamut) {
+      gamutTest = gamut;
+      return this;
     }
 
     public Builder setASideColorSpace(ColorSpace aSide) {
@@ -95,11 +114,6 @@ public final class Profile {
 
     public Builder setColorantInputTable(List<NamedColor> in) {
       colorantInTable = in;
-      return this;
-    }
-
-    public Builder setColorantOrder(int[] colorantOrder) {
-      this.colorantOrder = colorantOrder;
       return this;
     }
 
@@ -143,7 +157,7 @@ public final class Profile {
       return this;
     }
 
-    public Builder setLuminance(GenericColorValue luminance) {
+    public Builder setLuminance(double luminance) {
       this.luminance = luminance;
       return this;
     }
@@ -203,6 +217,24 @@ public final class Profile {
       return this;
     }
 
+    public Builder setTransform(RenderingIntent intent, ColorTransform transform) {
+      if (transform != null) {
+        transforms.put(intent, transform);
+      } else {
+        transforms.remove(intent);
+      }
+      return this;
+    }
+
+    public Builder setInverseTransform(RenderingIntent intent, ColorTransform transform) {
+      if (transform != null) {
+        inverseTransforms.put(intent, transform);
+      } else {
+        transforms.remove(intent);
+      }
+      return this;
+    }
+
     private void completeDefaults() {
       if (aSide == null) {
         aSide = ColorSpace.RGB;
@@ -210,7 +242,6 @@ public final class Profile {
       if (bSide == null) {
         bSide = ColorSpace.CIEXYZ;
       }
-      // FIXME validate bSide depending on profile class
 
       if (creationTime == null) {
         creationTime = ZonedDateTime.now();
@@ -218,25 +249,10 @@ public final class Profile {
       if (calibrationTime == null) {
         calibrationTime = creationTime;
       }
-      if (charTarget == null) {
-        charTarget = "";
-      }
       if (chromaticAdaptation == null) {
         chromaticAdaptation = ColorMatrix.IDENTITY_3X3;
       }
-      // FIXME can we build the colorant table from the chromaticity list if its present?
-      if (colorantInTable == null) {
-        colorantInTable = new ArrayList<>();
-      }
-      if (colorantOutTable == null) {
-        colorantOutTable = new ArrayList<>();
-      }
-      if (colorantOrder == null) {
-        colorantOrder = new int[colorantInTable.size()];
-        for (int i = 0; i < colorantOrder.length; i++) {
-          colorantOrder[i] = i;
-        }
-      }
+
       if (colorimetricIntent == null) {
         colorimetricIntent = ColorimetricIntent.PICTURE_REFERRED;
       }
@@ -250,7 +266,18 @@ public final class Profile {
       if (description == null) {
         description = new ProfileDescription();
       }
-      // FIXME what are good defaults for illuminant and luminance? should they stay null?
+
+      if (illuminant == null) {
+        illuminant = GenericColorValue.pcsXYZ(0.9642, 1.0, 0.8249);
+      }
+      if (luminance == null) {
+        if (viewingCondition != null) {
+          luminance = viewingCondition.getIlluminant().getChannel(1);
+        } else {
+          luminance = 100.0;
+        }
+      }
+
       if (namedColors == null) {
         namedColors = new ArrayList<>();
       }
@@ -270,43 +297,234 @@ public final class Profile {
         renderingIntent = RenderingIntent.PERCEPTUAL;
       }
 
-      // FIXME add profile class specific validation rules
+      // Complete missing transforms that are related to one-another or have defaults
+
+      // 1. First if an explicit inverse was given, but no normal mode was given, use that
+      inverseTransforms.keySet().stream().filter(intent -> !transforms.containsKey(intent))
+          .forEach(intent -> {
+            ColorTransform forward = inverseTransforms.get(intent).inverted();
+            if (forward != null) {
+              transforms.put(intent, forward);
+            }
+          });
+
+      // 2. Calculate media relative colorimetric intent from ICC absolute.
+      //  - Use this to get the media transform if an explicit absolute transform was provided
+      //    before falling back to the default matrix/trc function
+      if (transforms.containsKey(RenderingIntent.ICC_ABSOLUTE_COLORIMETRIC) && !transforms
+          .containsKey(RenderingIntent.MEDIA_RELATIVE_COLORIMETRIC)) {
+        // FIXME implement inverse
+      }
+
+      // 3. Fall back to the default tag for normal mode on anything that wasn't defined implicitly
+      // in the two steps above; but not the ICC_ABSOLUTE intent (see below)
+      if (defaultTransform != null) {
+        if (!transforms.containsKey(RenderingIntent.PERCEPTUAL)) {
+          transforms.put(RenderingIntent.PERCEPTUAL, defaultTransform);
+        }
+        if (!transforms.containsKey(RenderingIntent.SATURATION)) {
+          transforms.put(RenderingIntent.SATURATION, defaultTransform);
+        }
+        if (!transforms.containsKey(RenderingIntent.MEDIA_RELATIVE_COLORIMETRIC)) {
+          transforms.put(RenderingIntent.MEDIA_RELATIVE_COLORIMETRIC, defaultTransform);
+        }
+      }
+
+      // 4. Calculate absolute colorimetric intent from media intent, which likely exists at this point
+      // from being explicitly given, having a default, or from being inverted.
+      if (transforms.containsKey(RenderingIntent.MEDIA_RELATIVE_COLORIMETRIC) && !transforms
+          .containsKey(RenderingIntent.ICC_ABSOLUTE_COLORIMETRIC)) {
+        // FIXME implement this
+      }
+
+      // 5. Calculate inverses for any provided transforms that were not also provided with explicit inverses
+      // (In most cases this is the inverse of the TRC/matrix default)
+      transforms.keySet().stream().filter(intent -> !inverseTransforms.containsKey(intent))
+          .forEach(intent -> {
+            ColorTransform inverse = transforms.get(intent).inverted();
+            if (inverse != null) {
+              inverseTransforms.put(intent, inverse);
+            }
+          });
+
+      // After transforms have been completed, build up the colorant tables if they have not already
+      // been specified.
+      if (colorantInTable == null) {
+        // Calculate colorants based on the a-side space
+        if (profileClass != ProfileClass.DEVICE_LINK_PROFILE) {
+          // Use the media relative transformation if it exists, otherwise don't calculate pcs values
+          ColorTransform aToB = transforms.get(RenderingIntent.MEDIA_RELATIVE_COLORIMETRIC);
+          colorantInTable = generateColorantTable(aToB, aSide, bSide);
+        } else {
+          // No transformation exists and pcs space must be LAB (additionally bSide does not
+          // necessarily encode a legal pcs space)
+          colorantInTable = generateColorantTable(null, aSide, ColorSpace.CIELAB);
+        }
+      }
+
+      if (colorantOutTable == null) {
+        // Calculate colorants based on the b-side space
+        if (profileClass != ProfileClass.DEVICE_LINK_PROFILE) {
+          // Generate a table that maps "device" (aka normalized pcs values) to the actual
+          // channel ranges (hence the inverse of the normalizing function)
+          colorantOutTable = generateColorantTable(
+              bSide.getNormalizingFunction().inverted(), bSide, bSide);
+        } else {
+          // No transformation exists, and device link's must have pcs values in LAB
+          colorantOutTable = generateColorantTable(null, bSide, ColorSpace.CIELAB);
+        }
+      }
+
+      // FIXME is it possible to calculate the colorant chromaticities?
+    }
+
+    private List<NamedColor> generateColorantTable(
+        ColorTransform deviceToPCS, ColorSpace deviceSpace, ColorSpace pcsSpace) {
+      // Skip table creation if the function is badly dimensioned (this is done so that
+      // validate() can fail with a more useful error message about the particular transform)
+      if (deviceToPCS != null && deviceToPCS.getInputChannels() != deviceSpace.getChannelCount()
+          && deviceToPCS.getOutputChannels() != pcsSpace.getChannelCount()) {
+        return Collections.emptyList();
+      }
+
+      List<NamedColor> table = new ArrayList<>();
+      double[] pcs = new double[pcsSpace.getChannelCount()];
+      for (int i = 0; i < deviceSpace.getChannelCount(); i++) {
+        // Allocate this anew each time since the genericColor static function assumes the array is
+        // safe to take ownership of
+        double[] device = new double[aSide.getChannelCount()];
+        device[i] = 1.0;
+
+        if (deviceToPCS != null) {
+          deviceToPCS.transform(device, pcs);
+        }
+
+        GenericColorValue pcsColor = new GenericColorValue(
+            bSide == ColorSpace.CIEXYZ ? GenericColorValue.ColorType.PCSXYZ
+                : GenericColorValue.ColorType.PCSLAB, pcs);
+
+        String name = (deviceSpace.hasChannelNames() ? deviceSpace.getChannelName(i)
+            : "Channel " + (i + 1));
+        table.add(new NamedColor(name, pcsColor, GenericColorValue.genericColor(device)));
+      }
+
+      return table;
     }
 
     private void validate() {
-      if (colorantInTable.size() != 0 && colorantInTable.size() != aSide.getChannelCount()) {
+      // b-side transformation must be XYZ or LAB for non-device link profiles
+      if (profileClass != ProfileClass.DEVICE_LINK_PROFILE && bSide != ColorSpace.CIEXYZ
+          && bSide != ColorSpace.CIELAB) {
         throw new IllegalStateException(
-            "Colorant input table does not provide A-side channel count colorants");
+            "Non-device link profile must have XYZ or LAB b-side color space, not: " + bSide);
       }
-      // FIXME does this have to match b side or a side?
-      if (colorantOutTable.size() != 0 && colorantOutTable.size() != bSide.getChannelCount()) {
+      // abstract profiles need XYZ or LAB on a and b sides, but if we got here the b-side is already valid
+      if (profileClass == ProfileClass.ABSTRACT_PROFILE && aSide != ColorSpace.CIEXYZ
+          && aSide != ColorSpace.CIELAB) {
         throw new IllegalStateException(
-            "Colorant output table does not provide B-side channel count colorants");
+            "Abstract profiles must have XYZ or LAB a-side color space, not: " + aSide);
       }
-      if (colorantOrder.length != colorantInTable.size()) {
+      // at least one transformation must be provided for non-named color profiles (named color profiles have no required transforms)
+      if (profileClass != ProfileClass.NAMED_COLOR_PROFILE && transforms.isEmpty()) {
+        throw new IllegalStateException("Must provide at least one transformation for profile");
+      }
+      // Must provide some named colors if it's a named color profile
+      if (profileClass == ProfileClass.NAMED_COLOR_PROFILE && namedColors.isEmpty()) {
+        throw new IllegalStateException("Named color profile defines no named colors");
+      }
+
+      // validate that all provided transformations match expected input/output channel counts for a and b side spaces
+      transforms.values().stream().forEach(transform -> {
+        if (transform.getInputChannels() != aSide.getChannelCount()
+            || transform.getOutputChannels() != bSide.getChannelCount()) {
+          throw new IllegalStateException(
+              "Input/output channel counts for A to B transform do not match up with channels for a and b-side color spaces");
+        }
+      });
+      inverseTransforms.values().stream().forEach(transform -> {
+        if (transform.getInputChannels() != bSide.getChannelCount()
+            || transform.getOutputChannels() != aSide.getChannelCount()) {
+          throw new IllegalStateException(
+              "Input/output channel counts for B to A transform do not match up with channels for a and b-side color spaces");
+        }
+      });
+
+      // The colorant-in table must have a-side's channel count colorants
+      if (colorantInTable.size() != aSide.getChannelCount()) {
         throw new IllegalStateException(
-            "Colorant order length does not equal size of colorant input table");
+            "Colorants not specified for generic color space on a-side");
       }
-      if (chromaticAdaptation.getInputChannels() != 3
-          && chromaticAdaptation.getOutputChannels() != 3) {
-        throw new IllegalStateException("Chromatic adaptation matrix must be a 3x3 matrix");
+      // The colorant output table must have b-side's channel count colorants
+      if (colorantOutTable.size() != bSide.getChannelCount()) {
+        throw new IllegalStateException(
+            "Colorants not specified for generic color space on b-side");
       }
+
+      // Validate various color tables
+      validateNamedColors(colorantInTable, aSide);
+      validateNamedColors(colorantOutTable, bSide);
+      validateNamedColors(namedColors, aSide);
+
       if (chromaticity != null && chromaticity.getChannelCount() != aSide.getChannelCount()) {
         throw new IllegalStateException(
             "Colorant chromaticities are not provided for A-side channel count colorants");
       }
-      if (mediaWhitePoint == null) {
-        throw new IllegalStateException("Media white point must be provided");
-      }
-      // FIXME does this have to match b side or a side?
-      if (outputResponse != null && outputResponse.getChannelCount() != bSide.getChannelCount()) {
+
+      if (outputResponse != null && outputResponse.getChannelCount() != aSide.getChannelCount()) {
         throw new IllegalStateException(
-            "Output response must have channel count equal to B-sides channel count");
+            "Output response must have channel count equal to A-sides channel count");
       }
       if (primaryPlatform == null) {
         throw new IllegalStateException("Primary platform cannot be null");
       }
-      // FIXME do we need to evaluate the color type for the illuminant, media white point, and luminance?
+
+      if (chromaticAdaptation.getInputChannels() != 3
+          && chromaticAdaptation.getOutputChannels() != 3) {
+        throw new IllegalStateException("Chromatic adaptation matrix must be a 3x3 matrix");
+      }
+      if (illuminant.getType() != GenericColorValue.ColorType.PCSXYZ) {
+        throw new IllegalStateException("Illuminant must be specified as PCSXYZ");
+      }
+      if (mediaWhitePoint == null) {
+        throw new IllegalStateException("Media white point must be provided");
+      }
+      if (mediaWhitePoint.getType() != GenericColorValue.ColorType.NORMALIZED_CIEXYZ) {
+        throw new IllegalStateException("Media white point must be normalized CIEXYZ");
+      }
+
+      if (gamutTest != null) {
+        // The gamut test goes from device space to a single value (presumably), which determines
+        // the boolean (0 = in gamut, non-zero = out of gamut) response
+        if (gamutTest.getInputChannels() != aSide.getChannelCount()) {
+          throw new IllegalStateException(
+              "Gamut test must have input channel count equal to a-side color space's channel count");
+        }
+        if (gamutTest.getOutputChannels() != 1) {
+          throw new IllegalStateException("Gamut test must output a single value");
+        }
+      }
+    }
+
+    private void validateNamedColors(List<NamedColor> colors, ColorSpace deviceSpace) {
+      // Make sure device colors in the colorant tables are the right dimension, and the pcs values
+      // are in the b-side space (non-device profiles) or LAB (device profiles)
+      GenericColorValue.ColorType pcsType;
+      if (profileClass != ProfileClass.DEVICE_LINK_PROFILE) {
+        pcsType = bSide == ColorSpace.CIEXYZ ? GenericColorValue.ColorType.PCSXYZ
+            : GenericColorValue.ColorType.PCSLAB;
+      } else {
+        pcsType = GenericColorValue.ColorType.PCSLAB;
+      }
+
+      for (NamedColor c : colors) {
+        if (c.getDeviceColor().getChannelCount() != deviceSpace.getChannelCount()) {
+          throw new IllegalStateException(
+              "Device color in a-side colorant table does not have correct dimensionality for color space");
+        }
+        if (c.getPCSColor().getType() != pcsType) {
+          throw new IllegalStateException("Named color's PCS value not in expected color space");
+        }
+      }
     }
   }
 
@@ -317,7 +535,6 @@ public final class Profile {
   private final ColorMatrix chromaticAdaptation;
   private final Colorant chromaticity;
   private final List<NamedColor> colorantInTable;
-  private final int[] colorantOrder;
   private final List<NamedColor> colorantOutTable;
   private final ColorimetricIntent colorimetricIntent;
   private final LocalizedString copyright;
@@ -325,9 +542,9 @@ public final class Profile {
   private final Signature creator;
   private final ProfileDescription description;
   private final long flags;
-  //  private final ColorTransform gamut; // FIXME should this transform be handled separately from everything else?
+  private final ColorTransform gamutTest;
   private final GenericColorValue illuminant;
-  private final GenericColorValue luminance;
+  private final double luminance;
   private final Measurement measurement;
   private final GenericColorValue mediaWhitePoint;
   private final List<NamedColor> namedColors;
@@ -342,18 +559,23 @@ public final class Profile {
   private final long version;
   private final ViewingCondition viewingCondition;
 
+  private final Map<RenderingIntent, ColorTransform> aToBTransforms;
+  private final Map<RenderingIntent, ColorTransform> bToATransforms;
+
   private Profile(
       ColorSpace aSide, ColorSpace bSide, ZonedDateTime calibrationTime, String charTarget,
       ColorMatrix chromaticAdaptation, Colorant chromaticity, List<NamedColor> colorantInTable,
-      int[] colorantOrder, List<NamedColor> colorantOutTable, ColorimetricIntent colorimetricIntent,
+      List<NamedColor> colorantOutTable, ColorimetricIntent colorimetricIntent,
       LocalizedString copyright, ZonedDateTime creationTime, Signature creator,
-      ProfileDescription description, long flags, GenericColorValue illuminant,
-      GenericColorValue luminance, Measurement measurement, GenericColorValue mediaWhitePoint,
-      List<NamedColor> namedColors, ResponseCurveSet outputResponse,
-      RenderingIntentGamut perceptualGamut, Signature preferredCMMType,
-      PrimaryPlatform primaryPlatform, ProfileClass profileClass,
+      ProfileDescription description, long flags, ColorTransform gamutTest,
+      GenericColorValue illuminant, double luminance, Measurement measurement,
+      GenericColorValue mediaWhitePoint, List<NamedColor> namedColors,
+      ResponseCurveSet outputResponse, RenderingIntentGamut perceptualGamut,
+      Signature preferredCMMType, PrimaryPlatform primaryPlatform, ProfileClass profileClass,
       List<ProfileDescription> profileSequence, RenderingIntent renderingIntent,
-      RenderingIntentGamut saturationGamut, long version, ViewingCondition viewingCondition) {
+      RenderingIntentGamut saturationGamut, long version, ViewingCondition viewingCondition,
+      Map<RenderingIntent, ColorTransform> aToBTransforms,
+      Map<RenderingIntent, ColorTransform> bToATransforms) {
     this.aSide = aSide;
     this.bSide = bSide;
     this.calibrationTime = calibrationTime;
@@ -361,7 +583,6 @@ public final class Profile {
     this.chromaticAdaptation = chromaticAdaptation;
     this.chromaticity = chromaticity;
     this.colorantInTable = colorantInTable;
-    this.colorantOrder = colorantOrder;
     this.colorantOutTable = colorantOutTable;
     this.colorimetricIntent = colorimetricIntent;
     this.copyright = copyright;
@@ -369,6 +590,7 @@ public final class Profile {
     this.creator = creator;
     this.description = description;
     this.flags = flags;
+    this.gamutTest = gamutTest;
     this.illuminant = illuminant;
     this.luminance = luminance;
     this.measurement = measurement;
@@ -384,17 +606,43 @@ public final class Profile {
     this.saturationGamut = saturationGamut;
     this.version = version;
     this.viewingCondition = viewingCondition;
+    this.aToBTransforms = aToBTransforms;
+    this.bToATransforms = bToATransforms;
   }
 
   public static Builder newProfile(ProfileClass profileClass, long version) {
     return new Builder(profileClass, version);
   }
 
+  public ColorTransform getAToBTransform(RenderingIntent intent) {
+    return aToBTransforms.get(intent);
+  }
+
+  public ColorTransform getBToATransform(RenderingIntent intent) {
+    return bToATransforms.get(intent);
+  }
+
+  public boolean inGamut(double[] aColor) {
+    if (aColor.length != aSide.getChannelCount()) {
+      throw new IllegalArgumentException(
+          "Color must have " + aSide.getChannelCount() + " channels");
+    }
+    if (gamutTest == null) {
+      return true;
+    }
+
+    // gamut transform was verified to have an output of 1 channel in the profile builder
+    double[] test = new double[1];
+    gamutTest.transform(aColor, test);
+
+    return Double.compare(test[0], 0.0) == 0;
+  }
+
   public ZonedDateTime getCalibrationDate() {
     return calibrationTime;
   }
 
-  public String getCharTarget() {
+  public String getCharacterizationTarget() {
     return charTarget;
   }
 
@@ -410,10 +658,6 @@ public final class Profile {
     return colorantInTable;
   }
 
-  public int[] getColorantOrder() {
-    return Arrays.copyOf(colorantOrder, colorantOrder.length);
-  }
-
   public List<NamedColor> getColorantOutTable() {
     return colorantOutTable;
   }
@@ -426,7 +670,7 @@ public final class Profile {
     return copyright;
   }
 
-  public GenericColorValue getLuminance() {
+  public double getLuminance() {
     return luminance;
   }
 

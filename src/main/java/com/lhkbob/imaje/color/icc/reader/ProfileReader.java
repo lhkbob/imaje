@@ -5,7 +5,9 @@ import com.lhkbob.imaje.color.icc.ColorimetricIntent;
 import com.lhkbob.imaje.color.icc.DeviceTechnology;
 import com.lhkbob.imaje.color.icc.GenericColorValue;
 import com.lhkbob.imaje.color.icc.LocalizedString;
+import com.lhkbob.imaje.color.icc.NamedColor;
 import com.lhkbob.imaje.color.icc.Profile;
+import com.lhkbob.imaje.color.icc.ProfileClass;
 import com.lhkbob.imaje.color.icc.ProfileDescription;
 import com.lhkbob.imaje.color.icc.ProfileID;
 import com.lhkbob.imaje.color.icc.RenderingIntent;
@@ -72,8 +74,9 @@ public class ProfileReader {
   }
 
   public static Profile readProfile(InputStream in) throws IOException {
-    if (!(in instanceof BufferedInputStream))
+    if (!(in instanceof BufferedInputStream)) {
       in = new BufferedInputStream(in);
+    }
 
     int profileSize = getProfileSize(in);
     ByteBuffer profileData = readBytes(in, profileSize);
@@ -89,7 +92,7 @@ public class ProfileReader {
   }
 
   private static ByteBuffer readBytes(InputStream in, int count) throws IOException {
-    byte[] data= new byte[count];
+    byte[] data = new byte[count];
     int nread = 0;
     int n;
     while ((n = in.read(data, nread, data.length - nread)) >= 0) {
@@ -133,25 +136,27 @@ public class ProfileReader {
         .setCharTarget(tags.getTagValue(Tag.CHAR_TARGET))
         .setCopyright(tags.getTagValue(Tag.COPYRIGHT))
         .setColorantChromaticities(tags.getTagValue(Tag.CHROMATICITY))
-        .setColorantInputTable(tags.getTagValue(Tag.COLORANT_TABLE))
-        .setColorantOutputTable(tags.getTagValue(Tag.COLORANT_TABLE_OUT))
-        .setColorantOrder(tags.getTagValue(Tag.COLORANT_ORDER))
         .setMeasurement(tags.getTagValue(Tag.MEASUREMENT))
         .setNamedColors(tags.getTagValue(Tag.NAMED_COLOR2))
         .setOutputResponse(tags.getTagValue(Tag.OUTPUT_RESPONSE));
 
-    // Relatively simple values from tags that need to be converted from signatures to enums
+    // Relatively simple values from tags that need to be converted from signatures to enums or similar
     b.setColorimetricIntent(ColorimetricIntent
         .fromSignature(tags.getTagValue(Tag.COLORIMETRIC_INTENT_IMAGE_STATE, Signature.NULL)))
         .setPerceptualRenderingIntentGamut(RenderingIntentGamut
             .fromSignature(tags.getTagValue(Tag.PERCEPTUAL_RENDERING_INTENT_GAMUT, Signature.NULL)))
         .setSaturationRenderingIntentGamut(RenderingIntentGamut.fromSignature(
             tags.getTagValue(Tag.SATURATION_RENDERING_INTENT_GAMUT, Signature.NULL)));
+    GenericColorValue luminance = getSingleColor(tags, Tag.LUMINANCE);
+    if (luminance != null) {
+      b.setLuminance(luminance.getChannel(1));
+    }
+
+    b.setMediaWhitePoint(getSingleColor(tags, Tag.MEDIA_WHITE_POINT));
 
     // Moderately complex tag values that should be consolidated before actually creating the profile
-    b.setLuminance(getSingleColor(tags, Tag.LUMINANCE))
-        .setMediaWhitePoint(getSingleColor(tags, Tag.MEDIA_WHITE_POINT));
 
+    // The chromatic adaptation tag has 9 values in an array that must be arranged as a matrix
     double[] adaptation = tags.getTagValue(Tag.CHROMATIC_ADAPTATION);
     if (adaptation != null) {
       if (adaptation.length != 9) {
@@ -161,6 +166,28 @@ public class ProfileReader {
       b.setChromaticAdaptation(new ColorMatrix(3, 3, adaptation));
     }
 
+    // Reorder colorant tables by the colorantOrder tag if it's provided, otherwise order is
+    // implicit. If the order tag is present, it affects the input colorant table for all
+    // profile classes except the device link profile (in which case it affects the output table)
+    List<NamedColor> colorantIn = tags.getTagValue(Tag.COLORANT_TABLE);
+    List<NamedColor> colorantOut = tags.getTagValue(Tag.COLORANT_TABLE_OUT);
+    int[] colorantOrder = tags.getTagValue(Tag.COLORANT_ORDER);
+    if (colorantOrder != null) {
+      if (header.getProfileClass() != ProfileClass.DEVICE_LINK_PROFILE) {
+        // Reorder colorantIn if it's provided
+        if (colorantIn != null) {
+          colorantIn = reorderColorants(colorantIn, colorantOrder);
+        }
+      } else {
+        // Reorder colorantOut if it's provided
+        if (colorantOut != null) {
+          colorantOut = reorderColorants(colorantOut, colorantOrder);
+        }
+      }
+    }
+    b.setColorantInputTable(colorantIn).setColorantOutputTable(colorantOut);
+
+    // Combine sequence descriptions with ids and localized text descriptions
     List<ProfileDescription> sequenceDescriptions = tags.getTagValue(Tag.PROFILE_SEQUENCE_DESC);
     if (sequenceDescriptions != null) {
       // See if text descriptions were also included, which are stored in a separate tag
@@ -189,6 +216,7 @@ public class ProfileReader {
     }
     b.setProfileSequenceDescriptions(sequenceDescriptions);
 
+    // Combine viewing condition and viewing condition descriptions
     ViewingCondition viewCond = tags.getTagValue(Tag.VIEWING_CONDITION);
     if (viewCond != null) {
       LocalizedString desc = tags.getTagValue(Tag.VIEWING_COND_DESC);
@@ -201,7 +229,8 @@ public class ProfileReader {
     b.setViewingCondition(viewCond);
 
     // Handle all rendering intent transformations that are defined for the profile class
-    ColorTransform matrixTRC = constructMatrixTRCTransform(header, tags);
+    b.setDefaultTransform(constructMatrixTRCTransform(header, tags));
+
     switch (header.getProfileClass()) {
     // Input, output, display, and color space profiles have the same transform options, except
     // that output and color have limited matrixTRC support; output can use a gray trc and
@@ -212,24 +241,22 @@ public class ProfileReader {
     case COLOR_SPACE_PROFILE:
     case OUTPUT_DEVICE_PROFILE: {
       // Perceptual intent is DToB0, AToB0, matrix/TRC in precedence order
-      b.setTransform(RenderingIntent.PERCEPTUAL,
-          getTransform(tags, matrixTRC, Tag.D_TO_B0, Tag.A_TO_B0));
+      b.setTransform(RenderingIntent.PERCEPTUAL, getTransform(tags, Tag.D_TO_B0, Tag.A_TO_B0));
       // Don't specify inverse matrix/TRC here so that the inverse defaulting can gracefully use
       // whichever perceptual forward transform was found instead of the matrix inverse
       b.setInverseTransform(RenderingIntent.PERCEPTUAL,
-          getTransform(tags, null, Tag.B_TO_D0, Tag.B_TO_A0));
+          getTransform(tags, Tag.B_TO_D0, Tag.B_TO_A0));
 
       // Media-relative intent is DToB1, AToB1, matrix/TRC in precedence order
       b.setTransform(RenderingIntent.MEDIA_RELATIVE_COLORIMETRIC,
-          getTransform(tags, matrixTRC, Tag.D_TO_B1, Tag.A_TO_B1));
+          getTransform(tags, Tag.D_TO_B1, Tag.A_TO_B1));
       b.setInverseTransform(RenderingIntent.MEDIA_RELATIVE_COLORIMETRIC,
-          getTransform(tags, null, Tag.B_TO_D1, Tag.B_TO_A1));
+          getTransform(tags, Tag.B_TO_D1, Tag.B_TO_A1));
 
       // Saturation intent is DToB2, AToB2, matrix/TRC in precedence order
-      b.setTransform(RenderingIntent.SATURATION,
-          getTransform(tags, matrixTRC, Tag.D_TO_B2, Tag.A_TO_B2));
+      b.setTransform(RenderingIntent.SATURATION, getTransform(tags, Tag.D_TO_B2, Tag.A_TO_B2));
       b.setInverseTransform(RenderingIntent.SATURATION,
-          getTransform(tags, null, Tag.B_TO_D2, Tag.B_TO_A2));
+          getTransform(tags, Tag.B_TO_D2, Tag.B_TO_A2));
 
       // ICC-absolute intent is DToB3, or computed implicitly from media-relative transformation
       b.setTransform(RenderingIntent.ICC_ABSOLUTE_COLORIMETRIC, tags.getTagValue(Tag.D_TO_B3));
@@ -258,9 +285,25 @@ public class ProfileReader {
     return b.build();
   }
 
+  private static List<NamedColor> reorderColorants(List<NamedColor> colorants, int[] colorantOrder) {
+    if (colorants.size() != colorantOrder.length)
+      throw new IllegalStateException(
+          "Colorant order tag length different than colorant table tag length");
+
+    List<NamedColor> reordered = new ArrayList<>();
+    for (int i = 0; i < colorantOrder.length; i++) {
+      if (colorantOrder[i] >= colorants.size()) {
+        throw new IllegalStateException("Colorant order table references bad channel");
+      }
+      reordered.add(colorants.get(colorantOrder[i]));
+    }
+
+    return reordered;
+  }
+
   @SafeVarargs
   private static ColorTransform getTransform(
-      TagTable tags, ColorTransform matrixTRC, Tag.Definition<ColorTransform>... precedence) {
+      TagTable tags, Tag.Definition<ColorTransform>... precedence) {
     ColorTransform t = null;
     for (Tag.Definition<ColorTransform> def : precedence) {
       t = tags.getTagValue(def);
@@ -269,7 +312,7 @@ public class ProfileReader {
       }
     }
 
-    return (t == null ? matrixTRC : t);
+    return t;
   }
 
   private static ColorTransform constructMatrixTRCTransform(Header header, TagTable tags) {
@@ -305,8 +348,9 @@ public class ProfileReader {
       stages.add(new CurveTransform(Collections.singletonList(trcGray)));
       // Scale the gray curve into XYZ space
       GenericColorValue white = getSingleColor(tags, Tag.MEDIA_WHITE_POINT);
-      if (white == null)
+      if (white == null) {
         white = header.getIlluminant();
+      }
 
       stages.add(new LuminanceToXYZTransform(white));
       // Possibly convert from XYZ to LAB

@@ -3,22 +3,34 @@ package com.lhkbob.imaje.color.icc;
 import com.lhkbob.imaje.color.icc.transforms.NormalizeChannelTransform;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  *
  */
 public enum ColorSpace {
-  CIEXYZ("XYZ", 3, 0.0, 1.0 + 32767.0 / 32768.0),
-  CIELAB("Lab", 3, new double[] { 0.0, -128.0, -128.0 }, new double[] { 100.0, 127.0, 127.0 }),
-  CIELUV("Luv", 3, new double[] { 0.0, -128.0, -128.0 }, new double[] { 100.0, 127.0, 127.0 }),
-  YCbCr("YCbr", 3, new double[] { 0.0, -0.5, -0.5 }, new double[] { 1.0, 0.5, 0.5 }),
-  CIEYxy("Yxy", 3, 0.0, 1.0),
-  RGB("RGB", 3, 0.0, 1.0),
-  GRAY("GRAY", 1, 0.0, 1.0),
-  HSV("HSV", 3, new double[] { 0.0, 0.0, 0.0 }, new double[] { 360.0, 1.0, 1.0 }),
-  HLS("HLS", 3, new double[] { 0.0, 0.0, 0.0 }, new double[] { 360.0, 1.0, 1.0 }),
-  CMYK("CMYK", 4, 0.0, 1.0),
-  CMY("CMY", 3, 0.0, 1.0),
+  CIEXYZ("XYZ", 3, 0.0, 1.0 + 32767.0 / 32768.0, "X tristimulus", "Y tristimulus", "Z tristimulus"),
+  CIELAB(
+      "Lab", 3, new double[] { 0.0, -128.0, -128.0 }, new double[] { 100.0, 127.0, 127.0 }, "L*",
+      "a*", "b*"),
+  CIELUV(
+      "Luv", 3, new double[] { 0.0, -128.0, -128.0 }, new double[] { 100.0, 127.0, 127.0 }, "L*",
+      "u*", "v*"),
+  YCbCr(
+      "YCbr", 3, new double[] { 0.0, -0.5, -0.5 }, new double[] { 1.0, 0.5, 0.5 }, "Y (luminance)",
+      "Cb", "Cr"),
+  CIEYxy("Yxy", 3, 0.0, 1.0, "Y (luminance)", "x chromaticity", "y chromaticity"),
+  RGB("RGB", 3, 0.0, 1.0, "Red", "Green", "Blue "),
+  GRAY("GRAY", 1, 0.0, 1.0, "Luminance"),
+  HSV(
+      "HSV", 3, new double[] { 0.0, 0.0, 0.0 }, new double[] { 360.0, 1.0, 1.0 }, "Hue",
+      "Saturation", "Value"),
+  HLS(
+      "HLS", 3, new double[] { 0.0, 0.0, 0.0 }, new double[] { 360.0, 1.0, 1.0 }, "Hue",
+      "Lightness", "Saturation"),
+  CMYK("CMYK", 4, 0.0, 1.0, "Cyan", "Magenta", "Yellow", "Black"),
+  CMY("CMY", 3, 0.0, 1.0, "Cyan", "Magenta", "Yellow"),
   TWO_COLOR("2CLR", 2, 0.0, 1.0),
   THREE_COLOR("3CLR", 3, 0.0, 1.0),
   FOUR_COLOR("4CLR", 4, 0.0, 1.0),
@@ -37,10 +49,17 @@ public enum ColorSpace {
   private final int channelCount;
   private final Signature signature;
   private final NormalizeChannelTransform normalizingFunction;
+  private final List<String> channelNames;
 
-  ColorSpace(String signature, int channelCount, double min, double max) {
+  ColorSpace(String signature, int channelCount, double min, double max, String... channelNames) {
+    if (channelNames.length > 0 && channelNames.length != channelCount) {
+      throw new RuntimeException("CRITICAL: incorrect number of channel names");
+    }
+
     this.signature = Signature.fromName(signature);
     this.channelCount = channelCount;
+    this.channelNames = Collections.unmodifiableList(Arrays.asList(channelNames));
+
     double[] mins = new double[channelCount];
     double[] maxs = new double[channelCount];
     Arrays.fill(mins, min);
@@ -48,10 +67,16 @@ public enum ColorSpace {
     normalizingFunction = new NormalizeChannelTransform(mins, maxs);
   }
 
-  ColorSpace(String signature, int channelCount, double[] mins, double[] maxs) {
+  ColorSpace(
+      String signature, int channelCount, double[] mins, double[] maxs, String... channelNames) {
     if (mins.length != channelCount || maxs.length != channelCount) {
       throw new RuntimeException("CRITICAL: bad min/max array lengths");
     }
+    if (channelNames.length > 0 && channelNames.length != channelCount) {
+      throw new RuntimeException("CRITICAL: incorrect number of channel names");
+    }
+
+    this.channelNames = Collections.unmodifiableList(Arrays.asList(channelNames));
 
     this.signature = Signature.fromName(signature);
     this.channelCount = channelCount;
@@ -66,6 +91,22 @@ public enum ColorSpace {
     }
 
     throw new IllegalArgumentException("Unknown signature: " + s);
+  }
+
+  public String getChannelName(int channel) {
+    if (channelNames.isEmpty()) {
+      return "";
+    } else {
+      return channelNames.get(channel);
+    }
+  }
+
+  public List<String> getChannelNames() {
+    return channelNames;
+  }
+
+  public boolean hasChannelNames() {
+    return !channelNames.isEmpty();
   }
 
   public NormalizeChannelTransform getNormalizingFunction() {
