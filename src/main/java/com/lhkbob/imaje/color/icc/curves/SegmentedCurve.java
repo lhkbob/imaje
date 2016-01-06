@@ -10,6 +10,7 @@ import java.util.List;
 public class SegmentedCurve implements Curve {
   private final double[] segmentBreakpoints;
   private final List<Curve> segments;
+
   public SegmentedCurve(List<Curve> segments) {
     if (segments.isEmpty()) {
       throw new IllegalArgumentException("Must provide at least one curve segment");
@@ -88,7 +89,73 @@ public class SegmentedCurve implements Curve {
 
   @Override
   public Curve inverted() {
-    throw new UnsupportedOperationException("NOT IMPLEMENTED");
+    // the constructor verified that the domain is a continuous interval, but the function
+    // segments themselves could have discontinuous values (if so then it can't be inverted)
+    List<Curve> inverseSegments = new ArrayList<>();
+
+    Curve invSeg = segments.get(0).inverted();
+    if (invSeg == null) {
+      // segment can't be inverted so entire inverse is undefined
+      return null;
+    } else {
+      inverseSegments.add(invSeg);
+    }
+    int monotonicity = 0;
+
+    for (int i = 1; i < segments.size(); i++) {
+      Curve left = segments.get(i - 1);
+      Curve right = segments.get(i);
+
+      // Using the curves reported min/max values avoids numerical imprecision issues that cause
+      // unintended disconnects in the domain
+      double ly = left.evaluate(left.getDomainMax());
+      double ry = right.evaluate(right.getDomainMin());
+      if (Math.abs(ly - ry) > EPS) {
+        // discontinuous
+        return null;
+      }
+
+      // The left curve has already been inverted and added to inverseSegments, so try and invert
+      // the right curve and make sure it doesn't overlap with the previous inverted segments
+      invSeg = right.inverted();
+      if (invSeg == null) {
+        return null;
+      }
+
+      if (monotonicity == 0) {
+        // haven't determined how to order the inverted segments
+        if (Math.abs(inverseSegments.get(0).getDomainMax() - invSeg.getDomainMin()) < EPS) {
+          // positively ordered, so new inverse segment goes to the right
+          monotonicity = 1;
+          inverseSegments.add(invSeg);
+        } else if (Math.abs(inverseSegments.get(0).getDomainMin() - invSeg.getDomainMin()) < EPS) {
+          // negatively ordered, so new inverse segment goes to the left
+          monotonicity = -1;
+          inverseSegments.add(0, invSeg);
+        } else {
+          // Somehow doesn't line up like expected so can't invert
+          return null;
+        }
+      } else if (monotonicity > 0) {
+        // expect the last segment's max to equal this new segment's min
+        if (Math.abs(
+            inverseSegments.get(inverseSegments.size() - 1).getDomainMax() - invSeg.getDomainMin())
+            < EPS) {
+          inverseSegments.add(invSeg);
+        } else {
+          return null;
+        }
+      } else {
+        // expect the first segment's min to equal this new segment's max
+        if (Math.abs(inverseSegments.get(0).getDomainMin() - invSeg.getDomainMax()) < EPS) {
+          inverseSegments.add(0, invSeg);
+        } else {
+          return null;
+        }
+      }
+    }
+
+    return new SegmentedCurve(inverseSegments);
   }
 
   @Override
@@ -104,5 +171,6 @@ public class SegmentedCurve implements Curve {
     }
     return sb.toString();
   }
+
   private static final double EPS = 1e-8;
 }

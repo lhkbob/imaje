@@ -68,7 +68,33 @@ public class UniformlySampledCurve implements Curve {
 
   @Override
   public Curve inverted() {
-    throw new UnsupportedOperationException("NOT IMPLEMENTED");
+    int monotonicity = SampledCurve.calculateStrictMonotonicity(values);
+    if (monotonicity == 0) {
+      // not invertible
+      return null;
+    } else if (monotonicity > 0) {
+      // positively monotonic, so generate a synthetic x axis array before swapping xs and ys
+      // and returning a sampled curve (which will properly interpolate between the non-uniform
+      // values distribution in this class)
+      return new SampledCurve(values, generateXAxis(false), true);
+    } else {
+      // negatively monotonic, so generate x axis, reverse both arrays and then swap xs and ys
+      double[] reversedXs = generateXAxis(true);
+      double[] reversedYs = new double[values.length];
+      for (int i = 0; i < values.length; i++) {
+        reversedYs[values.length - i - 1] = values[i];
+      }
+      return new SampledCurve(reversedYs, reversedXs, true);
+    }
+  }
+
+  private double[] generateXAxis(boolean reverse) {
+    double[] xs = new double[values.length];
+    for (int i = 0; i < xs.length; i++) {
+      double a = (reverse ? xs.length - i - 1 : i) / (xs.length - 1.0);
+      xs[i] = a * (domainMax - domainMin) + domainMin;
+    }
+    return xs;
   }
 
   @Override
