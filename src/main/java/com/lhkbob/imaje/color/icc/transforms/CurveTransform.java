@@ -25,6 +25,10 @@ public class CurveTransform implements ColorTransform {
     return curves.size();
   }
 
+  public Curve getCurve(int channel) {
+    return curves.get(channel);
+  }
+
   @Override
   public CurveTransform inverted() {
     List<Curve> inverted = new ArrayList<>();
