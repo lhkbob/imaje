@@ -133,7 +133,7 @@ public class ColorMatrix implements ColorTransform {
     for (int i = 0; i < numRows; i++) {
       int offset = i * numColumns;
       output[i] = translation[i];
-      for (int j = 0; j < numColumns; i++) {
+      for (int j = 0; j < numColumns; j++) {
         output[i] += matrix[offset + j] * input[j];
       }
     }

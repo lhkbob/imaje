@@ -47,7 +47,7 @@ public class SequentialTransform implements ColorTransform {
   @Override
   public SequentialTransform inverted() {
     List<ColorTransform> inv = new ArrayList<>(transforms.size());
-    for (int i = transforms.size() - 1; i >= 0; i++) {
+    for (int i = transforms.size() - 1; i >= 0; i--) {
       ColorTransform invE = transforms.get(i).inverted();
       if (invE == null) {
         return null;
