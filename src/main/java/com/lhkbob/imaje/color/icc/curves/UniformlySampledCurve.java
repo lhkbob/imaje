@@ -46,7 +46,7 @@ public class UniformlySampledCurve implements Curve {
       // If we're exactly at the end of the array, no need to interpolation
       return values[idx];
     } else {
-      double alpha = normalized - idx * (values.length - 1);
+      double alpha = normalized - idx;
       return alpha * values[idx + 1] + (1.0 - alpha) * values[idx];
     }
   }
