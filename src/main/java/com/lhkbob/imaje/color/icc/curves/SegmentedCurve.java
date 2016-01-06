@@ -47,8 +47,8 @@ public class SegmentedCurve implements Curve {
       // Highly unlikely, but the input is exactly on the boundary of the curve
       return segments.get(idx).evaluate(x);
     } else {
-      // idx = -(insert - 1) -> insert = -idx + 1
-      int insert = -idx + 1;
+      // idx = -insert - 1 -> insert = -(idx + 1)
+      int insert = -(idx + 1);
       // insert represents the first breakpoint > x, but the breakpoints were set to the
       // corresponding segment's domain min. Thus, we really want to evaluate insert - 1.
       // If insert - 1 < 0, x is less than the leftmost minimum. If insert - 1 == length - 1

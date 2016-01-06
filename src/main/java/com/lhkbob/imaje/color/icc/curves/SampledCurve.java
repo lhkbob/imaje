@@ -52,8 +52,8 @@ public class SampledCurve implements Curve {
       // Highly unlikely, but the input is exactly at a sample point
       return ys[idx];
     } else {
-      // idx = -(insert - 1) -> insert = -idx + 1
-      int insert = -idx + 1;
+      // idx = -insert - 1 -> insert = -(idx + 1)
+      int insert = -(idx + 1);
       // insert represents the first sample > x so we interpolate between
       // (insert - 1) and insert. But if insert == 0 or insert == sample count
       // then x is outside of the domain of the function.
