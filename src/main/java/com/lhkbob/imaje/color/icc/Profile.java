@@ -230,7 +230,7 @@ public final class Profile {
       if (transform != null) {
         inverseTransforms.put(intent, transform);
       } else {
-        transforms.remove(intent);
+        inverseTransforms.remove(intent);
       }
       return this;
     }

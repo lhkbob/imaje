@@ -46,8 +46,8 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt32Number
  */
 public class ProfileReader {
   public static void main(String[] args) throws IOException {
-//    Path path = Paths.get("/Users/mludwig/Desktop/C/ICCLib_V2.16/lab2lab.icm");
-    Path path = Paths.get("/Users/mludwig/Desktop/color-profiles/sRGB Profile.icc");
+    Path path = Paths.get("/Users/mludwig/Desktop/C/ICCLib_V2.16/lab2lab.icm");
+//    Path path = Paths.get("/Users/mludwig/Desktop/color-profiles/sRGB Profile.icc");
     Profile p = readProfile(path);
     System.out.println(p.getDescription());
     System.out.println(p.getVersion());
@@ -59,6 +59,8 @@ public class ProfileReader {
     System.out.println(p.getPreferredCMMType());
     System.out.println(p.getRenderingIntent());
     System.out.println(p.getMediaWhitePoint());
+    System.out.println(p.getAToBTransform(RenderingIntent.PERCEPTUAL));
+    System.out.println(p.getBToATransform(RenderingIntent.PERCEPTUAL));
   }
 
   public static Profile readProfile(File file) throws IOException {
@@ -272,9 +274,9 @@ public class ProfileReader {
       // The device link profile's intent is determined by the header's rendering intent;
       // Abstract profiles have no well-defined intent so just use the headers.
       b.setTransform(header.getRenderingIntent(),
-          getTransform(tags, null, Tag.D_TO_B0, Tag.A_TO_B0));
+          getTransform(tags, Tag.D_TO_B0, Tag.A_TO_B0));
       b.setInverseTransform(header.getRenderingIntent(),
-          getTransform(tags, null, Tag.B_TO_D0, Tag.B_TO_A0));
+          getTransform(tags, Tag.B_TO_D0, Tag.B_TO_A0));
       break;
     case NAMED_COLOR_PROFILE:
       // Named color profiles have no transformations available, the mapping is
@@ -304,15 +306,14 @@ public class ProfileReader {
   @SafeVarargs
   private static ColorTransform getTransform(
       TagTable tags, Tag.Definition<ColorTransform>... precedence) {
-    ColorTransform t = null;
     for (Tag.Definition<ColorTransform> def : precedence) {
-      t = tags.getTagValue(def);
+      ColorTransform t = tags.getTagValue(def);
       if (t != null) {
-        break;
+        return t;
       }
     }
 
-    return t;
+    return null;
   }
 
   private static ColorTransform constructMatrixTRCTransform(Header header, TagTable tags) {
