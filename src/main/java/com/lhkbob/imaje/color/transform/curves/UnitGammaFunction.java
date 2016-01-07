@@ -13,7 +13,7 @@ package com.lhkbob.imaje.color.transform.curves;
  *
  * and the new threshold between the two is y(d)
  */
-public class UnitGammaCurve implements Curve {
+public class UnitGammaFunction implements Curve {
   private final double gamma;
   private final double linearThreshold;
   private final double linearXScalar;
@@ -21,7 +21,7 @@ public class UnitGammaCurve implements Curve {
   private final double powerXOffset;
   private final double powerXScalar;
   private final double powerYOffset;
-  public UnitGammaCurve(
+  public UnitGammaFunction(
       double gamma, double powerXScalar, double powerXOffset, double powerYOffset,
       double linearXScalar, double linearYOffset, double linearThreshold) {
     this.gamma = gamma;
@@ -34,29 +34,29 @@ public class UnitGammaCurve implements Curve {
   }
 
   // FIXME fix naming of these to not rely on underscores for clarity
-  public static UnitGammaCurve newCIE122_1996Curve(double gamma, double a, double b) {
-    return new UnitGammaCurve(gamma, a, b, 0.0, 0.0, 0.0, -b / a);
+  public static UnitGammaFunction newCIE122_1996Curve(double gamma, double a, double b) {
+    return new UnitGammaFunction(gamma, a, b, 0.0, 0.0, 0.0, -b / a);
   }
 
-  public static UnitGammaCurve newIEC61966_2_1Curve(
+  public static UnitGammaFunction newIEC61966_2_1Curve(
       double gamma, double a, double b, double c, double d) {
-    return new UnitGammaCurve(gamma, a, b, 0.0, c, 0.0, d);
+    return new UnitGammaFunction(gamma, a, b, 0.0, c, 0.0, d);
   }
 
-  public static UnitGammaCurve newIEC61966_3Curve(double gamma, double a, double b, double c) {
-    return new UnitGammaCurve(gamma, a, b, c, 0.0, c, -b / a);
+  public static UnitGammaFunction newIEC61966_3Curve(double gamma, double a, double b, double c) {
+    return new UnitGammaFunction(gamma, a, b, c, 0.0, c, -b / a);
   }
 
-  public static UnitGammaCurve newSimpleCurve(double gamma) {
-    return new UnitGammaCurve(gamma, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+  public static UnitGammaFunction newSimpleCurve(double gamma) {
+    return new UnitGammaFunction(gamma, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
   }
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof UnitGammaCurve)) {
+    if (!(o instanceof UnitGammaFunction)) {
       return false;
     }
-    UnitGammaCurve c = (UnitGammaCurve) o;
+    UnitGammaFunction c = (UnitGammaFunction) o;
     return Double.compare(c.gamma, gamma) == 0 && Double.compare(c.powerXScalar, powerXScalar) == 0
         && Double.compare(c.powerXOffset, powerXOffset) == 0
         && Double.compare(c.powerYOffset, powerYOffset) == 0
@@ -115,7 +115,7 @@ public class UnitGammaCurve implements Curve {
 
     if (Double.compare(linearThreshold, 0.0) == 0) {
       // No linear threshold to worry about
-      return new UnitGammaCurve(
+      return new UnitGammaFunction(
           invG, invPowerXScalar, invPowerXOffset, invPowerYOffset, 0.0, 0.0, 0.0);
     } else {
       // Things are invertible if the linear portion has a positive slop and connects to the
@@ -132,7 +132,7 @@ public class UnitGammaCurve implements Curve {
 
       // Same inverse of the gamma curve as above, plus an inverted linear term
       // - the new threshold is the y coordinate of this function's linear threshold
-      return new UnitGammaCurve(invG, invPowerXScalar, invPowerXOffset, invPowerYOffset,
+      return new UnitGammaFunction(invG, invPowerXScalar, invPowerXOffset, invPowerYOffset,
           1.0 / linearXScalar, -linearYOffset / linearXScalar,
           linearXScalar * linearThreshold + linearYOffset);
     }

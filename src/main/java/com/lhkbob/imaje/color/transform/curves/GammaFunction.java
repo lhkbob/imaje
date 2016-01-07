@@ -3,12 +3,12 @@ package com.lhkbob.imaje.color.transform.curves;
 /**
  *
  */
-public final class GammaCurve implements Curve {
+public final class GammaFunction implements Curve {
   private final double gamma;
   private final double xOffset;
   private final double xScalar;
   private final double yOffset;
-  public GammaCurve(
+  public GammaFunction(
       double gamma, double xScalar, double xOffset, double yOffset) {
     this.gamma = gamma;
     this.xScalar = xScalar;
@@ -18,10 +18,10 @@ public final class GammaCurve implements Curve {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof GammaCurve)) {
+    if (!(o instanceof GammaFunction)) {
       return false;
     }
-    GammaCurve c = (GammaCurve) o;
+    GammaFunction c = (GammaFunction) o;
     return Double.compare(c.gamma, gamma) == 0 && Double.compare(c.xScalar, xScalar) == 0
         && Double.compare(c.xOffset, xOffset) == 0 && Double.compare(c.yOffset, yOffset) == 0;
   }
@@ -63,7 +63,7 @@ public final class GammaCurve implements Curve {
     double invPowerXOffset = -invPowerXScalar * yOffset;
     double invPowerYOffset = -xOffset / xScalar;
 
-    return new GammaCurve(invG, invPowerXScalar, invPowerXOffset, invPowerYOffset);
+    return new GammaFunction(invG, invPowerXScalar, invPowerXOffset, invPowerYOffset);
   }
 
   @Override

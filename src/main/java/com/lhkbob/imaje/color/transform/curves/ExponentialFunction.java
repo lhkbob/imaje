@@ -3,15 +3,15 @@ package com.lhkbob.imaje.color.transform.curves;
 /**
  *
  */
-public class LogGammaCurve implements Curve {
-  private final double gamma;
+public final class ExponentialFunction implements Curve {
+  private final double base;
   private final double xOffset;
   private final double xScalar;
   private final double yOffset;
   private final double yScalar;
-  public LogGammaCurve(
-      double gamma, double xScalar, double xOffset, double yScalar, double yOffset) {
-    this.gamma = gamma;
+  public ExponentialFunction(
+      double base, double xScalar, double xOffset, double yScalar, double yOffset) {
+    this.base = base;
     this.xScalar = xScalar;
     this.xOffset = xOffset;
     this.yScalar = yScalar;
@@ -20,18 +20,19 @@ public class LogGammaCurve implements Curve {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof LogGammaCurve)) {
+    if (!(o instanceof ExponentialFunction)) {
       return false;
     }
-    LogGammaCurve c = (LogGammaCurve) o;
-    return Double.compare(c.gamma, gamma) == 0 && Double.compare(c.xScalar, xScalar) == 0
+
+    ExponentialFunction c = (ExponentialFunction) o;
+    return Double.compare(c.base, base) == 0 && Double.compare(c.xScalar, xScalar) == 0
         && Double.compare(c.xOffset, xOffset) == 0 && Double.compare(c.yScalar, yScalar) == 0
         && Double.compare(c.yOffset, yOffset) == 0;
   }
 
   @Override
   public double evaluate(double x) {
-    return yScalar * Math.log10(xScalar * Math.pow(x, gamma) + xOffset) + yOffset;
+    return yScalar * Math.pow(base, xScalar * x + xOffset) + yOffset;
   }
 
   @Override
@@ -47,7 +48,7 @@ public class LogGammaCurve implements Curve {
   @Override
   public int hashCode() {
     int result = 17;
-    result = 31 * result + Double.hashCode(gamma);
+    result = 31 * result + Double.hashCode(base);
     result = 31 * result + Double.hashCode(xScalar);
     result = 31 * result + Double.hashCode(xOffset);
     result = 31 * result + Double.hashCode(yScalar);
@@ -58,44 +59,33 @@ public class LogGammaCurve implements Curve {
   @Override
   public Curve inverted() {
     // Make sure we're not dividing by values that trivialize this function
-    if (Math.abs(gamma) < EPS || Math.abs(xScalar) < EPS || Math.abs(yScalar) < EPS) {
+    if (Math.abs(yScalar) < EPS || Math.abs(xScalar) < EPS || base <= 0.0) {
       return null;
     }
+    double invXScalar = 1.0 / yScalar;
+    double invXOffset = -yOffset / yScalar;
+    double invYScalar = 1.0 / (xScalar * Math.log10(base));
+    double invYOffset = -xOffset / xScalar;
 
-    if (Double.compare(gamma, 1.0) == 0) {
-      // Can be represented as just an exponential curve object
-      return new ExponentialCurve(
-          10.0, 1.0 / yScalar, -yOffset / yScalar, 1.0 / xScalar, -xOffset / xScalar);
-    } else if (Double.compare(xOffset, 0.0) == 0) {
-      // Can also be an exponential curve
-      return new ExponentialCurve(10.0, 1.0 / (yScalar * gamma), -yOffset / (yScalar * gamma),
-          1.0 / Math.pow(xScalar, 1.0 / gamma), 0.0);
-    } else {
-      // Must compose an exponential curve with a gamma curve
-      Curve exp = new ExponentialCurve(
-          10.0, 1.0 / yScalar, -yOffset / yScalar, 1.0 / xScalar, -xOffset / xScalar);
-      Curve gam = new GammaCurve(1.0 / gamma, 1.0, 0.0, 0.0);
-      return new ComposedCurve(gam, exp);
-    }
+    return new LogGammaFunction(1.0, invXScalar, invXOffset, invYScalar, invYOffset);
   }
 
   @Override
   public String toString() {
-    String base = String.format("x^%.3f", gamma);
+    String power = "x";
     if (Double.compare(xScalar, 1.0) != 0) {
-      base = String.format("%.3f * %s", xScalar, base);
+      power = String.format("%.3f * %s", xScalar, power);
     }
     if (Double.compare(xOffset, 0.0) != 0) {
-      base = String.format("%s + %.3f", base, xOffset);
+      power = String.format("%s + %.3f", power, xOffset);
     }
-    String func = "log_10(" + base + ")";
+    String func = String.format("%.3f^(%s)", base, power);
     if (Double.compare(yScalar, 1.0) != 0) {
       func = String.format("%.3f * %s", yScalar, func);
     }
     if (Double.compare(yOffset, 0.0) != 0) {
       func = String.format("%s + %.3f", func, yOffset);
     }
-
     return "y(x) = " + func;
   }
   private static final double EPS = 1e-8;

@@ -7,11 +7,11 @@ import java.util.List;
 /**
  *
  */
-public class SegmentedCurve implements Curve {
+public class PiecewiseCurve implements Curve {
   private final double[] segmentBreakpoints;
   private final List<Curve> segments;
 
-  public SegmentedCurve(List<Curve> segments) {
+  public PiecewiseCurve(List<Curve> segments) {
     if (segments.isEmpty()) {
       throw new IllegalArgumentException("Must provide at least one curve segment");
     }
@@ -33,10 +33,10 @@ public class SegmentedCurve implements Curve {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof SegmentedCurve)) {
+    if (!(o instanceof PiecewiseCurve)) {
       return false;
     }
-    SegmentedCurve c = (SegmentedCurve) o;
+    PiecewiseCurve c = (PiecewiseCurve) o;
     return c.segments.equals(segments);
   }
 
@@ -155,7 +155,7 @@ public class SegmentedCurve implements Curve {
       }
     }
 
-    return new SegmentedCurve(inverseSegments);
+    return new PiecewiseCurve(inverseSegments);
   }
 
   @Override
