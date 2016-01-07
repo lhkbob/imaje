@@ -3,9 +3,9 @@ package com.lhkbob.imaje.color.icc.reader;
 import com.lhkbob.imaje.color.icc.Signature;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.color.transform.curves.DomainWindow;
-import com.lhkbob.imaje.color.transform.curves.LinearCurve;
+import com.lhkbob.imaje.color.transform.curves.LinearFunction;
 import com.lhkbob.imaje.color.transform.curves.UniformlySampledCurve;
-import com.lhkbob.imaje.color.transform.curves.UnitGammaCurve;
+import com.lhkbob.imaje.color.transform.curves.UnitGammaFunction;
 
 import java.nio.ByteBuffer;
 
@@ -29,11 +29,11 @@ public class CurveTypeParser implements TagParser<Curve> {
     int tableLength = Math.toIntExact(nextUInt32Number(data));
     if (tableLength == 0) {
       // Identity response, but limited to a 0-1 range
-      return new DomainWindow(new LinearCurve(1.0, 0.0), 0.0, 1.0);
+      return new DomainWindow(new LinearFunction(1.0, 0.0), 0.0, 1.0);
     } else if (tableLength == 1) {
       // Next two bytes are a u8f8 representing a gamma exponent
       double gamma = nextU8Fixed8Number(data);
-      return UnitGammaCurve.newSimpleCurve(gamma);
+      return UnitGammaFunction.newSimpleCurve(gamma);
     } else {
       // It's a table of normalized uint16's
       double[] table = new double[tableLength];

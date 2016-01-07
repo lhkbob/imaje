@@ -8,10 +8,10 @@ import com.lhkbob.imaje.color.transform.general.Composition;
 import com.lhkbob.imaje.color.icc.Signature;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.color.transform.curves.DomainWindow;
-import com.lhkbob.imaje.color.transform.curves.ExponentialCurve;
-import com.lhkbob.imaje.color.transform.curves.GammaCurve;
-import com.lhkbob.imaje.color.transform.curves.LogGammaCurve;
-import com.lhkbob.imaje.color.transform.curves.SegmentedCurve;
+import com.lhkbob.imaje.color.transform.curves.ExponentialFunction;
+import com.lhkbob.imaje.color.transform.curves.GammaFunction;
+import com.lhkbob.imaje.color.transform.curves.LogGammaFunction;
+import com.lhkbob.imaje.color.transform.curves.PiecewiseCurve;
 import com.lhkbob.imaje.color.transform.curves.UniformlySampledCurve;
 
 import java.nio.ByteBuffer;
@@ -184,7 +184,7 @@ public class MultiProcessElementsTypeParser implements TagParser<Transform> {
         }
       }
 
-      return new SegmentedCurve(segments);
+      return new PiecewiseCurve(segments);
     }
   }
 
@@ -242,17 +242,17 @@ public class MultiProcessElementsTypeParser implements TagParser<Transform> {
     switch (functionType) {
     case 0: {
       double[] p = readFormulaParameters(data, 4);
-      c = new GammaCurve(p[0], p[1], p[2], p[3]);
+      c = new GammaFunction(p[0], p[1], p[2], p[3]);
       break;
     }
     case 1: {
       double[] p = readFormulaParameters(data, 5);
-      c = new LogGammaCurve(p[0], p[2], p[3], p[1], p[4]);
+      c = new LogGammaFunction(p[0], p[2], p[3], p[1], p[4]);
       break;
     }
     case 2: {
       double[] p = readFormulaParameters(data, 5);
-      c = new ExponentialCurve(p[1], p[2], p[3], p[0], p[4]);
+      c = new ExponentialFunction(p[1], p[2], p[3], p[0], p[4]);
       break;
     }
     default:

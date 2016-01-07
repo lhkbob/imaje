@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.color.icc.reader;
 
+import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.icc.ColorSpace;
 import com.lhkbob.imaje.color.icc.ColorimetricIntent;
 import com.lhkbob.imaje.color.icc.DeviceTechnology;
@@ -329,10 +330,11 @@ public class ProfileReader {
         white = header.getIlluminant();
       }
 
-      stages.add(new LuminanceToXYZ(white));
+      XYZ whiteXYZ = new XYZ(white.getChannel(0), white.getChannel(1), white.getChannel(2));
+      stages.add(new LuminanceToXYZ(whiteXYZ));
       // Possibly convert from XYZ to LAB
       if (header.getBSideColorSpace() == ColorSpace.CIELAB) {
-        stages.add(new XYZToLab(white));
+        stages.add(new XYZToLab(whiteXYZ));
       }
       return new Composition(stages);
     }

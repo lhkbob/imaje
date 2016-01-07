@@ -2,7 +2,7 @@ package com.lhkbob.imaje.color.icc.reader;
 
 import com.lhkbob.imaje.color.icc.Signature;
 import com.lhkbob.imaje.color.transform.curves.Curve;
-import com.lhkbob.imaje.color.transform.curves.UnitGammaCurve;
+import com.lhkbob.imaje.color.transform.curves.UnitGammaFunction;
 
 import java.nio.ByteBuffer;
 
@@ -29,20 +29,20 @@ public class ParametricCurveTypeParser implements TagParser<Curve> {
     switch (functionType) {
     case 0: {
       double gamma = nextS15Fixed16Number(data);
-      return UnitGammaCurve.newSimpleCurve(gamma);
+      return UnitGammaFunction.newSimpleCurve(gamma);
     }
     case 1: {
       double gamma = nextS15Fixed16Number(data);
       double a = nextS15Fixed16Number(data);
       double b = nextS15Fixed16Number(data);
-      return UnitGammaCurve.newCIE122_1996Curve(gamma, a, b);
+      return UnitGammaFunction.newCIE122_1996Curve(gamma, a, b);
     }
     case 2: {
       double gamma = nextS15Fixed16Number(data);
       double a = nextS15Fixed16Number(data);
       double b = nextS15Fixed16Number(data);
       double c = nextS15Fixed16Number(data);
-      return UnitGammaCurve.newIEC61966_3Curve(gamma, a, b, c);
+      return UnitGammaFunction.newIEC61966_3Curve(gamma, a, b, c);
     }
     case 3: {
       double gamma = nextS15Fixed16Number(data);
@@ -50,7 +50,7 @@ public class ParametricCurveTypeParser implements TagParser<Curve> {
       double b = nextS15Fixed16Number(data);
       double c = nextS15Fixed16Number(data);
       double d = nextS15Fixed16Number(data);
-      return UnitGammaCurve.newIEC61966_2_1Curve(gamma, a, b, c, d);
+      return UnitGammaFunction.newIEC61966_2_1Curve(gamma, a, b, c, d);
     }
     case 4: {
       double gamma = nextS15Fixed16Number(data);
@@ -60,7 +60,7 @@ public class ParametricCurveTypeParser implements TagParser<Curve> {
       double d = nextS15Fixed16Number(data);
       double e = nextS15Fixed16Number(data);
       double f = nextS15Fixed16Number(data);
-      return new UnitGammaCurve(gamma, a, b, c, e, f, d);
+      return new UnitGammaFunction(gamma, a, b, c, e, f, d);
     }
     default:
       throw new IllegalStateException("Unknown parametric curve type: " + functionType);
