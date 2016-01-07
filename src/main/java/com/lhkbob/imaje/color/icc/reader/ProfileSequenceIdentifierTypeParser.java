@@ -16,7 +16,7 @@ import static com.lhkbob.imaje.color.icc.reader.ProfileSequenceDescriptionTypePa
 /**
  *
  */
-public class ProfileSequenceIdentifierTypeParser implements TagParser<LinkedHashMap<ProfileID, LocalizedString>> {
+public final class ProfileSequenceIdentifierTypeParser implements TagParser<LinkedHashMap<ProfileID, LocalizedString>> {
   public static final Signature SIGNATURE = Signature.fromName("psid");
 
   @Override

@@ -11,7 +11,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt16Number
 /**
  *
  */
-public class ChromaticityTypeParser implements TagParser<Colorant> {
+public final class ChromaticityTypeParser implements TagParser<Colorant> {
   public static final Signature SIGNATURE = Signature.fromName("chrm");
 
   @Override

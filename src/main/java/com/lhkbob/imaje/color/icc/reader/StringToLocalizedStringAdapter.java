@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  *
  */
-public class StringToLocalizedStringAdapter implements TagParser<LocalizedString> {
+public final class StringToLocalizedStringAdapter implements TagParser<LocalizedString> {
   private final TagParser<String> parser;
 
   public StringToLocalizedStringAdapter(TagParser<String> parser) {

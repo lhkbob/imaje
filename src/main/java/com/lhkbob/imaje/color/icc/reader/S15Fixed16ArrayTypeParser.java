@@ -9,7 +9,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextS15Fixed16Nu
 /**
  *
  */
-public class S15Fixed16ArrayTypeParser implements TagParser<double[]> {
+public final class S15Fixed16ArrayTypeParser implements TagParser<double[]> {
   public static final Signature SIGNATURE = Signature.fromName("sf32");
 
   @Override

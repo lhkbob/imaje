@@ -26,7 +26,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skipToBoundary;
 /**
  *
  */
-public class LUTTypeParser implements TagParser<Transform> {
+public final class LUTTypeParser implements TagParser<Transform> {
   public static final Signature A_TO_B_SIGNATURE = Signature.fromName("mAB");
   public static final Signature B_TO_A_SIGNATURE = Signature.fromName("mBA");
   private final boolean reverse;

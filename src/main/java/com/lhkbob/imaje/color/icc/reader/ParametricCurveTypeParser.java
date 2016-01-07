@@ -13,7 +13,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skip;
 /**
  *
  */
-public class ParametricCurveTypeParser implements TagParser<Curve> {
+public final class ParametricCurveTypeParser implements TagParser<Curve> {
   public static final Signature SIGNATURE = Signature.fromName("para");
 
   @Override

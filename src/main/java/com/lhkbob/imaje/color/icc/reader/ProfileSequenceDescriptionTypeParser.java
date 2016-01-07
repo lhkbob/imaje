@@ -19,7 +19,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skip;
 /**
  *
  */
-public class ProfileSequenceDescriptionTypeParser implements TagParser<List<ProfileDescription>> {
+public final class ProfileSequenceDescriptionTypeParser implements TagParser<List<ProfileDescription>> {
   public static final Signature SIGNATURE = Signature.fromName("pseq");
 
   @Override

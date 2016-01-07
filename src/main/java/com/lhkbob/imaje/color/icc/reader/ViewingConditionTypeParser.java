@@ -14,8 +14,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextXYZNumber;
 /**
  *
  */
-public class ViewingConditionTypeParser implements TagParser<ViewingCondition> {
-  public static final long HEX_ENCODED_SIGNATURE = 0x76686577L;
+public final class ViewingConditionTypeParser implements TagParser<ViewingCondition> {
   public static final Signature SIGNATURE = Signature.fromName("view");
 
   @Override

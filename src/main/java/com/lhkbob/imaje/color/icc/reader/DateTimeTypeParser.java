@@ -10,7 +10,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextDateTimeNumb
 /**
  *
  */
-public class DateTimeTypeParser implements TagParser<ZonedDateTime> {
+public final class DateTimeTypeParser implements TagParser<ZonedDateTime> {
   public static final Signature SIGNATURE = Signature.fromName("dtim");
 
   @Override

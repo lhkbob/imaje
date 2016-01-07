@@ -13,7 +13,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextXYZNumber;
 /**
  *
  */
-public class XYZTypeParser implements TagParser<List<GenericColorValue>> {
+public final class XYZTypeParser implements TagParser<List<GenericColorValue>> {
   public static final Signature SIGNATURE = Signature.fromName("XYZ");
 
   @Override

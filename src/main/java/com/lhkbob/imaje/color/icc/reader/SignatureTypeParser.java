@@ -9,7 +9,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextSignature;
 /**
  *
  */
-public class SignatureTypeParser implements TagParser<Signature> {
+public final class SignatureTypeParser implements TagParser<Signature> {
   public static final Signature SIGNATURE = Signature.fromName("sig");
 
   @Override

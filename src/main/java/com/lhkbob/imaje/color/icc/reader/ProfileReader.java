@@ -16,11 +16,11 @@ import com.lhkbob.imaje.color.icc.RenderingIntentGamut;
 import com.lhkbob.imaje.color.icc.Signature;
 import com.lhkbob.imaje.color.icc.ViewingCondition;
 import com.lhkbob.imaje.color.transform.curves.Curve;
-import com.lhkbob.imaje.color.transform.general.Matrix;
-import com.lhkbob.imaje.color.transform.general.Transform;
+import com.lhkbob.imaje.color.transform.general.Composition;
 import com.lhkbob.imaje.color.transform.general.Curves;
 import com.lhkbob.imaje.color.transform.general.LuminanceToXYZ;
-import com.lhkbob.imaje.color.transform.general.Composition;
+import com.lhkbob.imaje.color.transform.general.Matrix;
+import com.lhkbob.imaje.color.transform.general.Transform;
 import com.lhkbob.imaje.color.transform.general.XYZToLab;
 
 import java.io.BufferedInputStream;
@@ -43,7 +43,9 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt32Number
 /**
  *
  */
-public class ProfileReader {
+public final class ProfileReader {
+  private ProfileReader() {}
+
   public static Profile readProfile(Path path) throws IOException {
     try (
         FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
@@ -250,8 +252,7 @@ public class ProfileReader {
     case ABSTRACT_PROFILE:
       // The device link profile's intent is determined by the header's rendering intent;
       // Abstract profiles have no well-defined intent so just use the headers.
-      b.setTransform(header.getRenderingIntent(),
-          getTransform(tags, Tag.D_TO_B0, Tag.A_TO_B0));
+      b.setTransform(header.getRenderingIntent(), getTransform(tags, Tag.D_TO_B0, Tag.A_TO_B0));
       b.setInverseTransform(header.getRenderingIntent(),
           getTransform(tags, Tag.B_TO_D0, Tag.B_TO_A0));
       break;
@@ -264,10 +265,12 @@ public class ProfileReader {
     return b.build();
   }
 
-  private static List<NamedColor> reorderColorants(List<NamedColor> colorants, int[] colorantOrder) {
-    if (colorants.size() != colorantOrder.length)
+  private static List<NamedColor> reorderColorants(
+      List<NamedColor> colorants, int[] colorantOrder) {
+    if (colorants.size() != colorantOrder.length) {
       throw new IllegalStateException(
           "Colorant order tag length different than colorant table tag length");
+    }
 
     List<NamedColor> reordered = new ArrayList<>();
     for (int i = 0; i < colorantOrder.length; i++) {

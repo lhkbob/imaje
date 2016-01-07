@@ -19,7 +19,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.require;
 /**
  *
  */
-public class NamedColorTypeParser implements TagParser<List<NamedColor>> {
+public final class NamedColorTypeParser implements TagParser<List<NamedColor>> {
   public static final Signature SIGNATURE = Signature.fromName("ncl2");
 
   @Override

@@ -15,7 +15,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt32Number
 /**
  *
  */
-public class TextDescriptionTagParser implements TagParser<LocalizedString> {
+public final class TextDescriptionTagParser implements TagParser<LocalizedString> {
   public static final Signature SIGNATURE = Signature.fromName("desc");
 
   @Override

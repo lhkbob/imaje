@@ -10,7 +10,7 @@ import java.time.ZonedDateTime;
 /**
  *
  */
-public class ICCDataTypeUtil {
+public final class ICCDataTypeUtil {
   public static class PositionNumber {
     private final long offset;
     private final long size;

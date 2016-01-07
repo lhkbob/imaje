@@ -16,7 +16,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt32Number
 /**
  *
  */
-public class CurveTypeParser implements TagParser<Curve> {
+public final class CurveTypeParser implements TagParser<Curve> {
   public static final Signature SIGNATURE = Signature.fromName("curv");
 
   @Override

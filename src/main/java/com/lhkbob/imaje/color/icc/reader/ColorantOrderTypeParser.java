@@ -11,7 +11,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.require;
 /**
  *
  */
-public class ColorantOrderTypeParser implements TagParser<int[]> {
+public final class ColorantOrderTypeParser implements TagParser<int[]> {
   public static final Signature SIGNATURE = Signature.fromName("clro");
 
   @Override

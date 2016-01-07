@@ -9,7 +9,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt8Number;
 /**
  *
  */
-public class UInt8ArrayTypeParser implements TagParser<int[]> {
+public final class UInt8ArrayTypeParser implements TagParser<int[]> {
   public static final Signature SIGNATURE = Signature.fromName("ui08");
 
   @Override

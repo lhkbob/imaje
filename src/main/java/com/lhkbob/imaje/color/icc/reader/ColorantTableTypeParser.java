@@ -18,7 +18,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextXYZNumber16;
 /**
  *
  */
-public class ColorantTableTypeParser implements TagParser<List<NamedColor>> {
+public final class ColorantTableTypeParser implements TagParser<List<NamedColor>> {
   public static final Signature SIGNATURE = Signature.fromName("clrt");
 
   @Override

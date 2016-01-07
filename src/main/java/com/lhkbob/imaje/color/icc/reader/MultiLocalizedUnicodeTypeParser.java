@@ -16,7 +16,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skip;
 /**
  *
  */
-public class MultiLocalizedUnicodeTypeParser implements TagParser<LocalizedString> {
+public final class MultiLocalizedUnicodeTypeParser implements TagParser<LocalizedString> {
   public static final Signature SIGNATURE = Signature.fromName("mluc");
 
   @Override

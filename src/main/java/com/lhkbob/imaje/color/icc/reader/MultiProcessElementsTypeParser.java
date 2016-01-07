@@ -32,7 +32,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skipToBoundary;
 /**
  *
  */
-public class MultiProcessElementsTypeParser implements TagParser<Transform> {
+public final class MultiProcessElementsTypeParser implements TagParser<Transform> {
   public static final Signature SIGNATURE = Signature.fromName("mpet");
 
   @Override

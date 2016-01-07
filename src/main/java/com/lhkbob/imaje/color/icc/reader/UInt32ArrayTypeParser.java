@@ -9,7 +9,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt32Number
 /**
  *
  */
-public class UInt32ArrayTypeParser implements TagParser<long[]> {
+public final class UInt32ArrayTypeParser implements TagParser<long[]> {
   public static final Signature SIGNATURE = Signature.fromName("ui32");
 
   @Override

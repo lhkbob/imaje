@@ -16,7 +16,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt32Number
 /**
  *
  */
-public class TagTable {
+public final class TagTable {
   private final Map<Signature, Tag<?>> tags;
 
   public TagTable(List<Tag<?>> tags) {

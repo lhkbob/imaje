@@ -21,7 +21,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skip;
 /**
  *
  */
-public class LUT8TypeParser implements TagParser<Transform> {
+public final class LUT8TypeParser implements TagParser<Transform> {
   public static final Signature SIGNATURE = Signature.fromName("mft1");
 
   @Override

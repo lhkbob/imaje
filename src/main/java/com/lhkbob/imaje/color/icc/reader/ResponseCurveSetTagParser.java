@@ -18,7 +18,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skip;
 /**
  *
  */
-public class ResponseCurveSetTagParser implements TagParser<ResponseCurveSet> {
+public final class ResponseCurveSetTagParser implements TagParser<ResponseCurveSet> {
   public static final Signature SIGNATURE = Signature.fromName("rcs2");
 
   @Override

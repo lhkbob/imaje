@@ -9,7 +9,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt16Number
 /**
  *
  */
-public class UInt16ArrayTypeParser implements TagParser<int[]> {
+public final class UInt16ArrayTypeParser implements TagParser<int[]> {
   public static final Signature SIGNATURE = Signature.fromName("ui16");
 
   @Override

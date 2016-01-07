@@ -5,7 +5,7 @@ import java.util.Arrays;
 /**
  *
  */
-public class GenericColorValue {
+public final class GenericColorValue {
   public enum ColorType {
     /**
      * XYZ tristimulus values where Y is in candelas per square meter.

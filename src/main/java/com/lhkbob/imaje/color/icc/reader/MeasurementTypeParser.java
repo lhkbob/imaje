@@ -17,7 +17,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextXYZNumber;
 /**
  *
  */
-public class MeasurementTypeParser implements TagParser<Measurement> {
+public final class MeasurementTypeParser implements TagParser<Measurement> {
   public static final Signature SIGNATURE = Signature.fromName("meas");
 
   @Override
