@@ -12,10 +12,14 @@ public interface Transform {
 
   void transform(double[] input, double[] output);
 
-  // FIXME do we need to track the range and domain of the elements?
-  // e.g. if subsequent stages have different intervals, do we clamp or scale?
-  // FIXME what about the multiProcessElement curves that have an infinite range, compared to
-  // the functions using the LUT-based tags that assume 0-1?
-
-  // It looks like there's either a 0-1 range/domain scheme, OR infinite range/domain
+  static void validateDimensions(Transform t, double[] input, double[] output) {
+    if (input.length != t.getInputChannels()) {
+      throw new IllegalArgumentException(
+          "Input vector must have " + t.getInputChannels() + " channels, but has " + input.length);
+    }
+    if (output.length != t.getOutputChannels()) {
+      throw new IllegalArgumentException(
+          "Output vector must have " + t.getOutputChannels() + " channels, but has " + output.length);
+    }
+  }
 }

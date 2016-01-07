@@ -1,19 +1,15 @@
 package com.lhkbob.imaje.color.transform.general;
 
-import com.lhkbob.imaje.color.icc.GenericColorValue;
+import com.lhkbob.imaje.color.XYZ;
 
 /**
  *
  */
 public class XYZToLuminance implements Transform {
-  private final GenericColorValue whitepoint;
+  private final XYZ whitepoint;
 
-  public XYZToLuminance(GenericColorValue whitepoint) {
-    if (whitepoint.getType() != GenericColorValue.ColorType.CIEXYZ && whitepoint.getType() != GenericColorValue.ColorType.PCSXYZ
-        && whitepoint.getType() != GenericColorValue.ColorType.NORMALIZED_CIEXYZ) {
-      throw new IllegalArgumentException("Whitepoint must be an XYZ color");
-    }
-    this.whitepoint = whitepoint;
+  public XYZToLuminance(XYZ whitepoint) {
+    this.whitepoint = whitepoint.clone();
   }
 
   @Override
@@ -33,16 +29,9 @@ public class XYZToLuminance implements Transform {
 
   @Override
   public void transform(double[] input, double[] output) {
-    if (input.length != getInputChannels()) {
-      throw new IllegalArgumentException(
-          "Input vector must have " + getInputChannels() + " channels, but has " + input.length);
-    }
-    if (output.length != getOutputChannels()) {
-      throw new IllegalArgumentException(
-          "Output vector must have " + getOutputChannels() + " channels, but has " + output.length);
-    }
+    Transform.validateDimensions(this, input, output);
 
-    output[0] = input[1] / whitepoint.getChannel(1);
+    output[0] = input[1] / whitepoint.y();
   }
 
   @Override
@@ -52,10 +41,12 @@ public class XYZToLuminance implements Transform {
 
   @Override
   public boolean equals(Object o) {
-    if (o == this)
+    if (o == this) {
       return true;
-    if (!(o instanceof XYZToLuminance))
+    }
+    if (!(o instanceof XYZToLuminance)) {
       return false;
+    }
     return ((XYZToLuminance) o).whitepoint.equals(whitepoint);
   }
 

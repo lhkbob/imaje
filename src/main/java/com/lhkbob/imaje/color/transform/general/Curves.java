@@ -25,10 +25,6 @@ public class Curves implements Transform {
     return curves.size();
   }
 
-  public Curve getCurve(int channel) {
-    return curves.get(channel);
-  }
-
   @Override
   public Curves inverted() {
     List<Curve> inverted = new ArrayList<>();
@@ -44,14 +40,7 @@ public class Curves implements Transform {
 
   @Override
   public void transform(double[] input, double[] output) {
-    if (input.length != getInputChannels()) {
-      throw new IllegalArgumentException(
-          "Input vector must have " + getInputChannels() + " channels, but has " + input.length);
-    }
-    if (output.length != getOutputChannels()) {
-      throw new IllegalArgumentException(
-          "Output vector must have " + getOutputChannels() + " channels, but has " + output.length);
-    }
+    Transform.validateDimensions(this, input, output);
 
     for (int i = 0; i < input.length; i++) {
       Curve c = curves.get(i);

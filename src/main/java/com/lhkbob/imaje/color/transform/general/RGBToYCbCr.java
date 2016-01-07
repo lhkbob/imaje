@@ -48,14 +48,7 @@ public class RGBToYCbCr implements Transform {
 
   @Override
   public void transform(double[] input, double[] output) {
-    if (input.length != getInputChannels()) {
-      throw new IllegalArgumentException(
-          "Input vector must have " + getInputChannels() + " channels, but has " + input.length);
-    }
-    if (output.length != getOutputChannels()) {
-      throw new IllegalArgumentException(
-          "Output vector must have " + getOutputChannels() + " channels, but has " + output.length);
-    }
+    Transform.validateDimensions(this, input, output);
 
     // Y from R, G, and B
     output[0] = kr * input[0] + (1.0 - kr - kb) * input[1] + kb * input[2];

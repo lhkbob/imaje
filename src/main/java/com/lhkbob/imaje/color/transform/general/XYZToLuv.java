@@ -1,6 +1,6 @@
 package com.lhkbob.imaje.color.transform.general;
 
-import com.lhkbob.imaje.color.icc.GenericColorValue;
+import com.lhkbob.imaje.color.XYZ;
 
 import static com.lhkbob.imaje.color.transform.general.XYZToLab.f;
 
@@ -8,19 +8,13 @@ import static com.lhkbob.imaje.color.transform.general.XYZToLab.f;
  *
  */
 public class XYZToLuv implements Transform {
-  private final GenericColorValue referenceWhitepoint;
+  private final XYZ referenceWhitepoint;
   private final double uWhite, vWhite;
 
-  public XYZToLuv(GenericColorValue referenceWhitepoint) {
-    if (referenceWhitepoint.getType() != GenericColorValue.ColorType.CIEXYZ &&
-        referenceWhitepoint.getType() != GenericColorValue.ColorType.NORMALIZED_CIEXYZ
-        && referenceWhitepoint.getType() != GenericColorValue.ColorType.PCSXYZ) {
-      throw new IllegalArgumentException("Reference white point must be specified as XYZ");
-    }
+  public XYZToLuv(XYZ referenceWhitepoint) {
     this.referenceWhitepoint = referenceWhitepoint;
-    uWhite = uPrime(referenceWhitepoint.getChannel(0), referenceWhitepoint.getChannel(1), referenceWhitepoint.getChannel(2));
-    vWhite = vPrime(referenceWhitepoint.getChannel(0), referenceWhitepoint.getChannel(1),
-        referenceWhitepoint.getChannel(2));
+    uWhite = uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
+    vWhite = vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
   }
 
   @Override
@@ -40,18 +34,11 @@ public class XYZToLuv implements Transform {
 
   @Override
   public void transform(double[] input, double[] output) {
-    if (input.length != getInputChannels()) {
-      throw new IllegalArgumentException(
-          "Input vector must have " + getInputChannels() + " channels, but has " + input.length);
-    }
-    if (output.length != getOutputChannels()) {
-      throw new IllegalArgumentException(
-          "Output vector must have " + getOutputChannels() + " channels, but has " + output.length);
-    }
+    Transform.validateDimensions(this, input, output);
 
     double up = uPrime(input[0], input[1], input[2]);
     double vp = vPrime(input[0], input[1], input[2]);
-    output[0] = 116.0 * f(input[1] / referenceWhitepoint.getChannel(1)) - 16.0; // L*
+    output[0] = 116.0 * f(input[1] / referenceWhitepoint.y()) - 16.0; // L*
     output[1] = 13.0 * output[0] * (up - uWhite); // u*
     output[2] = 13.0 * output[0] * (vp - vWhite); // v*
   }
@@ -71,10 +58,12 @@ public class XYZToLuv implements Transform {
 
   @Override
   public boolean equals(Object o) {
-    if (o == this)
+    if (o == this) {
       return true;
-    if (!(o instanceof XYZToLuv))
+    }
+    if (!(o instanceof XYZToLuv)) {
       return false;
+    }
     return ((XYZToLuv) o).referenceWhitepoint.equals(referenceWhitepoint);
   }
 

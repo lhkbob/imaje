@@ -43,14 +43,7 @@ public class NormalizeChannels implements Transform {
 
   @Override
   public void transform(double[] input, double[] output) {
-    if (input.length != getInputChannels()) {
-      throw new IllegalArgumentException(
-          "Input vector must have " + getInputChannels() + " channels, but has " + input.length);
-    }
-    if (output.length != getOutputChannels()) {
-      throw new IllegalArgumentException(
-          "Output vector must have " + getOutputChannels() + " channels, but has " + output.length);
-    }
+    Transform.validateDimensions(this, input, output);
 
     for (int i = 0; i < channelMins.length; i++) {
       double unclipped = (input[i] - channelMins[i]) / (channelMaxs[i] - channelMins[i]);
@@ -107,15 +100,7 @@ public class NormalizeChannels implements Transform {
 
     @Override
     public void transform(double[] input, double[] output) {
-      if (input.length != getInputChannels()) {
-        throw new IllegalArgumentException(
-            "Input vector must have " + getInputChannels() + " channels, but has " + input.length);
-      }
-      if (output.length != getOutputChannels()) {
-        throw new IllegalArgumentException(
-            "Output vector must have " + getOutputChannels() + " channels, but has "
-                + output.length);
-      }
+      Transform.validateDimensions(this, input, output);
 
       for (int i = 0; i < channelMaxs.length; i++) {
         double clipped = Math.max(0.0, Math.min(input[i], 1.0));

@@ -1,6 +1,6 @@
 package com.lhkbob.imaje.color.transform.general;
 
-import com.lhkbob.imaje.color.icc.GenericColorValue;
+import com.lhkbob.imaje.color.XYZ;
 
 /**
  *
@@ -14,15 +14,10 @@ public class LabToXYZ implements Transform {
   static final double A_SCALE = 1.0 / 500.0;
   static final double B_SCALE = 1.0 / 200.0;
 
-  private final GenericColorValue referenceWhitepoint;
+  private final XYZ referenceWhitepoint;
 
-  public LabToXYZ(GenericColorValue referenceWhitepoint) {
-    if (referenceWhitepoint.getType() != GenericColorValue.ColorType.CIEXYZ &&
-        referenceWhitepoint.getType() != GenericColorValue.ColorType.NORMALIZED_CIEXYZ
-        && referenceWhitepoint.getType() != GenericColorValue.ColorType.PCSXYZ) {
-      throw new IllegalArgumentException("Reference white point must be specified as XYZ");
-    }
-    this.referenceWhitepoint = referenceWhitepoint;
+  public LabToXYZ(XYZ referenceWhitepoint) {
+    this.referenceWhitepoint = referenceWhitepoint.clone();
   }
 
   @Override
@@ -42,22 +37,15 @@ public class LabToXYZ implements Transform {
 
   @Override
   public void transform(double[] input, double[] output) {
-    if (input.length != getInputChannels()) {
-      throw new IllegalArgumentException(
-          "Input vector must have " + getInputChannels() + " channels, but has " + input.length);
-    }
-    if (output.length != getOutputChannels()) {
-      throw new IllegalArgumentException(
-          "Output vector must have " + getOutputChannels() + " channels, but has " + output.length);
-    }
+    Transform.validateDimensions(this, input, output);
 
     double lp = L_SCALE * (input[0] + 16.0);
     // X from L and a
-    output[0] = referenceWhitepoint.getChannel(0) * inverseF(lp + A_SCALE * input[1]);
+    output[0] = referenceWhitepoint.x() * inverseF(lp + A_SCALE * input[1]);
     // Y from L
-    output[1] = referenceWhitepoint.getChannel(1) * inverseF(lp);
+    output[1] = referenceWhitepoint.y() * inverseF(lp);
     // Z from L and b
-    output[2] = referenceWhitepoint.getChannel(2) * inverseF(lp - B_SCALE * input[2]);
+    output[2] = referenceWhitepoint.z() * inverseF(lp - B_SCALE * input[2]);
   }
 
   static double inverseF(double t) {
@@ -75,10 +63,12 @@ public class LabToXYZ implements Transform {
 
   @Override
   public boolean equals(Object o) {
-    if (o == this)
+    if (o == this) {
       return true;
-    if (!(o instanceof LabToXYZ))
+    }
+    if (!(o instanceof LabToXYZ)) {
       return false;
+    }
     return ((LabToXYZ) o).referenceWhitepoint.equals(referenceWhitepoint);
   }
 

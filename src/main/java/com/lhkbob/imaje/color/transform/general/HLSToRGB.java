@@ -13,7 +13,7 @@ public class HLSToRGB extends AbstractHueToRGBTransform {
 
   @Override
   public void transform(double[] input, double[] output) {
-    checkVectorDimensions(input, output);
+    Transform.validateDimensions(this, input, output);
 
     work[0] = input[0]; // hue
     work[1] = (1.0 - Math.abs(2.0 * input[1] - 1.0)) * input[2]; // chroma

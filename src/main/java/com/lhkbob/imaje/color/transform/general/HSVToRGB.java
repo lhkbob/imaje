@@ -13,7 +13,7 @@ public class HSVToRGB extends AbstractHueToRGBTransform {
 
   @Override
   public void transform(double[] input, double[] output) {
-    checkVectorDimensions(input, output);
+    Transform.validateDimensions(this, input, output);
 
     work[0] = input[0]; // hue
     work[1] = input[2] * input[1]; // chroma

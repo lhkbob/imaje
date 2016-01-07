@@ -48,7 +48,7 @@ public class Matrix implements Transform {
     this.translation = new double[numRows];
   }
 
-  public double get(int i, int j) {
+  private double get(int i, int j) {
     if (j == numColumns) {
       return translation[i];
     } else {
@@ -184,14 +184,7 @@ public class Matrix implements Transform {
 
   @Override
   public void transform(double[] input, double[] output) {
-    if (input.length != numColumns) {
-      throw new IllegalArgumentException(
-          "Input vector must have dimension " + numColumns + ", not " + input.length);
-    }
-    if (output.length != numRows) {
-      throw new IllegalArgumentException(
-          "Output vector must have dimension " + numRows + ", not " + output.length);
-    }
+    Transform.validateDimensions(this, input, output);
 
     for (int i = 0; i < numRows; i++) {
       int offset = i * numColumns;

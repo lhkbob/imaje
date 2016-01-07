@@ -40,10 +40,6 @@ public class Composition implements Transform {
     return transforms.get(transforms.size() - 1).getOutputChannels();
   }
 
-  public List<Transform> getSequence() {
-    return transforms;
-  }
-
   @Override
   public Composition inverted() {
     List<Transform> inv = new ArrayList<>(transforms.size());
@@ -59,14 +55,7 @@ public class Composition implements Transform {
 
   @Override
   public void transform(double[] input, double[] output) {
-    if (input.length != getInputChannels()) {
-      throw new IllegalArgumentException(
-          "Input vector must have " + getInputChannels() + " channels, but has " + input.length);
-    }
-    if (output.length != getOutputChannels()) {
-      throw new IllegalArgumentException(
-          "Output vector must have " + getOutputChannels() + " channels, but has " + output.length);
-    }
+    Transform.validateDimensions(this, input, output);
 
     double[] in = input;
     double[] out;
