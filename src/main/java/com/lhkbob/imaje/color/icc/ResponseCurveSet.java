@@ -1,6 +1,6 @@
 package com.lhkbob.imaje.color.icc;
 
-import com.lhkbob.imaje.color.icc.curves.Curve;
+import com.lhkbob.imaje.color.transform.curves.Curve;
 
 import java.util.Arrays;
 import java.util.HashMap;

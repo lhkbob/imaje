@@ -1,6 +1,6 @@
 package com.lhkbob.imaje.color.icc;
 
-import com.lhkbob.imaje.color.icc.transforms.NormalizeChannelTransform;
+import com.lhkbob.imaje.color.transform.general.NormalizeChannels;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,7 +48,7 @@ public enum ColorSpace {
 
   private final int channelCount;
   private final Signature signature;
-  private final NormalizeChannelTransform normalizingFunction;
+  private final NormalizeChannels normalizingFunction;
   private final List<String> channelNames;
 
   ColorSpace(String signature, int channelCount, double min, double max, String... channelNames) {
@@ -64,7 +64,7 @@ public enum ColorSpace {
     double[] maxs = new double[channelCount];
     Arrays.fill(mins, min);
     Arrays.fill(maxs, max);
-    normalizingFunction = new NormalizeChannelTransform(mins, maxs);
+    normalizingFunction = new NormalizeChannels(mins, maxs);
   }
 
   ColorSpace(
@@ -80,7 +80,7 @@ public enum ColorSpace {
 
     this.signature = Signature.fromName(signature);
     this.channelCount = channelCount;
-    normalizingFunction = new NormalizeChannelTransform(mins, maxs);
+    normalizingFunction = new NormalizeChannels(mins, maxs);
   }
 
   public static ColorSpace fromSignature(Signature s) {
@@ -109,7 +109,7 @@ public enum ColorSpace {
     return !channelNames.isEmpty();
   }
 
-  public NormalizeChannelTransform getNormalizingFunction() {
+  public NormalizeChannels getNormalizingFunction() {
     return normalizingFunction;
   }
 

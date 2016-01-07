@@ -1,8 +1,15 @@
 package com.lhkbob.imaje.color.icc;
 
-import com.lhkbob.imaje.color.icc.transforms.ColorMatrix;
-import com.lhkbob.imaje.color.icc.transforms.ColorTransform;
+import com.lhkbob.imaje.color.icc.reader.ProfileReader;
+import com.lhkbob.imaje.color.transform.general.Matrix;
+import com.lhkbob.imaje.color.transform.general.Transform;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,7 +28,7 @@ public final class Profile {
     private ColorSpace bSide;
     private ZonedDateTime calibrationTime;
     private String charTarget;
-    private ColorMatrix chromaticAdaptation;
+    private Matrix chromaticAdaptation;
     private Colorant chromaticity;
     private List<NamedColor> colorantInTable;
     private List<NamedColor> colorantOutTable;
@@ -45,10 +52,10 @@ public final class Profile {
     private RenderingIntentGamut saturationGamut;
     private ViewingCondition viewingCondition;
 
-    private final Map<RenderingIntent, ColorTransform> transforms;
-    private final Map<RenderingIntent, ColorTransform> inverseTransforms;
-    private ColorTransform defaultTransform;
-    private ColorTransform gamutTest;
+    private final Map<RenderingIntent, Transform> transforms;
+    private final Map<RenderingIntent, Transform> inverseTransforms;
+    private Transform defaultTransform;
+    private Transform gamutTest;
 
     private Builder(ProfileClass profileClass, long version) {
       this.profileClass = profileClass;
@@ -72,12 +79,12 @@ public final class Profile {
           Collections.unmodifiableMap(new HashMap<>(inverseTransforms)));
     }
 
-    public Builder setDefaultTransform(ColorTransform transform) {
+    public Builder setDefaultTransform(Transform transform) {
       defaultTransform = transform;
       return this;
     }
 
-    public Builder setGamutTest(ColorTransform gamut) {
+    public Builder setGamutTest(Transform gamut) {
       gamutTest = gamut;
       return this;
     }
@@ -102,7 +109,7 @@ public final class Profile {
       return this;
     }
 
-    public Builder setChromaticAdaptation(ColorMatrix matrix) {
+    public Builder setChromaticAdaptation(Matrix matrix) {
       chromaticAdaptation = matrix;
       return this;
     }
@@ -217,7 +224,7 @@ public final class Profile {
       return this;
     }
 
-    public Builder setTransform(RenderingIntent intent, ColorTransform transform) {
+    public Builder setTransform(RenderingIntent intent, Transform transform) {
       if (transform != null) {
         transforms.put(intent, transform);
       } else {
@@ -226,7 +233,7 @@ public final class Profile {
       return this;
     }
 
-    public Builder setInverseTransform(RenderingIntent intent, ColorTransform transform) {
+    public Builder setInverseTransform(RenderingIntent intent, Transform transform) {
       if (transform != null) {
         inverseTransforms.put(intent, transform);
       } else {
@@ -250,7 +257,7 @@ public final class Profile {
         calibrationTime = creationTime;
       }
       if (chromaticAdaptation == null) {
-        chromaticAdaptation = ColorMatrix.IDENTITY_3X3;
+        chromaticAdaptation = Matrix.IDENTITY_3X3;
       }
 
       if (colorimetricIntent == null) {
@@ -302,7 +309,7 @@ public final class Profile {
       // 1. First if an explicit inverse was given, but no normal mode was given, use that
       inverseTransforms.keySet().stream().filter(intent -> !transforms.containsKey(intent))
           .forEach(intent -> {
-            ColorTransform forward = inverseTransforms.get(intent).inverted();
+            Transform forward = inverseTransforms.get(intent).inverted();
             if (forward != null) {
               transforms.put(intent, forward);
             }
@@ -341,7 +348,7 @@ public final class Profile {
       // (In most cases this is the inverse of the TRC/matrix default)
       transforms.keySet().stream().filter(intent -> !inverseTransforms.containsKey(intent))
           .forEach(intent -> {
-            ColorTransform inverse = transforms.get(intent).inverted();
+            Transform inverse = transforms.get(intent).inverted();
             if (inverse != null) {
               inverseTransforms.put(intent, inverse);
             }
@@ -353,7 +360,7 @@ public final class Profile {
         // Calculate colorants based on the a-side space
         if (profileClass != ProfileClass.DEVICE_LINK_PROFILE) {
           // Use the media relative transformation if it exists, otherwise don't calculate pcs values
-          ColorTransform aToB = transforms.get(RenderingIntent.MEDIA_RELATIVE_COLORIMETRIC);
+          Transform aToB = transforms.get(RenderingIntent.MEDIA_RELATIVE_COLORIMETRIC);
           colorantInTable = generateColorantTable(aToB, aSide, bSide);
         } else {
           // No transformation exists and pcs space must be LAB (additionally bSide does not
@@ -379,7 +386,7 @@ public final class Profile {
     }
 
     private List<NamedColor> generateColorantTable(
-        ColorTransform deviceToPCS, ColorSpace deviceSpace, ColorSpace pcsSpace) {
+        Transform deviceToPCS, ColorSpace deviceSpace, ColorSpace pcsSpace) {
       // Skip table creation if the function is badly dimensioned (this is done so that
       // validate() can fail with a more useful error message about the particular transform)
       if (deviceToPCS != null && deviceToPCS.getInputChannels() != deviceSpace.getChannelCount()
@@ -532,7 +539,7 @@ public final class Profile {
   private final ColorSpace bSide;
   private final ZonedDateTime calibrationTime;
   private final String charTarget;
-  private final ColorMatrix chromaticAdaptation;
+  private final Matrix chromaticAdaptation;
   private final Colorant chromaticity;
   private final List<NamedColor> colorantInTable;
   private final List<NamedColor> colorantOutTable;
@@ -542,7 +549,7 @@ public final class Profile {
   private final Signature creator;
   private final ProfileDescription description;
   private final long flags;
-  private final ColorTransform gamutTest;
+  private final Transform gamutTest;
   private final GenericColorValue illuminant;
   private final double luminance;
   private final Measurement measurement;
@@ -559,23 +566,23 @@ public final class Profile {
   private final long version;
   private final ViewingCondition viewingCondition;
 
-  private final Map<RenderingIntent, ColorTransform> aToBTransforms;
-  private final Map<RenderingIntent, ColorTransform> bToATransforms;
+  private final Map<RenderingIntent, Transform> aToBTransforms;
+  private final Map<RenderingIntent, Transform> bToATransforms;
 
   private Profile(
       ColorSpace aSide, ColorSpace bSide, ZonedDateTime calibrationTime, String charTarget,
-      ColorMatrix chromaticAdaptation, Colorant chromaticity, List<NamedColor> colorantInTable,
+      Matrix chromaticAdaptation, Colorant chromaticity, List<NamedColor> colorantInTable,
       List<NamedColor> colorantOutTable, ColorimetricIntent colorimetricIntent,
       LocalizedString copyright, ZonedDateTime creationTime, Signature creator,
-      ProfileDescription description, long flags, ColorTransform gamutTest,
+      ProfileDescription description, long flags, Transform gamutTest,
       GenericColorValue illuminant, double luminance, Measurement measurement,
       GenericColorValue mediaWhitePoint, List<NamedColor> namedColors,
       ResponseCurveSet outputResponse, RenderingIntentGamut perceptualGamut,
       Signature preferredCMMType, PrimaryPlatform primaryPlatform, ProfileClass profileClass,
       List<ProfileDescription> profileSequence, RenderingIntent renderingIntent,
       RenderingIntentGamut saturationGamut, long version, ViewingCondition viewingCondition,
-      Map<RenderingIntent, ColorTransform> aToBTransforms,
-      Map<RenderingIntent, ColorTransform> bToATransforms) {
+      Map<RenderingIntent, Transform> aToBTransforms,
+      Map<RenderingIntent, Transform> bToATransforms) {
     this.aSide = aSide;
     this.bSide = bSide;
     this.calibrationTime = calibrationTime;
@@ -610,15 +617,39 @@ public final class Profile {
     this.bToATransforms = bToATransforms;
   }
 
+  public static Profile readProfile(File file) throws IOException {
+    return readProfile(file.toPath());
+  }
+
+  public static Profile readProfile(Path path) throws IOException {
+    return ProfileReader.readProfile(path);
+  }
+
+  public static Profile readProfile(String path) throws IOException {
+   return ProfileReader.readProfile(Paths.get(path));
+  }
+
+  public static Profile readProfile(InputStream in) throws IOException {
+    return ProfileReader.readProfile(in);
+  }
+
+  public static Profile fromBytes(ByteBuffer data) {
+    return ProfileReader.parse(data);
+  }
+
+  public static Profile fromBytes(byte[] data) {
+    return ProfileReader.parse(ByteBuffer.wrap(data));
+  }
+
   public static Builder newProfile(ProfileClass profileClass, long version) {
     return new Builder(profileClass, version);
   }
 
-  public ColorTransform getAToBTransform(RenderingIntent intent) {
+  public Transform getAToBTransform(RenderingIntent intent) {
     return aToBTransforms.get(intent);
   }
 
-  public ColorTransform getBToATransform(RenderingIntent intent) {
+  public Transform getBToATransform(RenderingIntent intent) {
     return bToATransforms.get(intent);
   }
 
@@ -628,6 +659,7 @@ public final class Profile {
           "Color must have " + aSide.getChannelCount() + " channels");
     }
     if (gamutTest == null) {
+      // FIXME should this be replaced with checking channel ranges or something? for at least a semblence of a gamut test?
       return true;
     }
 
@@ -646,7 +678,7 @@ public final class Profile {
     return charTarget;
   }
 
-  public ColorMatrix getChromaticAdaptation() {
+  public Matrix getChromaticAdaptation() {
     return chromaticAdaptation;
   }
 

@@ -3,12 +3,12 @@ package com.lhkbob.imaje.color.icc.reader;
 
 import com.lhkbob.imaje.color.icc.ColorSpace;
 import com.lhkbob.imaje.color.icc.Signature;
-import com.lhkbob.imaje.color.icc.curves.UniformlySampledCurve;
-import com.lhkbob.imaje.color.icc.transforms.ColorLookupTable;
-import com.lhkbob.imaje.color.icc.transforms.ColorMatrix;
-import com.lhkbob.imaje.color.icc.transforms.ColorTransform;
-import com.lhkbob.imaje.color.icc.transforms.CurveTransform;
-import com.lhkbob.imaje.color.icc.transforms.SequentialTransform;
+import com.lhkbob.imaje.color.transform.curves.UniformlySampledCurve;
+import com.lhkbob.imaje.color.transform.general.LookupTable;
+import com.lhkbob.imaje.color.transform.general.Matrix;
+import com.lhkbob.imaje.color.transform.general.Transform;
+import com.lhkbob.imaje.color.transform.general.Curves;
+import com.lhkbob.imaje.color.transform.general.Composition;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skip;
 /**
  *
  */
-public class LUT16TypeParser implements TagParser<ColorTransform> {
+public class LUT16TypeParser implements TagParser<Transform> {
   public static final Signature SIGNATURE = Signature.fromName("mft2");
 
   @Override
@@ -31,8 +31,8 @@ public class LUT16TypeParser implements TagParser<ColorTransform> {
   }
 
   @Override
-  public ColorTransform parse(Signature tag, Header header, ByteBuffer data) {
-    List<ColorTransform> transformStages = new ArrayList<>();
+  public Transform parse(Signature tag, Header header, ByteBuffer data) {
+    List<Transform> transformStages = new ArrayList<>();
 
     int inputChannels = nextUInt8Number(data);
     int outputChannels = nextUInt8Number(data);
@@ -60,7 +60,7 @@ public class LUT16TypeParser implements TagParser<ColorTransform> {
       }
       // The matrix values were specified as row-major in the profile data so no
       // reordering is necessary
-      transformStages.add(new ColorMatrix(3, 3, matrix));
+      transformStages.add(new Matrix(3, 3, matrix));
     }
 
     int inputTableSize = nextUInt16Number(data);
@@ -76,14 +76,14 @@ public class LUT16TypeParser implements TagParser<ColorTransform> {
       // This constructor copies the data array so we can reuse our local variable
       inputTable.add(new UniformlySampledCurve(0.0, 1.0, inputTableEntries));
     }
-    transformStages.add(new CurveTransform(inputTable));
+    transformStages.add(new Curves(inputTable));
 
     // CLUT
     double[] clutEntries = new double[(int) Math.pow(gridSize, inputChannels) * outputChannels];
     for (int i = 0; i < clutEntries.length; i++) {
       clutEntries[i] = nextUInt16Number(data) / 65535.0;
     }
-    transformStages.add(new ColorLookupTable(inputChannels, outputChannels, gridSize, clutEntries));
+    transformStages.add(new LookupTable(inputChannels, outputChannels, gridSize, clutEntries));
 
     // Output tables
     double[] outputTableEntries = new double[outputTableSize];
@@ -95,11 +95,11 @@ public class LUT16TypeParser implements TagParser<ColorTransform> {
       // This constructor copies the data array so we can reuse our local variable
       outputTable.add(new UniformlySampledCurve(0.0, 1.0, outputTableEntries));
     }
-    transformStages.add(new CurveTransform(outputTable));
+    transformStages.add(new Curves(outputTable));
 
     // Add a denormalizing stage
     transformStages.add(forward ? header.getBSideColorSpace().getNormalizingFunction().inverted()
         : header.getASideColorSpace().getNormalizingFunction().inverted());
-    return new SequentialTransform(transformStages);
+    return new Composition(transformStages);
   }
 }

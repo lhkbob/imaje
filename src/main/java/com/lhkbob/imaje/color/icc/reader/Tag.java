@@ -1,6 +1,6 @@
 package com.lhkbob.imaje.color.icc.reader;
 
-import com.lhkbob.imaje.color.icc.transforms.ColorTransform;
+import com.lhkbob.imaje.color.transform.general.Transform;
 import com.lhkbob.imaje.color.icc.Colorant;
 import com.lhkbob.imaje.color.icc.GenericColorValue;
 import com.lhkbob.imaje.color.icc.LocalizedString;
@@ -11,7 +11,7 @@ import com.lhkbob.imaje.color.icc.ProfileID;
 import com.lhkbob.imaje.color.icc.ResponseCurveSet;
 import com.lhkbob.imaje.color.icc.Signature;
 import com.lhkbob.imaje.color.icc.ViewingCondition;
-import com.lhkbob.imaje.color.icc.curves.Curve;
+import com.lhkbob.imaje.color.transform.curves.Curve;
 
 import java.nio.ByteBuffer;
 import java.time.ZonedDateTime;
@@ -125,25 +125,25 @@ public final class Tag<T> {
     }
   }
 
-  public static final Definition<ColorTransform> A_TO_B0 = new Definition<>(Signature.fromName("A2B0"),
+  public static final Definition<Transform> A_TO_B0 = new Definition<>(Signature.fromName("A2B0"),
       new LUT8TypeParser(), new LUT16TypeParser(), LUTTypeParser.newLUTAtoBTypeParser());
-  public static final Definition<ColorTransform> A_TO_B1 = new Definition<>(Signature.fromName("A2B1"),
+  public static final Definition<Transform> A_TO_B1 = new Definition<>(Signature.fromName("A2B1"),
       new LUT8TypeParser(), new LUT16TypeParser(), LUTTypeParser.newLUTAtoBTypeParser());
-  public static final Definition<ColorTransform> A_TO_B2 = new Definition<>(Signature.fromName("A2B2"),
+  public static final Definition<Transform> A_TO_B2 = new Definition<>(Signature.fromName("A2B2"),
       new LUT8TypeParser(), new LUT16TypeParser(), LUTTypeParser.newLUTAtoBTypeParser());
   public static final Definition<List<GenericColorValue>> BLUE_MATRIX_COLUMN = new Definition<>(
       Signature.fromName("bXYZ"), new XYZTypeParser());
   public static final Definition<Curve> BLUE_TRC = new Definition<>(Signature.fromName("bTRC"), new CurveTypeParser(), new ParametricCurveTypeParser());
-  public static final Definition<ColorTransform> B_TO_A0 = new Definition<>(Signature.fromName("B2A0"),
+  public static final Definition<Transform> B_TO_A0 = new Definition<>(Signature.fromName("B2A0"),
       new LUT8TypeParser(), new LUT16TypeParser(), LUTTypeParser.newLUTBtoATypeParser());
-  public static final Definition<ColorTransform> B_TO_A1 = new Definition<>(Signature.fromName("B2A1"),
+  public static final Definition<Transform> B_TO_A1 = new Definition<>(Signature.fromName("B2A1"),
       new LUT8TypeParser(), new LUT16TypeParser(), LUTTypeParser.newLUTBtoATypeParser());
-  public static final Definition<ColorTransform> B_TO_A2 = new Definition<>(Signature.fromName("B2A2"),
+  public static final Definition<Transform> B_TO_A2 = new Definition<>(Signature.fromName("B2A2"),
       new LUT8TypeParser(), new LUT16TypeParser(), LUTTypeParser.newLUTBtoATypeParser());
-  public static final Definition<ColorTransform> B_TO_D0 = new Definition<>(Signature.fromName("B2D0"), new MultiProcessElementsTypeParser());
-  public static final Definition<ColorTransform> B_TO_D1 = new Definition<>(Signature.fromName("B2D1"), new MultiProcessElementsTypeParser());
-  public static final Definition<ColorTransform> B_TO_D2 = new Definition<>(Signature.fromName("B2D2"), new MultiProcessElementsTypeParser());
-  public static final Definition<ColorTransform> B_TO_D3 = new Definition<>(Signature.fromName("B2D3"), new MultiProcessElementsTypeParser());
+  public static final Definition<Transform> B_TO_D0 = new Definition<>(Signature.fromName("B2D0"), new MultiProcessElementsTypeParser());
+  public static final Definition<Transform> B_TO_D1 = new Definition<>(Signature.fromName("B2D1"), new MultiProcessElementsTypeParser());
+  public static final Definition<Transform> B_TO_D2 = new Definition<>(Signature.fromName("B2D2"), new MultiProcessElementsTypeParser());
+  public static final Definition<Transform> B_TO_D3 = new Definition<>(Signature.fromName("B2D3"), new MultiProcessElementsTypeParser());
   public static final Definition<ZonedDateTime> CALIBRATION_DATE_TIME = new Definition<>(
       Signature.fromName("calt"), new DateTimeTypeParser());
   public static final Definition<String> CHAR_TARGET = new Definition<>(Signature.fromName("targ"), new TextTypeParser());
@@ -169,12 +169,12 @@ public final class Tag<T> {
   public static final Definition<LocalizedString> DEVICE_MODEL_DESC = new Definition<>(
       Signature.fromName("dmdd"), new MultiLocalizedUnicodeTypeParser(), new TextDescriptionTagParser());
 
-  public static final Definition<ColorTransform> D_TO_B0 = new Definition<>(Signature.fromName("B2D0"), new MultiProcessElementsTypeParser());
-  public static final Definition<ColorTransform> D_TO_B1 = new Definition<>(Signature.fromName("B2D1"), new MultiProcessElementsTypeParser());
-  public static final Definition<ColorTransform> D_TO_B2 = new Definition<>(Signature.fromName("B2D2"), new MultiProcessElementsTypeParser());
-  public static final Definition<ColorTransform> D_TO_B3 = new Definition<>(Signature.fromName("B2D3"), new MultiProcessElementsTypeParser());
+  public static final Definition<Transform> D_TO_B0 = new Definition<>(Signature.fromName("B2D0"), new MultiProcessElementsTypeParser());
+  public static final Definition<Transform> D_TO_B1 = new Definition<>(Signature.fromName("B2D1"), new MultiProcessElementsTypeParser());
+  public static final Definition<Transform> D_TO_B2 = new Definition<>(Signature.fromName("B2D2"), new MultiProcessElementsTypeParser());
+  public static final Definition<Transform> D_TO_B3 = new Definition<>(Signature.fromName("B2D3"), new MultiProcessElementsTypeParser());
 
-  public static final Definition<ColorTransform> GAMUT = new Definition<>(
+  public static final Definition<Transform> GAMUT = new Definition<>(
       Signature.fromName("gamt"), new LUT8TypeParser(), new LUT16TypeParser(),
       LUTTypeParser.newLUTBtoATypeParser());
 
@@ -197,11 +197,11 @@ public final class Tag<T> {
   public static final Definition<Signature> PERCEPTUAL_RENDERING_INTENT_GAMUT = new Definition<>(
       Signature.fromName("rig0"), new SignatureTypeParser());
 
-  public static final Definition<ColorTransform> PREVIEW0 = new Definition<>(Signature.fromName("pre0"),
+  public static final Definition<Transform> PREVIEW0 = new Definition<>(Signature.fromName("pre0"),
       new LUT8TypeParser(), new LUT16TypeParser(), LUTTypeParser.newLUTAtoBTypeParser());
-  public static final Definition<ColorTransform> PREVIEW1 = new Definition<>(Signature.fromName("pre1"),
+  public static final Definition<Transform> PREVIEW1 = new Definition<>(Signature.fromName("pre1"),
       new LUT8TypeParser(), new LUT16TypeParser(), LUTTypeParser.newLUTAtoBTypeParser());
-  public static final Definition<ColorTransform> PREVIEW2 = new Definition<>(Signature.fromName("pre2"),
+  public static final Definition<Transform> PREVIEW2 = new Definition<>(Signature.fromName("pre2"),
       new LUT8TypeParser(), new LUT16TypeParser(), LUTTypeParser.newLUTAtoBTypeParser());
 
   public static final Definition<LocalizedString> PROFILE_DESCRIPTION = new Definition<>(

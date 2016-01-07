@@ -1,11 +1,11 @@
 package com.lhkbob.imaje.color.icc.reader;
 
 import com.lhkbob.imaje.color.icc.Signature;
-import com.lhkbob.imaje.color.icc.curves.Curve;
-import com.lhkbob.imaje.color.icc.curves.DomainWindow;
-import com.lhkbob.imaje.color.icc.curves.LinearCurve;
-import com.lhkbob.imaje.color.icc.curves.UniformlySampledCurve;
-import com.lhkbob.imaje.color.icc.curves.UnitGammaCurve;
+import com.lhkbob.imaje.color.transform.curves.Curve;
+import com.lhkbob.imaje.color.transform.curves.DomainWindow;
+import com.lhkbob.imaje.color.transform.curves.LinearCurve;
+import com.lhkbob.imaje.color.transform.curves.UniformlySampledCurve;
+import com.lhkbob.imaje.color.transform.curves.UnitGammaCurve;
 
 import java.nio.ByteBuffer;
 

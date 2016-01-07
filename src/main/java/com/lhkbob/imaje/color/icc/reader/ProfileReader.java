@@ -14,22 +14,20 @@ import com.lhkbob.imaje.color.icc.RenderingIntent;
 import com.lhkbob.imaje.color.icc.RenderingIntentGamut;
 import com.lhkbob.imaje.color.icc.Signature;
 import com.lhkbob.imaje.color.icc.ViewingCondition;
-import com.lhkbob.imaje.color.icc.curves.Curve;
-import com.lhkbob.imaje.color.icc.transforms.ColorMatrix;
-import com.lhkbob.imaje.color.icc.transforms.ColorTransform;
-import com.lhkbob.imaje.color.icc.transforms.CurveTransform;
-import com.lhkbob.imaje.color.icc.transforms.LuminanceToXYZTransform;
-import com.lhkbob.imaje.color.icc.transforms.SequentialTransform;
-import com.lhkbob.imaje.color.icc.transforms.XYZToLabTransform;
+import com.lhkbob.imaje.color.transform.curves.Curve;
+import com.lhkbob.imaje.color.transform.general.Matrix;
+import com.lhkbob.imaje.color.transform.general.Transform;
+import com.lhkbob.imaje.color.transform.general.Curves;
+import com.lhkbob.imaje.color.transform.general.LuminanceToXYZ;
+import com.lhkbob.imaje.color.transform.general.Composition;
+import com.lhkbob.imaje.color.transform.general.XYZToLab;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,28 +43,6 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt32Number
  *
  */
 public class ProfileReader {
-  public static void main(String[] args) throws IOException {
-    Path path = Paths.get("/Users/mludwig/Desktop/C/ICCLib_V2.16/lab2lab.icm");
-//    Path path = Paths.get("/Users/mludwig/Desktop/color-profiles/sRGB Profile.icc");
-    Profile p = readProfile(path);
-    System.out.println(p.getDescription());
-    System.out.println(p.getVersion());
-    System.out.println(p.getProfileClass());
-    System.out.println(p.getASideColorSpace() + " -> " + p.getBSideColorSpace());
-    System.out.println(p.getCreator() + ": " + p.getCreationDate() + ", " + p.getCalibrationDate());
-    System.out.println(p.getCopyright());
-    System.out.println(p.getPrimaryPlatform());
-    System.out.println(p.getPreferredCMMType());
-    System.out.println(p.getRenderingIntent());
-    System.out.println(p.getMediaWhitePoint());
-    System.out.println(p.getAToBTransform(RenderingIntent.PERCEPTUAL));
-    System.out.println(p.getBToATransform(RenderingIntent.PERCEPTUAL));
-  }
-
-  public static Profile readProfile(File file) throws IOException {
-    return readProfile(file.toPath());
-  }
-
   public static Profile readProfile(Path path) throws IOException {
     try (
         FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
@@ -165,7 +141,7 @@ public class ProfileReader {
         throw new IllegalStateException(
             "Chromatic adaptation tag must contain 9 values, not: " + adaptation.length);
       }
-      b.setChromaticAdaptation(new ColorMatrix(3, 3, adaptation));
+      b.setChromaticAdaptation(new Matrix(3, 3, adaptation));
     }
 
     // Reorder colorant tables by the colorantOrder tag if it's provided, otherwise order is
@@ -304,10 +280,10 @@ public class ProfileReader {
   }
 
   @SafeVarargs
-  private static ColorTransform getTransform(
-      TagTable tags, Tag.Definition<ColorTransform>... precedence) {
-    for (Tag.Definition<ColorTransform> def : precedence) {
-      ColorTransform t = tags.getTagValue(def);
+  private static Transform getTransform(
+      TagTable tags, Tag.Definition<Transform>... precedence) {
+    for (Tag.Definition<Transform> def : precedence) {
+      Transform t = tags.getTagValue(def);
       if (t != null) {
         return t;
       }
@@ -316,7 +292,7 @@ public class ProfileReader {
     return null;
   }
 
-  private static ColorTransform constructMatrixTRCTransform(Header header, TagTable tags) {
+  private static Transform constructMatrixTRCTransform(Header header, TagTable tags) {
     GenericColorValue matrixRed = getSingleColor(tags, Tag.RED_MATRIX_COLUMN);
     GenericColorValue matrixGreen = getSingleColor(tags, Tag.GREEN_MATRIX_COLUMN);
     GenericColorValue matrixBlue = getSingleColor(tags, Tag.BLUE_MATRIX_COLUMN);
@@ -328,7 +304,7 @@ public class ProfileReader {
     // All 6 properties must be provided to have a valid trc/matrix transform
     if (matrixRed != null && matrixGreen != null && matrixBlue != null && trcRed != null
         && trcGreen != null && trcBlue != null) {
-      CurveTransform linearization = new CurveTransform(Arrays.asList(trcRed, trcGreen, trcBlue));
+      Curves linearization = new Curves(Arrays.asList(trcRed, trcGreen, trcBlue));
       double[] matrix = new double[] {
           matrixRed.getChannel(0), matrixGreen.getChannel(0), matrixBlue.getChannel(0),
           matrixRed.getChannel(1), matrixGreen.getChannel(1), matrixBlue.getChannel(1),
@@ -336,29 +312,29 @@ public class ProfileReader {
       };
 
       // Include channel normalizations
-      return new SequentialTransform(Arrays
+      return new Composition(Arrays
           .asList(header.getASideColorSpace().getNormalizingFunction(), linearization,
-              new ColorMatrix(3, 3, matrix),
+              new Matrix(3, 3, matrix),
               header.getBSideColorSpace().getNormalizingFunction().inverted()));
     }
 
     // See if a gray curve was provided
     Curve trcGray = tags.getTagValue(Tag.GRAY_TRC);
     if (trcGray != null) {
-      List<ColorTransform> stages = new ArrayList<>();
-      stages.add(new CurveTransform(Collections.singletonList(trcGray)));
+      List<Transform> stages = new ArrayList<>();
+      stages.add(new Curves(Collections.singletonList(trcGray)));
       // Scale the gray curve into XYZ space
       GenericColorValue white = getSingleColor(tags, Tag.MEDIA_WHITE_POINT);
       if (white == null) {
         white = header.getIlluminant();
       }
 
-      stages.add(new LuminanceToXYZTransform(white));
+      stages.add(new LuminanceToXYZ(white));
       // Possibly convert from XYZ to LAB
       if (header.getBSideColorSpace() == ColorSpace.CIELAB) {
-        stages.add(new XYZToLabTransform(white));
+        stages.add(new XYZToLab(white));
       }
-      return new SequentialTransform(stages);
+      return new Composition(stages);
     }
 
     // This transform model is not present

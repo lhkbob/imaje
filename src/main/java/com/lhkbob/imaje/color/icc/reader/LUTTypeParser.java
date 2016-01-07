@@ -1,12 +1,12 @@
 package com.lhkbob.imaje.color.icc.reader;
 
 import com.lhkbob.imaje.color.icc.Signature;
-import com.lhkbob.imaje.color.icc.curves.Curve;
-import com.lhkbob.imaje.color.icc.transforms.ColorLookupTable;
-import com.lhkbob.imaje.color.icc.transforms.ColorMatrix;
-import com.lhkbob.imaje.color.icc.transforms.ColorTransform;
-import com.lhkbob.imaje.color.icc.transforms.CurveTransform;
-import com.lhkbob.imaje.color.icc.transforms.SequentialTransform;
+import com.lhkbob.imaje.color.transform.curves.Curve;
+import com.lhkbob.imaje.color.transform.general.LookupTable;
+import com.lhkbob.imaje.color.transform.general.Matrix;
+import com.lhkbob.imaje.color.transform.general.Transform;
+import com.lhkbob.imaje.color.transform.general.Curves;
+import com.lhkbob.imaje.color.transform.general.Composition;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skipToBoundary;
 /**
  *
  */
-public class LUTTypeParser implements TagParser<ColorTransform> {
+public class LUTTypeParser implements TagParser<Transform> {
   public static final Signature A_TO_B_SIGNATURE = Signature.fromName("mAB");
   public static final Signature B_TO_A_SIGNATURE = Signature.fromName("mBA");
   private final boolean reverse;
@@ -51,9 +51,9 @@ public class LUTTypeParser implements TagParser<ColorTransform> {
   }
 
   @Override
-  public ColorTransform parse(Signature tag, Header header, ByteBuffer data) {
+  public Transform parse(Signature tag, Header header, ByteBuffer data) {
     int tagStart = data.position() - 8;
-    List<ColorTransform> transformStages = new ArrayList<>();
+    List<Transform> transformStages = new ArrayList<>();
 
     // Push on a normalizing function for the start space, or if in reverse mode push on
     // the denormalizing function since the stages are reversed at the very end
@@ -133,10 +133,10 @@ public class LUTTypeParser implements TagParser<ColorTransform> {
       // Reorder the AtoB order the code above creates to have the desired BtoA order
       Collections.reverse(transformStages);
     }
-    return new SequentialTransform(transformStages);
+    return new Composition(transformStages);
   }
 
-  private ColorLookupTable readCLUTBlock(
+  private LookupTable readCLUTBlock(
       ByteBuffer data, int start, int inputChannels, int outputChannels) {
     data.position(start);
 
@@ -169,10 +169,10 @@ public class LUTTypeParser implements TagParser<ColorTransform> {
     }
 
     skipToBoundary(data);
-    return new ColorLookupTable(inputChannels, outputChannels, gridSizes, values);
+    return new LookupTable(inputChannels, outputChannels, gridSizes, values);
   }
 
-  private CurveTransform readCurveBlock(
+  private Curves readCurveBlock(
       Signature tag, Header header, ByteBuffer data, int start, int curveCount,
       Map<Integer, Curve> cache, Map<Integer, Integer> sizes) {
     // There are inputChannels count curves stored sequentially as a fully formed tag type
@@ -214,10 +214,10 @@ public class LUTTypeParser implements TagParser<ColorTransform> {
       curves.add(curve);
     }
 
-    return new CurveTransform(curves);
+    return new Curves(curves);
   }
 
-  private ColorMatrix readMatrixBlock(ByteBuffer data, int start) {
+  private Matrix readMatrixBlock(ByteBuffer data, int start) {
     data.position(start);
 
     // The first 9 values are row-major for a 3x3 matrix
@@ -232,6 +232,6 @@ public class LUTTypeParser implements TagParser<ColorTransform> {
     }
     skipToBoundary(data);
 
-    return new ColorMatrix(3, 3, matrix, translation);
+    return new Matrix(3, 3, matrix, translation);
   }
 }

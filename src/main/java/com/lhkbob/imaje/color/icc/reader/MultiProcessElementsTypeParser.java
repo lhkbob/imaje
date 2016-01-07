@@ -1,18 +1,18 @@
 package com.lhkbob.imaje.color.icc.reader;
 
-import com.lhkbob.imaje.color.icc.transforms.ColorLookupTable;
-import com.lhkbob.imaje.color.icc.transforms.ColorMatrix;
-import com.lhkbob.imaje.color.icc.transforms.ColorTransform;
-import com.lhkbob.imaje.color.icc.transforms.CurveTransform;
-import com.lhkbob.imaje.color.icc.transforms.SequentialTransform;
+import com.lhkbob.imaje.color.transform.general.LookupTable;
+import com.lhkbob.imaje.color.transform.general.Matrix;
+import com.lhkbob.imaje.color.transform.general.Transform;
+import com.lhkbob.imaje.color.transform.general.Curves;
+import com.lhkbob.imaje.color.transform.general.Composition;
 import com.lhkbob.imaje.color.icc.Signature;
-import com.lhkbob.imaje.color.icc.curves.Curve;
-import com.lhkbob.imaje.color.icc.curves.DomainWindow;
-import com.lhkbob.imaje.color.icc.curves.ExponentialCurve;
-import com.lhkbob.imaje.color.icc.curves.GammaCurve;
-import com.lhkbob.imaje.color.icc.curves.LogGammaCurve;
-import com.lhkbob.imaje.color.icc.curves.SegmentedCurve;
-import com.lhkbob.imaje.color.icc.curves.UniformlySampledCurve;
+import com.lhkbob.imaje.color.transform.curves.Curve;
+import com.lhkbob.imaje.color.transform.curves.DomainWindow;
+import com.lhkbob.imaje.color.transform.curves.ExponentialCurve;
+import com.lhkbob.imaje.color.transform.curves.GammaCurve;
+import com.lhkbob.imaje.color.transform.curves.LogGammaCurve;
+import com.lhkbob.imaje.color.transform.curves.SegmentedCurve;
+import com.lhkbob.imaje.color.transform.curves.UniformlySampledCurve;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skipToBoundary;
 /**
  *
  */
-public class MultiProcessElementsTypeParser implements TagParser<ColorTransform> {
+public class MultiProcessElementsTypeParser implements TagParser<Transform> {
   public static final Signature SIGNATURE = Signature.fromName("mpet");
 
   @Override
@@ -41,7 +41,7 @@ public class MultiProcessElementsTypeParser implements TagParser<ColorTransform>
   }
 
   @Override
-  public ColorTransform parse(Signature tag, Header header, ByteBuffer data) {
+  public Transform parse(Signature tag, Header header, ByteBuffer data) {
     int tagStart = data.position() - 8;
     int tagLimit = data.limit();
 
@@ -60,17 +60,17 @@ public class MultiProcessElementsTypeParser implements TagParser<ColorTransform>
     }
 
     // The ICC spec says that elements may be shared
-    Map<ICCDataTypeUtil.PositionNumber, ColorTransform> elementCache = new HashMap<>();
+    Map<ICCDataTypeUtil.PositionNumber, Transform> elementCache = new HashMap<>();
     // Note that unlike the LUTx parsers, there is no need to add normalizing functions to the start/end
     // because the elements here except the full range of floats or perform clipping (e.g. CLUT),
     // which is handled already by the individual ColorTransform instances.
-    List<ColorTransform> elements = new ArrayList<>();
+    List<Transform> elements = new ArrayList<>();
 
     // Read all elements based on the table
     int tagEnd = data.position();
     for (int i = 0; i < processElementCount; i++) {
       ICCDataTypeUtil.PositionNumber pos = table[i];
-      ColorTransform t = elementCache.get(pos);
+      Transform t = elementCache.get(pos);
       if (t == null) {
         // Must instead load it
 
@@ -102,10 +102,10 @@ public class MultiProcessElementsTypeParser implements TagParser<ColorTransform>
           "Last process element's output channel count does not match tag");
     }
 
-    return new SequentialTransform(elements);
+    return new Composition(elements);
   }
 
-  private ColorLookupTable readCLUTElement(ByteBuffer data, int inputChannels, int outputChannels) {
+  private LookupTable readCLUTElement(ByteBuffer data, int inputChannels, int outputChannels) {
     // Read in the number of points along each input dimension for the CLUT and calculate the
     // total size of the table based on these dimension sizes.
     int clutSize = outputChannels;
@@ -124,7 +124,7 @@ public class MultiProcessElementsTypeParser implements TagParser<ColorTransform>
 
     skipToBoundary(data);
 
-    return new ColorLookupTable(inputChannels, outputChannels, gridSizes, values);
+    return new LookupTable(inputChannels, outputChannels, gridSizes, values);
   }
 
   private Curve readCurveSegments(ByteBuffer data, int start, ICCDataTypeUtil.PositionNumber pos) {
@@ -188,7 +188,7 @@ public class MultiProcessElementsTypeParser implements TagParser<ColorTransform>
     }
   }
 
-  private CurveTransform readCurveSetElement(
+  private Curves readCurveSetElement(
       ByteBuffer data, int inputChannels, int outputChannels) {
     if (inputChannels != outputChannels) {
       throw new IllegalStateException(
@@ -219,10 +219,10 @@ public class MultiProcessElementsTypeParser implements TagParser<ColorTransform>
     }
 
     skipToBoundary(data);
-    return new CurveTransform(curves);
+    return new Curves(curves);
   }
 
-  private ColorTransform readExpansionElement(ByteBuffer data) {
+  private Transform readExpansionElement(ByteBuffer data) {
     Signature sig = nextSignature(data);
     skipToBoundary(data);
     return EXPANSION_ELEMENT;
@@ -270,7 +270,7 @@ public class MultiProcessElementsTypeParser implements TagParser<ColorTransform>
     return values;
   }
 
-  private ColorMatrix readMatrixElement(ByteBuffer data, int inputChannels, int outputChannels) {
+  private Matrix readMatrixElement(ByteBuffer data, int inputChannels, int outputChannels) {
     double[] matrix = new double[inputChannels * outputChannels];
     double[] translation = new double[outputChannels];
 
@@ -284,10 +284,10 @@ public class MultiProcessElementsTypeParser implements TagParser<ColorTransform>
     }
     skipToBoundary(data);
 
-    return new ColorMatrix(outputChannels, inputChannels, matrix, translation);
+    return new Matrix(outputChannels, inputChannels, matrix, translation);
   }
 
-  private ColorTransform readProcessElement(
+  private Transform readProcessElement(
       Header header, ByteBuffer data, int start, ICCDataTypeUtil.PositionNumber element) {
     element.configureBuffer(data, start);
     Signature signature = nextSignature(data);
@@ -338,7 +338,7 @@ public class MultiProcessElementsTypeParser implements TagParser<ColorTransform>
   private static final Signature CURVE_SIGNATURE = Signature.fromName("cvst");
   private static final Signature EACS_SIGNATURE = Signature.fromName("eACS");
   // Dummy object returned by readExpansionElement
-  private static final ColorTransform EXPANSION_ELEMENT = new ColorTransform() {
+  private static final Transform EXPANSION_ELEMENT = new Transform() {
     @Override
     public int getInputChannels() {
       return 0;
@@ -350,7 +350,7 @@ public class MultiProcessElementsTypeParser implements TagParser<ColorTransform>
     }
 
     @Override
-    public ColorTransform inverted() {
+    public Transform inverted() {
       return null;
     }
 

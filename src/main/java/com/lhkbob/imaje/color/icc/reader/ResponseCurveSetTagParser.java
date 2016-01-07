@@ -4,7 +4,7 @@ import com.lhkbob.imaje.color.icc.GenericColorValue;
 import com.lhkbob.imaje.color.icc.MeasurementUnit;
 import com.lhkbob.imaje.color.icc.ResponseCurveSet;
 import com.lhkbob.imaje.color.icc.Signature;
-import com.lhkbob.imaje.color.icc.curves.SampledCurve;
+import com.lhkbob.imaje.color.transform.curves.SampledCurve;
 
 import java.nio.ByteBuffer;
 
