@@ -3,6 +3,7 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
+@Channels({"X", "Y", "Z"})
 public class XYZ implements Color {
   private double x;
   private double y;
@@ -25,7 +26,7 @@ public class XYZ implements Color {
 
   @Override
   public double get(int channel) {
-    switch(channel) {
+    switch (channel) {
     case 0:
       return x;
     case 1:
@@ -61,27 +62,27 @@ public class XYZ implements Color {
   }
 
   public double x() {
-    return getX();
+    return x;
   }
 
   public void x(double x) {
-    setX(x);
+    this.x = x;
   }
 
   public double y() {
-    return getY();
+    return y;
   }
 
   public void y(double y) {
-    setY(y);
+    this.y = y;
   }
 
   public double z() {
-    return getZ();
+    return z;
   }
 
   public void z(double z) {
-    setZ(z);
+    this.z = z;
   }
 
   public double getX() {
@@ -106,5 +107,31 @@ public class XYZ implements Color {
 
   public void setZ(double z) {
     this.z = z;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Double.hashCode(x);
+    result = 31 * result + Double.hashCode(y);
+    result = 31 * result + Double.hashCode(z);
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (o == null || o.getClass() != getClass()) {
+      return false;
+    }
+    XYZ c = (XYZ) o;
+    return Double.compare(c.x, x) == 0 && Double.compare(c.y, y) == 0
+        && Double.compare(c.z, z) == 0;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%s(%.3f, %.3f, %.3f)", getClass().getSimpleName(), x, y, z);
   }
 }
