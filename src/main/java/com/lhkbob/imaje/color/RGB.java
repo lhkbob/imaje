@@ -176,6 +176,7 @@ public class RGB implements Color {
     }
   }
 
+  @Gamma(gamma = 1.801)
   @Illuminant(type = Illuminant.Type.D65)
   @Primaries(red = @Chromaticity(x = 0.625, y = 0.34),
       green = @Chromaticity(x = 0.28, y = 0.595),
@@ -334,7 +335,7 @@ public class RGB implements Color {
     }
   }
 
-  @Gamma(gamma = 1.801, d = 0.002, e = 0.062)
+  @Gamma(gamma = 1.8, d = 0.002, e = 0.062)
   @Illuminant(type = Illuminant.Type.D50)
   @Primaries(red = @Chromaticity(x = 0.7347, y = 0.2653),
       green = @Chromaticity(x = 0.1596, y = 0.8404),
