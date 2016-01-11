@@ -6,9 +6,10 @@ import com.lhkbob.imaje.data.DoubleSource;
 import java.util.LinkedHashMap;
 
 /**
- *
+ * FIXME this is valid for 32-bit linear depths, but for the normalized depths they
+ * are frequently stored in 24-bit precision; perhaps that just demands a custom data source?
  */
-public class DepthAdapter implements PixelAdapter<Depth> {
+public class DepthAdapter<T extends Depth> implements PixelAdapter<T> {
   private final DoubleSource d;
 
   public DepthAdapter(DoubleSource d) {
@@ -16,12 +17,12 @@ public class DepthAdapter implements PixelAdapter<Depth> {
   }
 
   @Override
-  public void get(long pixelIndex, Depth result) {
+  public void get(long pixelIndex, T result) {
     result.z(d.get(pixelIndex));
   }
 
   @Override
-  public void set(long pixelIndex, Depth value) {
+  public void set(long pixelIndex, T value) {
     d.set(pixelIndex, value.z());
   }
 

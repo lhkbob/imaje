@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 /**
  *
  */
-public class DepthStencilAdapter implements PixelAdapter<DepthStencil> {
+public class DepthStencilAdapter<T extends DepthStencil> implements PixelAdapter<T> {
   private final DoubleSource d;
   private final IntSource s;
 
@@ -20,13 +20,13 @@ public class DepthStencilAdapter implements PixelAdapter<DepthStencil> {
   }
 
   @Override
-  public void get(long pixelIndex, DepthStencil result) {
+  public void get(long pixelIndex, T result) {
     result.z(d.get(pixelIndex));
     result.stencil(s.get(pixelIndex));
   }
 
   @Override
-  public void set(long pixelIndex, DepthStencil value) {
+  public void set(long pixelIndex,T value) {
     d.set(pixelIndex, value.z());
     s.set(pixelIndex, value.stencil());
   }
