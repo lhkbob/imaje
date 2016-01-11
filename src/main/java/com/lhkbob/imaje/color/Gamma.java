@@ -12,8 +12,18 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface Chromaticity {
-  double x();
+public @interface Gamma {
+  double gamma();
 
-  double y();
+  double a() default 1.0;
+
+  double b() default 0.0;
+
+  double c() default 0.0;
+
+  double d() default 0.0;
+
+  double e() default 1.0;
+
+  double f() default 0.0;
 }

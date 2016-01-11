@@ -12,6 +12,10 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface Chromaticities {
-  Chromaticity[] value();
+public @interface Primaries {
+  Chromaticity red();
+
+  Chromaticity green();
+
+  Chromaticity blue();
 }
