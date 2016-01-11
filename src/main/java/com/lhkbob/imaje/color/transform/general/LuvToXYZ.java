@@ -2,8 +2,8 @@ package com.lhkbob.imaje.color.transform.general;
 
 import com.lhkbob.imaje.color.XYZ;
 
-import static com.lhkbob.imaje.color.transform.general.LabToXYZ.L_SCALE;
-import static com.lhkbob.imaje.color.transform.general.LabToXYZ.inverseF;
+import static com.lhkbob.imaje.color.transform.general.CIELabToXYZ.L_SCALE;
+import static com.lhkbob.imaje.color.transform.general.CIELabToXYZ.inverseF;
 
 /**
  *

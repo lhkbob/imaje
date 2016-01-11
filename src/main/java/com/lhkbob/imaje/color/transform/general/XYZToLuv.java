@@ -2,7 +2,7 @@ package com.lhkbob.imaje.color.transform.general;
 
 import com.lhkbob.imaje.color.XYZ;
 
-import static com.lhkbob.imaje.color.transform.general.XYZToLab.f;
+import static com.lhkbob.imaje.color.transform.general.XYZToCIELab.f;
 
 /**
  *

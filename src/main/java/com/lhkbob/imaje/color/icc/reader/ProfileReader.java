@@ -21,7 +21,7 @@ import com.lhkbob.imaje.color.transform.general.Curves;
 import com.lhkbob.imaje.color.transform.general.LuminanceToXYZ;
 import com.lhkbob.imaje.color.transform.general.Matrix;
 import com.lhkbob.imaje.color.transform.general.Transform;
-import com.lhkbob.imaje.color.transform.general.XYZToLab;
+import com.lhkbob.imaje.color.transform.general.XYZToCIELab;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -337,7 +337,7 @@ public final class ProfileReader {
       stages.add(new LuminanceToXYZ(whiteXYZ));
       // Possibly convert from XYZ to LAB
       if (header.getBSideColorSpace() == ColorSpace.CIELAB) {
-        stages.add(new XYZToLab(whiteXYZ));
+        stages.add(new XYZToCIELab(whiteXYZ));
       }
       return new Composition(stages);
     }

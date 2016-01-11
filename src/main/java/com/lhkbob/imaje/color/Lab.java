@@ -4,7 +4,7 @@ package com.lhkbob.imaje.color;
  *
  */
 @Channels({"L*", "a*", "b*"})
-public class Lab implements Color {
+public abstract class Lab implements Color {
   private double l;
   private double a;
   private double b;
@@ -132,50 +132,18 @@ public class Lab implements Color {
     return String.format("%s(%.3f, %.3f, %.3f)", getClass().getSimpleName(), l, a, b);
   }
 
-  // TODO Add annotations that describe the differences between these LAB spaces
-
-  public static class CIE1976 extends Lab {
-    public CIE1976() {
+  public static class CIE extends Lab {
+    public CIE() {
 
     }
 
-    public CIE1976(double l, double a, double b) {
+    public CIE(double l, double a, double b) {
       super(l, a, b);
     }
 
     @Override
-    public CIE1976 clone() {
-      return (CIE1976) super.clone();
-    }
-  }
-
-  public static class CIE1994 extends Lab {
-    public CIE1994() {
-
-    }
-
-    public CIE1994(double l, double a, double b) {
-      super(l, a, b);
-    }
-
-    @Override
-    public CIE1994 clone() {
-      return (CIE1994) super.clone();
-    }
-  }
-
-  public static class CIE2000 extends Lab {
-    public CIE2000() {
-
-    }
-
-    public CIE2000(double l, double a, double b) {
-      super(l, a, b);
-    }
-
-    @Override
-    public CIE2000 clone() {
-      return (CIE2000) super.clone();
+    public CIE clone() {
+      return (CIE) super.clone();
     }
   }
 

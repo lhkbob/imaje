@@ -5,14 +5,14 @@ import com.lhkbob.imaje.color.XYZ;
 /**
  *
  */
-public class XYZToLab implements Transform {
+public class XYZToCIELab implements Transform {
   static final double LINEAR_THRESHOLD = Math.pow(6.0 / 29.0, 3.0); // ~0.009
   static final double LINEAR_SLOPE = Math.pow(29.0 / 6.0, 2.0) / 3.0; // ~7.787
   static final double LINEAR_OFFSET = 4.0 / 29.0; // ~0.138
 
   private final XYZ referenceWhitepoint;
 
-  public XYZToLab(XYZ referenceWhitepoint) {
+  public XYZToCIELab(XYZ referenceWhitepoint) {
     this.referenceWhitepoint = referenceWhitepoint.clone();
   }
 
@@ -27,8 +27,8 @@ public class XYZToLab implements Transform {
   }
 
   @Override
-  public LabToXYZ inverted() {
-    return new LabToXYZ(referenceWhitepoint);
+  public CIELabToXYZ inverted() {
+    return new CIELabToXYZ(referenceWhitepoint);
   }
 
   @Override
@@ -45,7 +45,7 @@ public class XYZToLab implements Transform {
   }
 
   @Override
-  public XYZToLab getLocallySafeInstance() {
+  public XYZToCIELab getLocallySafeInstance() {
     // This is purely functional (with constant parameters) so the instance can be used by any thread
     return this;
   }
@@ -68,14 +68,14 @@ public class XYZToLab implements Transform {
     if (o == this) {
       return true;
     }
-    if (!(o instanceof XYZToLab)) {
+    if (!(o instanceof XYZToCIELab)) {
       return false;
     }
-    return ((XYZToLab) o).referenceWhitepoint.equals(referenceWhitepoint);
+    return ((XYZToCIELab) o).referenceWhitepoint.equals(referenceWhitepoint);
   }
 
   @Override
   public String toString() {
-    return String.format("XYZ -> L*a*b* Transform (whitepoint: %s)", referenceWhitepoint);
+    return String.format("XYZ -> CIELAB Transform (whitepoint: %s)", referenceWhitepoint);
   }
 }
