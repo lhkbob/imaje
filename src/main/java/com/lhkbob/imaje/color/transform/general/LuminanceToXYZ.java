@@ -37,6 +37,12 @@ public class LuminanceToXYZ implements Transform {
   }
 
   @Override
+  public LuminanceToXYZ getLocallySafeInstance() {
+    // This is purely functional (with constant parameters) so the instance can be used by any thread
+    return this;
+  }
+
+  @Override
   public int hashCode() {
     return whitepoint.hashCode();
   }

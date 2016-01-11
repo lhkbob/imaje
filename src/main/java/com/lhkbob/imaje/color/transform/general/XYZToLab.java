@@ -44,6 +44,12 @@ public class XYZToLab implements Transform {
     output[2] = 200 * (fy - fz); // b*
   }
 
+  @Override
+  public XYZToLab getLocallySafeInstance() {
+    // This is purely functional (with constant parameters) so the instance can be used by any thread
+    return this;
+  }
+
   static double f(double r) {
     if (r > LINEAR_THRESHOLD) {
       return Math.cbrt(r);

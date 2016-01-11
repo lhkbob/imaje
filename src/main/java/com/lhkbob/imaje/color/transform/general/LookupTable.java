@@ -61,6 +61,20 @@ public class LookupTable implements Transform {
     axisAlphas = new double[inputChannels];
   }
 
+  private LookupTable(LookupTable toClone) {
+    // Read-only data that was calculated at construction time
+    gridOffsets = toClone.gridOffsets;
+    gridSizes = toClone.gridSizes;
+    hyperCubeOffsets = toClone.hyperCubeOffsets;
+    inputChannels = toClone.inputChannels;
+    outputChannels = toClone.outputChannels;
+    values = toClone.values;
+
+    // Working storage during transform
+    axisAlphas = new double[toClone.axisAlphas.length];
+    weights = new double[toClone.weights.length];
+  }
+
   @Override
   public int hashCode() {
     return System.identityHashCode(this);
@@ -146,6 +160,14 @@ public class LookupTable implements Transform {
         output[o] += w * values[d + o];
       }
     }
+  }
+
+  @Override
+  public Transform getLocallySafeInstance() {
+    // The majority of a lookup-table's data is constant, except for two working arrays. Use this
+    // private constructor to share data references where possible and allocate new safe member
+    // instances for the working arrays.
+    return new LookupTable(this);
   }
 
   private static int[] createSimpleSizes(int inputChannels, int gridSize) {

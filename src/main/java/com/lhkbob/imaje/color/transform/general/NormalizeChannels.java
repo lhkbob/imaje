@@ -52,6 +52,12 @@ public class NormalizeChannels implements Transform {
   }
 
   @Override
+  public NormalizeChannels getLocallySafeInstance() {
+    // This is purely functional (with constant parameters) so the instance can be used by any thread
+    return this;
+  }
+
+  @Override
   public int hashCode() {
     int result = 17;
     result = 31 * result + Arrays.hashCode(channelMaxs);
@@ -112,6 +118,12 @@ public class NormalizeChannels implements Transform {
     public int hashCode() {
       return DenormalizeChannelTransform.class.hashCode() ^ NormalizeChannels.this
           .hashCode();
+    }
+
+    @Override
+    public DenormalizeChannelTransform getLocallySafeInstance() {
+      // This is purely functional so the instance can be used by any thread
+      return this;
     }
 
     private NormalizeChannels getParent() {

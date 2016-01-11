@@ -32,6 +32,12 @@ public class YyxToXYZ implements Transform {
   }
 
   @Override
+  public YyxToXYZ getLocallySafeInstance() {
+    // This is purely functional so the instance can be used by any thread
+    return this;
+  }
+
+  @Override
   public int hashCode() {
     return YyxToXYZ.class.hashCode();
   }

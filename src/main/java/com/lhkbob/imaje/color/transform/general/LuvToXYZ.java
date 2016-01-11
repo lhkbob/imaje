@@ -52,6 +52,12 @@ public class LuvToXYZ implements Transform {
   }
 
   @Override
+  public LuvToXYZ getLocallySafeInstance() {
+    // This is purely functional (with constant parameters) so the instance can be used by any thread
+    return this;
+  }
+
+  @Override
   public int hashCode() {
     return referenceWhitepoint.hashCode();
   }

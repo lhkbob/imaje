@@ -46,4 +46,10 @@ public class XYZToYyx implements Transform {
   public String toString() {
     return "XYZ -> Yyx Transform";
   }
+
+  @Override
+  public XYZToYyx getLocallySafeInstance() {
+    // This is purely functional so the instance can be used by any thread
+    return this;
+  }
 }

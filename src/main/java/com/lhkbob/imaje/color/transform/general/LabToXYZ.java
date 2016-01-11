@@ -48,6 +48,12 @@ public class LabToXYZ implements Transform {
     output[2] = referenceWhitepoint.z() * inverseF(lp - B_SCALE * input[2]);
   }
 
+  @Override
+  public LabToXYZ getLocallySafeInstance() {
+    // This is purely functional (with constant parameters) so the instance can be used by any thread
+    return this;
+  }
+
   static double inverseF(double t) {
     if (t > LINEAR_THRESHOLD) {
       return t * t * t;

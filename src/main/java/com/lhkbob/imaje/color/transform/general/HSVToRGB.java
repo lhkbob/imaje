@@ -22,6 +22,13 @@ public class HSVToRGB extends AbstractHueToRGBTransform {
   }
 
   @Override
+  public HSVToRGB getLocallySafeInstance() {
+    // HSVToRGB uses a member variable for work during the transform() call so a new instance
+    // must be created for it to be used safely.
+    return new HSVToRGB();
+  }
+
+  @Override
   public int hashCode() {
     return HSVToRGB.class.hashCode();
   }

@@ -3,6 +3,7 @@ package com.lhkbob.imaje.color.transform.general;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -64,6 +65,14 @@ public class Composition implements Transform {
       transforms.get(i).transform(in, out);
       in = out;
     }
+  }
+
+  @Override
+  public Transform getLocallySafeInstance() {
+    // A composition's locally safe instance is locally safe instances of its composed functions
+    // and new working arrays.
+    return new Composition(
+        transforms.stream().map(Transform::getLocallySafeInstance).collect(Collectors.toList()));
   }
 
   @Override

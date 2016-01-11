@@ -35,6 +35,13 @@ public class RGBToHLS extends AbstractRGBToHueTransform {
   }
 
   @Override
+  public RGBToHLS getLocallySafeInstance() {
+    // This reuses the output array as a work array (unlike its partner HLSToRGB, which requires a
+    // new instance to be locally safe)
+    return this;
+  }
+
+  @Override
   public int hashCode() {
     return RGBToHLS.class.hashCode();
   }

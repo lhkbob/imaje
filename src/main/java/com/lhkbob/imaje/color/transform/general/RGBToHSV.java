@@ -35,6 +35,13 @@ public class RGBToHSV extends AbstractRGBToHueTransform {
   }
 
   @Override
+  public RGBToHSV getLocallySafeInstance() {
+    // This reuses the output array as a work array (unlike its partner HSVToRGB, which requires a
+    // new instance to be locally safe)
+    return this;
+  }
+
+  @Override
   public int hashCode() {
     return RGBToHSV.class.hashCode();
   }

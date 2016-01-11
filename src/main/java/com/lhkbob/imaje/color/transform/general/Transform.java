@@ -12,6 +12,8 @@ public interface Transform {
 
   void transform(double[] input, double[] output);
 
+  Transform getLocallySafeInstance();
+
   static void validateDimensions(Transform t, double[] input, double[] output) {
     if (input.length != t.getInputChannels()) {
       throw new IllegalArgumentException(

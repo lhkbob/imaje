@@ -1,68 +1,68 @@
 package com.lhkbob.imaje.color.transform.general;
 
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
+
 import java.util.Arrays;
 
 /**
- *
  */
 public class Matrix implements Transform {
   public static final Matrix IDENTITY_3X3 = new Matrix(
-      3, 3, new double[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 });
-  private final double[] matrix; // row major
-  private final int numColumns;
-  private final int numRows;
-  private final double[] translation;
+      new DenseMatrix64F(3, 3, true, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0), false);
 
-  public Matrix(int numRows, int numColumns, double[] matrix) {
-    this(numRows, numColumns, matrix, new double[numRows]);
+  private final DenseMatrix64F matrix;
+  private final boolean isAffine;
+  private final DenseMatrix64F input;
+  private final DenseMatrix64F output;
+
+  public Matrix(int numRows, int numCols, double[] matrix) {
+    this(makeMatrix(numRows, numCols, matrix, null), false, true);
   }
 
-  public Matrix(int numRows, int numColumns, double[] matrix, double[] translation) {
-    if (numRows < 1) {
-      throw new IllegalArgumentException("Number of rows must be at least 1, not: " + numRows);
-    }
-    if (numColumns < 1) {
-      throw new IllegalArgumentException(
-          "Number of columns must be at least 1, not: " + numColumns);
-    }
-    if (matrix.length != numRows * numColumns) {
-      throw new IllegalArgumentException(
-          "Matrix array must be of length " + (numRows * numColumns) + ", but was "
-              + matrix.length);
-    }
-    if (translation.length != numRows) {
-      throw new IllegalArgumentException(
-          "Translation vector must be of length " + numRows + ", but was " + translation.length);
-    }
-
-    this.numColumns = numColumns;
-    this.numRows = numRows;
-    this.matrix = Arrays.copyOf(matrix, matrix.length);
-    this.translation = Arrays.copyOf(translation, translation.length);
+  public Matrix(int numRows, int numCols, double[] matrix, double[] translation) {
+    this(makeMatrix(numRows, numCols, matrix, translation), true, true);
   }
 
-  private Matrix(int numRows, int numColumns) {
-    this.numRows = numRows;
-    this.numColumns = numColumns;
-    this.matrix = new double[numRows * numColumns];
-    this.translation = new double[numRows];
-  }
-
-  private double get(int i, int j) {
-    if (j == numColumns) {
-      return translation[i];
+  private static DenseMatrix64F makeMatrix(
+      int numRows, int numCols, double[] matrix, double[] translation) {
+    if (translation == null) {
+      // Assume that the data is a plain row-major matrix
+      return new DenseMatrix64F(numRows, numCols, true, matrix);
     } else {
-      return matrix[i * numColumns + j];
+      // Assume that the matrix value is numRows x numCols but then add a row and column to
+      // make it affine by adding [translation, 1.0] as a column and all 0s in the new last row (besides the 1)
+      DenseMatrix64F m = new DenseMatrix64F(numRows + 1, numCols + 1);
+      m.set(numRows, numCols, 1.0);
+      for (int i = 0; i < numRows; i++) {
+        m.set(i, numCols, translation[i]);
+        for (int j = 0; j < numCols; j++) {
+          m.set(i, j, matrix[i * numCols + j]);
+        }
+      }
+
+      return m;
     }
+  }
+
+  public Matrix(DenseMatrix64F matrix, boolean isAffine) {
+    this(matrix, isAffine, false);
+  }
+
+  private Matrix(DenseMatrix64F matrix, boolean isAffine, boolean ownMatrix) {
+    this.matrix = (ownMatrix ? matrix : matrix.copy());
+    this.isAffine = isAffine;
+    input = new DenseMatrix64F(matrix.getNumCols(), 1);
+    output = new DenseMatrix64F(1, matrix.getNumRows());
   }
 
   @Override
   public int hashCode() {
     int result = 17;
-    result = 31 * result + Arrays.hashCode(matrix);
-    result = 31 * result + Arrays.hashCode(translation);
-    result = 31 * result + numRows;
-    result = 31 * result + numColumns;
+    result = 31 * result + Arrays.hashCode(matrix.data);
+    result = 31 * result + matrix.numCols;
+    result = 31 * result + matrix.numRows;
+    result = 31 * result + Boolean.hashCode(isAffine);
     return result;
   }
 
@@ -75,42 +75,39 @@ public class Matrix implements Transform {
       return false;
     }
     Matrix c = (Matrix) o;
-    return c.numColumns == numColumns && c.numRows == numRows && Arrays
-        .equals(c.translation, translation) && Arrays.equals(c.matrix, matrix);
+    return c.matrix.numCols == matrix.numCols && c.matrix.numRows == matrix.numRows
+        && c.isAffine == isAffine && Arrays.equals(c.matrix.data, matrix.data);
   }
 
   @Override
   public String toString() {
-    boolean hasTranslation = false;
-    for (int i = 0; i < translation.length; i++) {
-      if (translation[i] != 0.0) {
-        hasTranslation = true;
-      }
-    }
-
-    StringBuilder sb = new StringBuilder("Color Matrix (").append(numRows).append(" x ")
-        .append(numColumns).append("):\n");
+    StringBuilder sb = new StringBuilder("Color Matrix (").append(matrix.numRows).append(" x ")
+        .append(matrix.numCols).append("):\n");
     sb.append("  matrix: [");
-    for (int i = 0; i < numRows; i++) {
+
+    int matRows = (isAffine ? matrix.numRows - 1 : matrix.numRows);
+    int matCols = (isAffine ? matrix.numCols - 1 : matrix.numCols);
+
+    for (int i = 0; i < matRows; i++) {
       if (i > 0) {
-        sb.append("\n           "); // padding for alignment
+        sb.append(",\n           "); // padding for alignment
       }
-      for (int j = 0; j < numColumns; j++) {
+      for (int j = 0; j < matCols; j++) {
         if (j > 0) {
           sb.append(", ");
         }
-        sb.append(String.format("%.3f", matrix[i * numColumns + j]));
+        sb.append(String.format("%.3f", matrix.get(i, j)));
       }
     }
     sb.append("]");
 
-    if (hasTranslation) {
+    if (isAffine) {
       sb.append("\n  with offset: [");
-      for (int i = 0; i < numColumns; i++) {
+      for (int i = 0; i < matCols; i++) {
         if (i > 0) {
           sb.append(", ");
         }
-        sb.append(String.format("%.3f", translation[i]));
+        sb.append(String.format("%.3f", matrix.get(matRows, i)));
       }
       sb.append("]");
     }
@@ -120,78 +117,44 @@ public class Matrix implements Transform {
 
   @Override
   public int getInputChannels() {
-    return numColumns;
+    return isAffine ? matrix.numCols - 1 : matrix.numCols;
   }
 
   @Override
   public int getOutputChannels() {
-    return numRows;
+    return isAffine ? matrix.numRows - 1 : matrix.numRows;
   }
 
   @Override
   public Transform inverted() {
-    // To avoid importing a general matrix library for this single function, only a 3x3 matrix
-    // inversion is implemented since it can be coded explicitly. Lastly, the vast majority of
-    // color matrix use in an ICC profile is tied to the XYZ color space so should be a 3x3.
-    //
-    // If the matrix comes from one of the newer multiprocess element transforms, then it's likely
-    // the profile builder provided an inverse transform tag as well.
-    if (numColumns != 3 || numRows != 3) {
-      return null;
+    DenseMatrix64F inv = new DenseMatrix64F(matrix.numCols, matrix.numRows);
+
+    if (matrix.numRows != matrix.numCols || !CommonOps.invert(matrix, inv)) {
+      // Calculate a pseudo-inverse instead of failing completely
+      CommonOps.pinv(matrix, inv);
     }
-    // If the translation part of the transform is non-zero the matrix is technically not
-    // 3x3 anymore and can't be inverted with this code
-    for (int i = 0; i < numRows; i++) {
-      if (Math.abs(translation[i]) > 1e-8) {
-        return null;
-      }
-    }
-
-    return invert3x3();
-  }
-
-  private double det3x3() {
-    double t1 = get(1, 1) * get(2, 2) - get(1, 2) * get(2, 1);
-    double t2 = get(1, 0) * get(2, 2) - get(1, 2) * get(2, 0);
-    double t3 = get(1, 0) * get(2, 1) - get(1, 1) * get(2, 0);
-    return get(0, 0) * t1 - get(0, 1) * t2 + get(0, 2) * t3;
-  }
-
-  private Matrix invert3x3() {
-    double invDet = det3x3(); // not inverted yet
-    if (Math.abs(invDet) < 1e-8) {
-      return null; // singular matrix can't be inverted
-    }
-    invDet = 1 / invDet;
-
-    // Fill in the matrix values in place, which is fine since the object hasn't been published yet
-    Matrix m = new Matrix(3, 3);
-
-    m.matrix[0] = invDet * (get(2, 2) * get(1, 1) - get(2, 1) * get(1, 2));
-    m.matrix[1] = invDet * (get(2, 1) * get(0, 2) - get(2, 2) * get(0, 1));
-    m.matrix[2] = invDet * (get(1, 2) * get(0, 1) - get(1, 1) * get(0, 2));
-
-    m.matrix[3] = invDet * (get(2, 0) * get(1, 2) - get(2, 2) * get(1, 0));
-    m.matrix[4] = invDet * (get(2, 2) * get(0, 0) - get(2, 0) * get(0, 2));
-    m.matrix[5] = invDet * (get(1, 0) * get(0, 2) - get(1, 2) * get(0, 0));
-
-    m.matrix[6] = invDet * (get(2, 1) * get(1, 0) - get(2, 0) * get(1, 1));
-    m.matrix[7] = invDet * (get(2, 0) * get(0, 1) - get(2, 1) * get(0, 0));
-    m.matrix[8] = invDet * (get(1, 1) * get(0, 0) - get(1, 0) * get(0, 1));
-
-    return m;
+    return new Matrix(inv, isAffine, true);
   }
 
   @Override
   public void transform(double[] input, double[] output) {
     Transform.validateDimensions(this, input, output);
 
-    for (int i = 0; i < numRows; i++) {
-      int offset = i * numColumns;
-      output[i] = translation[i];
-      for (int j = 0; j < numColumns; j++) {
-        output[i] += matrix[offset + j] * input[j];
-      }
+    // input will be length of input matrix, or 1 less
+    System.arraycopy(input, 0, this.input.data, 0, input.length);
+    if (isAffine) {
+      // Make sure last value in input matrix is 1.0 (when affine, input.length == this.input.numCols - 1)
+      this.input.set(input.length, 1.0);
     }
+    CommonOps.mult(matrix, this.input, this.output);
+
+    // output will be length output matrix, or 1 less (and we ignore the additional homogenous coord)
+    System.arraycopy(this.output.data, 0, output, 0, output.length);
+  }
+
+  @Override
+  public Matrix getLocallySafeInstance() {
+    // Input/output matrices cannot be shared by threads
+    return new Matrix(matrix, isAffine, true);
   }
 }

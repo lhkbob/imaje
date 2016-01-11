@@ -50,6 +50,13 @@ public class Curves implements Transform {
   }
 
   @Override
+  public Curves getLocallySafeInstance() {
+    // This is purely functional (curve list is constant, and a curve is meant to be a constant
+    // thread-safe function) so the instance can be used by any thread
+    return this;
+  }
+
+  @Override
   public int hashCode() {
     return curves.hashCode();
   }

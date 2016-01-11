@@ -43,6 +43,12 @@ public class XYZToLuv implements Transform {
     output[2] = 13.0 * output[0] * (vp - vWhite); // v*
   }
 
+  @Override
+  public XYZToLuv getLocallySafeInstance() {
+    // This is purely functional (with constant parameters) so the instance can be used by any thread
+    return this;
+  }
+
   static double uPrime(double x, double y, double z) {
     return 4.0 * x / (x + 15.0 * y + 3.0 * z);
   }
