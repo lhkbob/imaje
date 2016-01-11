@@ -3,6 +3,7 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
+@Channels({"Y", "x", "y"})
 public class Yyx implements Color {
   private double x;
   private double y;
