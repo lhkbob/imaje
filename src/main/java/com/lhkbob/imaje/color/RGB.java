@@ -4,7 +4,7 @@ package com.lhkbob.imaje.color;
  *
  */
 @Channels({ "Red", "Green", "Blue" })
-public abstract class RGB implements Color {
+public class RGB implements Color {
   private double r;
   private double g;
   private double b;
