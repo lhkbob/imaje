@@ -13,17 +13,17 @@ import org.ejml.data.FixedMatrix3x3_64F;
  */
 public class XYZToRGB implements Transform {
   private final FixedMatrix3x3_64F xyzToLinearRGB;
-  private final Curve gammaCurve;
+  private final Curve invGammaCurve;
   private final FixedMatrix3_64F workIn;
   private final FixedMatrix3_64F workOut;
 
-  public XYZToRGB(FixedMatrix3x3_64F xyzToLinearRGB, Curve gammaCurve) {
-    this(xyzToLinearRGB, gammaCurve, false);
+  public XYZToRGB(FixedMatrix3x3_64F xyzToLinearRGB, Curve invGammaCurve) {
+    this(xyzToLinearRGB, invGammaCurve, false);
   }
 
-  XYZToRGB(FixedMatrix3x3_64F xyzToLinearRGB, Curve gammaCurve, boolean ownMatrix) {
+  XYZToRGB(FixedMatrix3x3_64F xyzToLinearRGB, Curve invGammaCurve, boolean ownMatrix) {
     this.xyzToLinearRGB = (ownMatrix ? xyzToLinearRGB : xyzToLinearRGB.copy());
-    this.gammaCurve = gammaCurve;
+    this.invGammaCurve = invGammaCurve;
     workIn = new FixedMatrix3_64F();
     workOut = new FixedMatrix3_64F();
   }
@@ -49,7 +49,7 @@ public class XYZToRGB implements Transform {
 
   @Override
   public RGBToXYZ inverted() {
-    Curve invGammaCurve = (gammaCurve == null ? null : gammaCurve.inverted());
+    Curve invGammaCurve = (this.invGammaCurve == null ? null : this.invGammaCurve.inverted());
     FixedMatrix3x3_64F linearRGBToXYZ = new FixedMatrix3x3_64F();
     FixedOps3.invert(xyzToLinearRGB, linearRGBToXYZ);
     return new RGBToXYZ(linearRGBToXYZ, invGammaCurve, true);
@@ -66,10 +66,10 @@ public class XYZToRGB implements Transform {
     FixedOps3.mult(xyzToLinearRGB, workIn, workOut);
 
     // Apply gamma correction
-    if (gammaCurve != null) {
-      output[0] = gammaCurve.evaluate(clampToCurveDomain(workOut.a1));
-      output[1] = gammaCurve.evaluate(clampToCurveDomain(workOut.a2));
-      output[2] = gammaCurve.evaluate(clampToCurveDomain(workOut.a3));
+    if (invGammaCurve != null) {
+      output[0] = invGammaCurve.evaluate(clampToCurveDomain(workOut.a1));
+      output[1] = invGammaCurve.evaluate(clampToCurveDomain(workOut.a2));
+      output[2] = invGammaCurve.evaluate(clampToCurveDomain(workOut.a3));
     } else {
       output[0] = workOut.a1;
       output[1] = workOut.a2;
@@ -78,13 +78,13 @@ public class XYZToRGB implements Transform {
   }
 
   private double clampToCurveDomain(double c) {
-    // Only called when gammaCurve is not null
-    return Math.max(gammaCurve.getDomainMin(), Math.min(c, gammaCurve.getDomainMax()));
+    // Only called when invGammaCurve is not null
+    return Math.max(invGammaCurve.getDomainMin(), Math.min(c, invGammaCurve.getDomainMax()));
   }
 
   @Override
   public XYZToRGB getLocallySafeInstance() {
-    return new XYZToRGB(xyzToLinearRGB, gammaCurve, true);
+    return new XYZToRGB(xyzToLinearRGB, invGammaCurve, true);
   }
 
   @Override
@@ -98,7 +98,7 @@ public class XYZToRGB implements Transform {
     result = 31 * result + Double.hashCode(xyzToLinearRGB.a31);
     result = 31 * result + Double.hashCode(xyzToLinearRGB.a32);
     result = 31 * result + Double.hashCode(xyzToLinearRGB.a33);
-    result = 31 * result + (gammaCurve != null ? gammaCurve.hashCode() : 0);
+    result = 31 * result + (invGammaCurve != null ? invGammaCurve.hashCode() : 0);
     return result;
   }
 
@@ -111,7 +111,7 @@ public class XYZToRGB implements Transform {
       return false;
     }
     XYZToRGB t = (XYZToRGB) o;
-    return (t.gammaCurve == null ? gammaCurve == null : t.gammaCurve.equals(gammaCurve))
+    return (t.invGammaCurve == null ? invGammaCurve == null : t.invGammaCurve.equals(invGammaCurve))
         && Double.compare(t.xyzToLinearRGB.a11, xyzToLinearRGB.a11) == 0
         && Double.compare(t.xyzToLinearRGB.a12, xyzToLinearRGB.a12) == 0
         && Double.compare(t.xyzToLinearRGB.a13, xyzToLinearRGB.a13) == 0
@@ -142,8 +142,8 @@ public class XYZToRGB implements Transform {
     }
     sb.append(']');
 
-    if (gammaCurve != null) {
-      sb.append("\n  gamma correct: ").append(gammaCurve);
+    if (invGammaCurve != null) {
+      sb.append("\n  gamma correct: ").append(invGammaCurve);
     }
     return sb.toString();
   }

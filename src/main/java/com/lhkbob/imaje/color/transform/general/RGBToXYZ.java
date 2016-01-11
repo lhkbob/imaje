@@ -13,17 +13,17 @@ import org.ejml.data.FixedMatrix3x3_64F;
  */
 public class RGBToXYZ implements Transform {
   private final FixedMatrix3x3_64F linearRGBToXYZ;
-  private final Curve invGammaCurve;
+  private final Curve gammaCurve;
   private final FixedMatrix3_64F workIn;
   private final FixedMatrix3_64F workOut;
 
-  public RGBToXYZ(FixedMatrix3x3_64F linearRGBToXYZ, Curve invGammaCurve) {
-    this(linearRGBToXYZ, invGammaCurve, false);
+  public RGBToXYZ(FixedMatrix3x3_64F linearRGBToXYZ, Curve gammaCurve) {
+    this(linearRGBToXYZ, gammaCurve, false);
   }
 
-  RGBToXYZ(FixedMatrix3x3_64F linearRGBToXYZ, Curve invGammaCurve, boolean ownMatrix) {
+  RGBToXYZ(FixedMatrix3x3_64F linearRGBToXYZ, Curve gammaCurve, boolean ownMatrix) {
     this.linearRGBToXYZ = (ownMatrix ? linearRGBToXYZ : linearRGBToXYZ.copy());
-    this.invGammaCurve = invGammaCurve;
+    this.gammaCurve = gammaCurve;
     workIn = new FixedMatrix3_64F();
     workOut = new FixedMatrix3_64F();
   }
@@ -71,7 +71,7 @@ public class RGBToXYZ implements Transform {
 
   @Override
   public XYZToRGB inverted() {
-    Curve gammaCurve = (invGammaCurve == null ? null : invGammaCurve.inverted());
+    Curve gammaCurve = (this.gammaCurve == null ? null : this.gammaCurve.inverted());
     FixedMatrix3x3_64F xyzToLinearRGB = new FixedMatrix3x3_64F();
     FixedOps3.invert(linearRGBToXYZ, xyzToLinearRGB);
     return new XYZToRGB(xyzToLinearRGB, gammaCurve, true);
@@ -82,10 +82,10 @@ public class RGBToXYZ implements Transform {
     Transform.validateDimensions(this, input, output);
 
     // Apply linearization curve
-    if (invGammaCurve != null) {
-      workIn.a1 = invGammaCurve.evaluate(clampToCurveDomain(input[0]));
-      workIn.a2 = invGammaCurve.evaluate(clampToCurveDomain(input[1]));
-      workIn.a3 = invGammaCurve.evaluate(clampToCurveDomain(input[2]));
+    if (gammaCurve != null) {
+      workIn.a1 = gammaCurve.evaluate(clampToCurveDomain(input[0]));
+      workIn.a2 = gammaCurve.evaluate(clampToCurveDomain(input[1]));
+      workIn.a3 = gammaCurve.evaluate(clampToCurveDomain(input[2]));
     } else {
       workIn.a1 = input[0];
       workIn.a2 = input[1];
@@ -102,12 +102,12 @@ public class RGBToXYZ implements Transform {
 
   private double clampToCurveDomain(double c) {
     // Only called when curve is not null, so this is safe
-    return Math.max(invGammaCurve.getDomainMin(), Math.min(c, invGammaCurve.getDomainMax()));
+    return Math.max(gammaCurve.getDomainMin(), Math.min(c, gammaCurve.getDomainMax()));
   }
 
   @Override
   public RGBToXYZ getLocallySafeInstance() {
-    return new RGBToXYZ(linearRGBToXYZ, invGammaCurve, true);
+    return new RGBToXYZ(linearRGBToXYZ, gammaCurve, true);
   }
 
   @Override
@@ -121,7 +121,7 @@ public class RGBToXYZ implements Transform {
     result = 31 * result + Double.hashCode(linearRGBToXYZ.a31);
     result = 31 * result + Double.hashCode(linearRGBToXYZ.a32);
     result = 31 * result + Double.hashCode(linearRGBToXYZ.a33);
-    result = 31 * result + (invGammaCurve != null ? invGammaCurve.hashCode() : 0);
+    result = 31 * result + (gammaCurve != null ? gammaCurve.hashCode() : 0);
     return result;
   }
 
@@ -134,7 +134,7 @@ public class RGBToXYZ implements Transform {
       return false;
     }
     RGBToXYZ t = (RGBToXYZ) o;
-    return (t.invGammaCurve == null ? invGammaCurve == null : t.invGammaCurve.equals(invGammaCurve))
+    return (t.gammaCurve == null ? gammaCurve == null : t.gammaCurve.equals(gammaCurve))
         && Double.compare(t.linearRGBToXYZ.a11, linearRGBToXYZ.a11) == 0
         && Double.compare(t.linearRGBToXYZ.a12, linearRGBToXYZ.a12) == 0
         && Double.compare(t.linearRGBToXYZ.a13, linearRGBToXYZ.a13) == 0
@@ -149,8 +149,8 @@ public class RGBToXYZ implements Transform {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("RGB -> XYZ:\n");
-    if (invGammaCurve != null) {
-      sb.append("  linearization: ").append(invGammaCurve).append('\n');
+    if (gammaCurve != null) {
+      sb.append("  linearization: ").append(gammaCurve).append('\n');
     }
 
     sb.append("  3x3 transform: [");
