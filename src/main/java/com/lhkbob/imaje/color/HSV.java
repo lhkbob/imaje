@@ -3,8 +3,12 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({"Hue", "Saturation", "Value"})
+@Channels({HSV.HUE, HSV.SATURATION, HSV.VALUE})
 public class HSV implements Color {
+  public static final String HUE = "Hue";
+  public static final String SATURATION = "Saturation";
+  public static final String VALUE = "Value";
+
   private double hue;
   private double saturation;
   private double value;

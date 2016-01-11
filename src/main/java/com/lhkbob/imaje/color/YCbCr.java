@@ -3,8 +3,12 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({ "Y", "Cb", "Cr" })
+@Channels({ YCbCr.Y, YCbCr.CB, YCbCr.CR })
 public class YCbCr implements Color {
+  public static final String Y = "Y";
+  public static final String CB = "Cb";
+  public static final String CR = "Cr";
+
   private double y;
   private double cb;
   private double cr;

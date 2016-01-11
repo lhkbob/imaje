@@ -3,8 +3,12 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({ "Y'", "U", "V" })
+@Channels({ YUV.Y, YUV.U, YUV.V })
 public class YUV implements Color {
+  public static final String Y = "Y";
+  public static final String U = "U";
+  public static final String V = "V";
+
   private double y;
   private double u;
   private double v;

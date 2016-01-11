@@ -3,8 +3,12 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({"Y", "x", "y"})
+@Channels({Yyx.Y, Yyx.X_CHROMATICITY, Yyx.Y_CHROMATICITY})
 public class Yyx implements Color {
+  public static final String Y = "Y";
+  public static final String X_CHROMATICITY = "x";
+  public static final String Y_CHROMATICITY = "y";
+
   private double x;
   private double y;
   private double luminance;

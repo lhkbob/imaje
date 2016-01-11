@@ -3,8 +3,13 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({"Cyan", "Magenta", "Yellow", "Black"})
+@Channels({CMYK.CYAN, CMYK.MAGENTA, CMYK.YELLOW, CMYK.KEY})
 public class CMYK implements Color {
+  public static final String CYAN = "Cyan";
+  public static final String MAGENTA = "Magenta";
+  public static final String YELLOW = "Yellow";
+  public static final String KEY = "Key";
+
   private double cyan;
   private double magenta;
   private double yellow;

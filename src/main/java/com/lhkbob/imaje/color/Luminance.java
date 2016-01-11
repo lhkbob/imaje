@@ -3,8 +3,10 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({ "Luminance" })
+@Channels({ Luminance.LUMINANCE })
 public class Luminance implements Color {
+  public static final String LUMINANCE = "Luminance";
+
   private double l;
 
   public Luminance() {

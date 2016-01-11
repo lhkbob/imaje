@@ -3,8 +3,10 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels("Depth")
+@Channels(Depth.Z)
 public class Depth implements Color {
+  public static final String Z = "Z";
+
   private double depth;
 
   public Depth() {

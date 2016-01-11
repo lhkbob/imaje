@@ -3,8 +3,12 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({ "Long", "Medium", "Short" })
+@Channels({ LMS.LONG, LMS.MEDIUM, LMS.SHORT })
 public class LMS implements Color {
+  public static final String LONG = "Long";
+  public static final String MEDIUM = "Medium";
+  public static final String SHORT = "Short";
+
   private double l;
   private double m;
   private double s;

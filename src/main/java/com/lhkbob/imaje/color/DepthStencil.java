@@ -3,8 +3,11 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({ "Depth", "Stencil" })
+@Channels({ DepthStencil.Z, DepthStencil.STENCIL_MASK })
 public class DepthStencil implements Color {
+  public static final String Z = "Z";
+  public static final String STENCIL_MASK = "Stencil";
+
   private double depthValue;
   private int stencilMask;
 

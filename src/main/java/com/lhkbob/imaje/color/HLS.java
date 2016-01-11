@@ -3,8 +3,12 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({ "Hue", "Lightness", "Saturation" })
+@Channels({ HLS.HUE, HLS.LIGHTNESS, HLS.SATURATION })
 public class HLS implements Color {
+  public static final String HUE = "Hue";
+  public static final String LIGHTNESS = "Lightness";
+  public static final String SATURATION = "Saturation";
+
   private double hue;
   private double lightness;
   private double saturation;

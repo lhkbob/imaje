@@ -3,8 +3,12 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({"L*", "a*", "b*"})
+@Channels({Lab.L, Lab.A, Lab.B})
 public class Lab implements Color {
+  public static final String L = "L";
+  public static final String A = "a";
+  public static final String B = "b";
+
   private double l;
   private double a;
   private double b;

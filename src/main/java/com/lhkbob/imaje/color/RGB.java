@@ -3,8 +3,12 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({ "Red", "Green", "Blue" })
+@Channels({ RGB.RED, RGB.GREEN, RGB.BLUE })
 public class RGB implements Color {
+  public static final String RED = "Red";
+  public static final String GREEN = "Green";
+  public static final String BLUE = "Blue";
+
   private double r;
   private double g;
   private double b;
