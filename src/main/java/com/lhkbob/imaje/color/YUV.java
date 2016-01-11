@@ -93,6 +93,7 @@ public class YUV implements Color {
     return String.format("%s(%.3f, %.3f, %.3f)", getClass().getSimpleName(), y, u, v);
   }
 
+  @OpponentAxis(aWeight = 0.0722, bWeight = 0.2126)
   public static class REC709 extends YUV {
     public REC709() {
 
@@ -108,6 +109,7 @@ public class YUV implements Color {
     }
   }
 
+  @OpponentAxis(aWeight = 0.0593, bWeight = 0.2627)
   public static class REC2020 extends YUV {
     public REC2020() {
 
@@ -123,6 +125,7 @@ public class YUV implements Color {
     }
   }
 
+  @OpponentAxis(aWeight = 0.114, bWeight = 0.299)
   public static class REC601 extends YUV {
     public REC601() {
 
