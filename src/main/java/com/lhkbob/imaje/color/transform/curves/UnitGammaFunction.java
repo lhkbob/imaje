@@ -133,8 +133,7 @@ public class UnitGammaFunction implements Curve {
       // Same inverse of the gamma curve as above, plus an inverted linear term
       // - the new threshold is the y coordinate of this function's linear threshold
       return new UnitGammaFunction(invG, invPowerXScalar, invPowerXOffset, invPowerYOffset,
-          1.0 / linearXScalar, -linearYOffset / linearXScalar,
-          linearXScalar * linearThreshold + linearYOffset);
+          1.0 / linearXScalar, -linearYOffset / linearXScalar, linear(linearThreshold));
     }
   }
 
