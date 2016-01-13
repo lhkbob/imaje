@@ -41,4 +41,9 @@ public class YyxAdapter implements PixelAdapter<Yyx> {
     channels.put(Yyx.Y_CHROMATICITY, y);
     return channels;
   }
+
+  @Override
+  public Class<Yyx> getType() {
+    return Yyx.class;
+  }
 }

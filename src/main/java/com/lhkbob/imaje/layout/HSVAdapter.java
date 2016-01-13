@@ -41,4 +41,9 @@ public class HSVAdapter implements PixelAdapter<HSV> {
     channels.put(HSV.VALUE, v);
     return channels;
   }
+
+  @Override
+  public Class<HSV> getType() {
+    return HSV.class;
+  }
 }

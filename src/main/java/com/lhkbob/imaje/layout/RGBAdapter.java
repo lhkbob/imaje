@@ -9,11 +9,13 @@ import java.util.LinkedHashMap;
  *
  */
 public class RGBAdapter<T extends RGB> implements PixelAdapter<T> {
+  private final Class<T> type;
   private final DoubleSource r;
   private final DoubleSource g;
   private final DoubleSource b;
 
-  public RGBAdapter(DoubleSource r, DoubleSource g, DoubleSource b) {
+  public RGBAdapter(Class<T> type, DoubleSource r, DoubleSource g, DoubleSource b) {
+    this.type = type;
     this.r = r;
     this.g = g;
     this.b = b;
@@ -40,5 +42,10 @@ public class RGBAdapter<T extends RGB> implements PixelAdapter<T> {
     channels.put(RGB.GREEN, g);
     channels.put(RGB.BLUE, b);
     return channels;
+  }
+
+  @Override
+  public Class<T> getType() {
+    return type;
   }
 }

@@ -9,11 +9,13 @@ import java.util.LinkedHashMap;
  *
  */
 public class YCbCrAdapter<T extends YCbCr> implements PixelAdapter<T> {
+  private final Class<T> type;
   private final DoubleSource y;
   private final DoubleSource cb;
   private final DoubleSource cr;
 
-  public YCbCrAdapter(DoubleSource y, DoubleSource cb, DoubleSource cr) {
+  public YCbCrAdapter(Class<T> type, DoubleSource y, DoubleSource cb, DoubleSource cr) {
+    this.type = type;
     this.y = y;
     this.cb = cb;
     this.cr = cr;
@@ -40,5 +42,10 @@ public class YCbCrAdapter<T extends YCbCr> implements PixelAdapter<T> {
     channels.put(YCbCr.CB, cb);
     channels.put(YCbCr.CR, cr);
     return channels;
+  }
+
+  @Override
+  public Class<T> getType() {
+    return type;
   }
 }

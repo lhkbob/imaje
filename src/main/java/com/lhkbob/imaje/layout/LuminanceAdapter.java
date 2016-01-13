@@ -31,4 +31,9 @@ public class LuminanceAdapter implements PixelAdapter<Luminance> {
     channels.put(Luminance.LUMINANCE, l);
     return channels;
   }
+
+  @Override
+  public Class<Luminance> getType() {
+    return Luminance.class;
+  }
 }

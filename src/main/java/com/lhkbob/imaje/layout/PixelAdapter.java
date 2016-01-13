@@ -14,4 +14,6 @@ public interface PixelAdapter<T extends Color> {
   void set(long pixelIndex, T value);
 
   LinkedHashMap<String, ? extends DataSource<?>> getChannels();
+
+  Class<T> getType();
 }

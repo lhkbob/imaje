@@ -41,4 +41,9 @@ public class XYZAdapter implements PixelAdapter<XYZ> {
     channels.put(XYZ.Z, z);
     return channels;
   }
+
+  @Override
+  public Class<XYZ> getType() {
+    return XYZ.class;
+  }
 }

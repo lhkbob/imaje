@@ -1,0 +1,59 @@
+package com.lhkbob.imaje.util;
+
+import java.util.Spliterator;
+import java.util.function.LongConsumer;
+
+/**
+ *
+ */
+public class IndexSpliterator implements Spliterator.OfLong {
+  private long indexFence;
+  private long nextIndex;
+  private final long minimumSplit;
+
+  public IndexSpliterator(long size, long minimumSplit) {
+    this(0, size, minimumSplit);
+  }
+
+  private IndexSpliterator(long nextIndex, long indexFence, long minimumSplit) {
+    this.minimumSplit = minimumSplit;
+
+    this.indexFence = indexFence;
+    this.nextIndex = nextIndex;
+  }
+
+  @Override
+  public OfLong trySplit() {
+    if (minimumSplit < 1 || estimateSize() <= minimumSplit) {
+      return null;
+    }
+
+    long split = (nextIndex + indexFence) / 2;
+    // The returned spliterator is from [nextIndex, split) and this spliterator
+    // is updated to be from [split, indexFence)
+    OfLong prefix = new IndexSpliterator(nextIndex, split, minimumSplit);
+    nextIndex = split;
+    return prefix;
+  }
+
+  @Override
+  public long estimateSize() {
+    return indexFence - nextIndex;
+  }
+
+  @Override
+  public int characteristics() {
+    return Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.SORTED | Spliterator.ORDERED;
+  }
+
+  @Override
+  public boolean tryAdvance(LongConsumer action) {
+    if (nextIndex < indexFence) {
+      long report = nextIndex++;
+      action.accept(report);
+      return true;
+    } else {
+      return false;
+    }
+  }
+}

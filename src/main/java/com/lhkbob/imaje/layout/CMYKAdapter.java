@@ -46,4 +46,9 @@ public class CMYKAdapter implements PixelAdapter<CMYK> {
     channels.put(CMYK.KEY, k);
     return channels;
   }
+
+  @Override
+  public Class<CMYK> getType() {
+    return CMYK.class;
+  }
 }

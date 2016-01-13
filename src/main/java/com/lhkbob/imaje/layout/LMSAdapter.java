@@ -41,4 +41,9 @@ public class LMSAdapter implements PixelAdapter<LMS> {
     channels.put(LMS.SHORT, s);
     return channels;
   }
+
+  @Override
+  public Class<LMS> getType() {
+    return LMS.class;
+  }
 }

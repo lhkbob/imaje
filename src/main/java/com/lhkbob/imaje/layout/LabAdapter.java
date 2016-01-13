@@ -9,11 +9,13 @@ import java.util.LinkedHashMap;
  *
  */
 public class LabAdapter<T extends Lab> implements PixelAdapter<T> {
+  private final Class<T> type;
   private final DoubleSource l;
   private final DoubleSource a;
   private final DoubleSource b;
 
-  public LabAdapter(DoubleSource l, DoubleSource a, DoubleSource b) {
+  public LabAdapter(Class<T> type, DoubleSource l, DoubleSource a, DoubleSource b) {
+    this.type = type;
     this.l = l;
     this.a = a;
     this.b = b;
@@ -40,5 +42,10 @@ public class LabAdapter<T extends Lab> implements PixelAdapter<T> {
     channels.put(Lab.A, a);
     channels.put(Lab.B, b);
     return channels;
+  }
+
+  @Override
+  public Class<T> getType() {
+    return type;
   }
 }

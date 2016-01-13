@@ -41,4 +41,9 @@ public class LuvAdapter implements PixelAdapter<Luv> {
     channels.put(Luv.V, v);
     return channels;
   }
+
+  @Override
+  public Class<Luv> getType() {
+    return Luv.class;
+  }
 }

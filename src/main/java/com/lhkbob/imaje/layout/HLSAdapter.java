@@ -41,4 +41,9 @@ public class HLSAdapter implements PixelAdapter<HLS> {
     channels.put(HLS.SATURATION, s);
     return channels;
   }
+
+  @Override
+  public Class<HLS> getType() {
+    return HLS.class;
+  }
 }
