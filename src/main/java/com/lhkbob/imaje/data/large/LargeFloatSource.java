@@ -8,9 +8,9 @@ import java.util.Arrays;
  *
  */
 public class LargeFloatSource implements FloatSource {
+  private final long repeatedSourceLength;
   private final FloatSource[] subSources;
   private final long totalLength;
-  private final long repeatedSourceLength;
 
   public LargeFloatSource(FloatSource[] sources) {
     subSources = Arrays.copyOf(sources, sources.length);
@@ -26,8 +26,11 @@ public class LargeFloatSource implements FloatSource {
     totalLength = total;
   }
 
-  public FloatSource[] getSources() {
-    return Arrays.copyOf(subSources, subSources.length);
+  @Override
+  public float get(long index) {
+    int sourceIndex = (int) (index / repeatedSourceLength);
+    long withinSourceIndex = index % repeatedSourceLength;
+    return subSources[sourceIndex].get(withinSourceIndex);
   }
 
   @Override
@@ -35,11 +38,8 @@ public class LargeFloatSource implements FloatSource {
     return totalLength;
   }
 
-  @Override
-  public float get(long index) {
-    int sourceIndex = (int) (index / repeatedSourceLength);
-    long withinSourceIndex = index % repeatedSourceLength;
-    return subSources[sourceIndex].get(withinSourceIndex);
+  public FloatSource[] getSources() {
+    return Arrays.copyOf(subSources, subSources.length);
   }
 
   @Override

@@ -16,6 +16,11 @@ public class IntArray implements IntSource {
     this.array = array;
   }
 
+  @Override
+  public int get(long index) {
+    return array[Math.toIntExact(index)];
+  }
+
   public int[] getArray() {
     return array;
   }
@@ -23,11 +28,6 @@ public class IntArray implements IntSource {
   @Override
   public long getLength() {
     return array.length;
-  }
-
-  @Override
-  public int get(long index) {
-    return array[Math.toIntExact(index)];
   }
 
   @Override

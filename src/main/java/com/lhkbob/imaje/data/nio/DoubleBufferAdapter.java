@@ -20,6 +20,11 @@ public class DoubleBufferAdapter implements DoubleSource {
     this.buffer = buffer;
   }
 
+  @Override
+  public double get(long index) {
+    return buffer.get(Math.toIntExact(index));
+  }
+
   public DoubleBuffer getBuffer() {
     return buffer;
   }
@@ -27,11 +32,6 @@ public class DoubleBufferAdapter implements DoubleSource {
   @Override
   public long getLength() {
     return buffer.capacity();
-  }
-
-  @Override
-  public double get(long index) {
-    return buffer.get(Math.toIntExact(index));
   }
 
   @Override

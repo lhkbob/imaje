@@ -2,11 +2,11 @@ package com.lhkbob.imaje.color.icc.reader;
 
 import com.lhkbob.imaje.color.icc.Signature;
 import com.lhkbob.imaje.color.transform.curves.Curve;
+import com.lhkbob.imaje.color.transform.general.Composition;
+import com.lhkbob.imaje.color.transform.general.Curves;
 import com.lhkbob.imaje.color.transform.general.LookupTable;
 import com.lhkbob.imaje.color.transform.general.Matrix;
 import com.lhkbob.imaje.color.transform.general.Transform;
-import com.lhkbob.imaje.color.transform.general.Curves;
-import com.lhkbob.imaje.color.transform.general.Composition;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

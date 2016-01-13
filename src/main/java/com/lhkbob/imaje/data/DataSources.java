@@ -54,47 +54,21 @@ import java.nio.file.StandardOpenOption;
  *
  */
 public final class DataSources {
+  public interface Builder<S, A, B extends Buffer> {
+    S ofArray(long length);
+
+    S ofBuffer(long length);
+
+    S wrapArray(A array);
+
+    S wrapBuffer(B buffer);
+
+    S wrapFile(Path path) throws IOException;
+
+    S wrapFile(FileChannel channel, long offset, long length) throws IOException;
+  }
+
   private DataSources() {}
-
-  public static Builder<ByteSource, byte[], ByteBuffer> newByteSource() {
-    return BYTE_BUILDER;
-  }
-
-  public static Builder<UnsignedByteSource, byte[], ByteBuffer> newUnsignedByteSource() {
-    return UNSIGNED_BYTE_BUILDER;
-  }
-
-  public static Builder<ShortSource, short[], ShortBuffer> newShortSource() {
-    return SHORT_BUILDER;
-  }
-
-  public static Builder<UnsignedShortSource, short[], ShortBuffer> newUnsignedShortSource() {
-    return UNSIGNED_SHORT_BUILDER;
-  }
-
-  public static Builder<IntSource, int[], IntBuffer> newIntSource() {
-    return INT_BUILDER;
-  }
-
-  public static Builder<UnsignedIntSource, int[], IntBuffer> newUnsignedIntSource() {
-    return UNSIGNED_INT_BUILDER;
-  }
-
-  public static Builder<LongSource, long[], LongBuffer> newLongSource() {
-    return LONG_BUILDER;
-  }
-
-  public static Builder<FloatSource, float[], FloatBuffer> newFloatSource() {
-    return FLOAT_BUILDER;
-  }
-
-  public static Builder<DoubleSource, double[], DoubleBuffer> newDoubleSource() {
-    return DOUBLE_BUILDER;
-  }
-
-  public static Builder<HalfSource, short[], ShortBuffer> newHalfSource() {
-    return HALF_BUILDER;
-  }
 
   public static DoubleSource asDoubleSource(final DataSource<?> source) {
     if (source instanceof DoubleSource) {
@@ -117,22 +91,49 @@ public final class DataSources {
       return new NormalizedLongSource((LongSource) source);
     } else {
       // Unknown subclass of data source
-      throw new UnsupportedOperationException("Unknown subclass of DataSource, can't convert to DoubleSource: " + source);
+      throw new UnsupportedOperationException(
+          "Unknown subclass of DataSource, can't convert to DoubleSource: " + source);
     }
   }
 
-  public interface Builder<S, A, B extends Buffer> {
-    S ofArray(long length);
+  public static Builder<ByteSource, byte[], ByteBuffer> newByteSource() {
+    return BYTE_BUILDER;
+  }
 
-    S ofBuffer(long length);
+  public static Builder<DoubleSource, double[], DoubleBuffer> newDoubleSource() {
+    return DOUBLE_BUILDER;
+  }
 
-    S wrapArray(A array);
+  public static Builder<FloatSource, float[], FloatBuffer> newFloatSource() {
+    return FLOAT_BUILDER;
+  }
 
-    S wrapBuffer(B buffer);
+  public static Builder<HalfSource, short[], ShortBuffer> newHalfSource() {
+    return HALF_BUILDER;
+  }
 
-    S wrapFile(Path path) throws IOException;
+  public static Builder<IntSource, int[], IntBuffer> newIntSource() {
+    return INT_BUILDER;
+  }
 
-    S wrapFile(FileChannel channel, long offset, long length) throws IOException;
+  public static Builder<LongSource, long[], LongBuffer> newLongSource() {
+    return LONG_BUILDER;
+  }
+
+  public static Builder<ShortSource, short[], ShortBuffer> newShortSource() {
+    return SHORT_BUILDER;
+  }
+
+  public static Builder<UnsignedByteSource, byte[], ByteBuffer> newUnsignedByteSource() {
+    return UNSIGNED_BYTE_BUILDER;
+  }
+
+  public static Builder<UnsignedIntSource, int[], IntBuffer> newUnsignedIntSource() {
+    return UNSIGNED_INT_BUILDER;
+  }
+
+  public static Builder<UnsignedShortSource, short[], ShortBuffer> newUnsignedShortSource() {
+    return UNSIGNED_SHORT_BUILDER;
   }
 
   private static int[] getLargeSourceSizes(long length) {
@@ -228,78 +229,6 @@ public final class DataSources {
       }
     }
   };
-
-  private static final Builder<ShortSource, short[], ShortBuffer> SHORT_BUILDER = new Builder<ShortSource, short[], ShortBuffer>() {
-    @Override
-    public ShortSource ofArray(long length) {
-      if (length > MAX_ARRAY_SIZE) {
-        int[] sizes = getLargeSourceSizes(length);
-        ShortArray[] backingData = new ShortArray[sizes.length];
-        for (int i = 0; i < sizes.length; i++) {
-          backingData[i] = new ShortArray(sizes[i]);
-        }
-
-        return new LargeShortSource(backingData);
-      } else {
-        return new ShortArray((int) length);
-      }
-    }
-
-    @Override
-    public ShortSource ofBuffer(long length) {
-      if (length > MAX_ARRAY_SIZE) {
-        int[] sizes = getLargeSourceSizes(length);
-        ShortBufferAdapter[] backingData = new ShortBufferAdapter[sizes.length];
-        for (int i = 0; i < sizes.length; i++) {
-          backingData[i] = new ShortBufferAdapter(sizes[i]);
-        }
-
-        return new LargeShortSource(backingData);
-      } else {
-        return new ShortBufferAdapter((int) length);
-      }
-    }
-
-    @Override
-    public ShortSource wrapArray(short[] array) {
-      return new ShortArray(array);
-    }
-
-    @Override
-    public ShortSource wrapBuffer(ShortBuffer buffer) {
-      return new ShortBufferAdapter(buffer);
-    }
-
-    @Override
-    public ShortSource wrapFile(Path path) throws IOException {
-      try (
-          FileChannel channel = FileChannel
-              .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-        return wrapFile(channel, 0, channel.size());
-      }
-    }
-
-    @Override
-    public ShortSource wrapFile(FileChannel channel, long offset, long length) throws IOException {
-      boolean bigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
-
-      if (length > MAX_ARRAY_SIZE) {
-        int[] sizes = getLargeSourceSizes(length);
-        MultiByteToShortSource[] backingData = new MultiByteToShortSource[sizes.length];
-        for (int i = 0; i < sizes.length; i++) {
-          MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, sizes[i]);
-          backingData[i] = new MultiByteToShortSource(new ByteBufferAdapter(mapped), bigEndian);
-          offset += sizes[i];
-        }
-
-        return new LargeShortSource(backingData);
-      } else {
-        MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, length);
-        return new MultiByteToShortSource(new ByteBufferAdapter(mapped), bigEndian);
-      }
-    }
-  };
-
   private static final Builder<LongSource, long[], LongBuffer> LONG_BUILDER = new Builder<LongSource, long[], LongBuffer>() {
     @Override
     public LongSource ofArray(long length) {
@@ -370,7 +299,6 @@ public final class DataSources {
       }
     }
   };
-
   private static final Builder<FloatSource, float[], FloatBuffer> FLOAT_BUILDER = new Builder<FloatSource, float[], FloatBuffer>() {
     @Override
     public FloatSource ofArray(long length) {
@@ -441,7 +369,6 @@ public final class DataSources {
       }
     }
   };
-
   private static final Builder<DoubleSource, double[], DoubleBuffer> DOUBLE_BUILDER = new Builder<DoubleSource, double[], DoubleBuffer>() {
     @Override
     public DoubleSource ofArray(long length) {
@@ -512,7 +439,6 @@ public final class DataSources {
       }
     }
   };
-
   private static final Builder<ByteSource, byte[], ByteBuffer> BYTE_BUILDER = new Builder<ByteSource, byte[], ByteBuffer>() {
     @Override
     public ByteSource ofArray(long length) {
@@ -581,7 +507,76 @@ public final class DataSources {
       }
     }
   };
+  private static final Builder<ShortSource, short[], ShortBuffer> SHORT_BUILDER = new Builder<ShortSource, short[], ShortBuffer>() {
+    @Override
+    public ShortSource ofArray(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        ShortArray[] backingData = new ShortArray[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new ShortArray(sizes[i]);
+        }
 
+        return new LargeShortSource(backingData);
+      } else {
+        return new ShortArray((int) length);
+      }
+    }
+
+    @Override
+    public ShortSource ofBuffer(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        ShortBufferAdapter[] backingData = new ShortBufferAdapter[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new ShortBufferAdapter(sizes[i]);
+        }
+
+        return new LargeShortSource(backingData);
+      } else {
+        return new ShortBufferAdapter((int) length);
+      }
+    }
+
+    @Override
+    public ShortSource wrapArray(short[] array) {
+      return new ShortArray(array);
+    }
+
+    @Override
+    public ShortSource wrapBuffer(ShortBuffer buffer) {
+      return new ShortBufferAdapter(buffer);
+    }
+
+    @Override
+    public ShortSource wrapFile(Path path) throws IOException {
+      try (
+          FileChannel channel = FileChannel
+              .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+        return wrapFile(channel, 0, channel.size());
+      }
+    }
+
+    @Override
+    public ShortSource wrapFile(FileChannel channel, long offset, long length) throws IOException {
+      boolean bigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
+
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        MultiByteToShortSource[] backingData = new MultiByteToShortSource[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, sizes[i]);
+          backingData[i] = new MultiByteToShortSource(new ByteBufferAdapter(mapped), bigEndian);
+          offset += sizes[i];
+        }
+
+        return new LargeShortSource(backingData);
+      } else {
+        MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, length);
+        return new MultiByteToShortSource(new ByteBufferAdapter(mapped), bigEndian);
+      }
+    }
+  };
   private static final Builder<HalfSource, short[], ShortBuffer> HALF_BUILDER = new Builder<HalfSource, short[], ShortBuffer>() {
     @Override
     public HalfSource ofArray(long length) {
@@ -641,44 +636,11 @@ public final class DataSources {
     }
 
     @Override
-    public UnsignedByteSource wrapFile(FileChannel channel, long offset, long length) throws IOException {
+    public UnsignedByteSource wrapFile(FileChannel channel, long offset, long length) throws
+        IOException {
       return new UnsignedByteSource(BYTE_BUILDER.wrapFile(channel, offset, length));
     }
   };
-
-  private static final Builder<UnsignedShortSource, short[], ShortBuffer> UNSIGNED_SHORT_BUILDER = new Builder<UnsignedShortSource, short[], ShortBuffer>() {
-    @Override
-    public UnsignedShortSource ofArray(long length) {
-      return new UnsignedShortSource(SHORT_BUILDER.ofArray(length));
-    }
-
-    @Override
-    public UnsignedShortSource ofBuffer(long length) {
-      return new UnsignedShortSource(SHORT_BUILDER.ofBuffer(length));
-    }
-
-    @Override
-    public UnsignedShortSource wrapArray(short[] array) {
-      return new UnsignedShortSource(SHORT_BUILDER.wrapArray(array));
-    }
-
-    @Override
-    public UnsignedShortSource wrapBuffer(ShortBuffer buffer) {
-      return new UnsignedShortSource(SHORT_BUILDER.wrapBuffer(buffer));
-    }
-
-    @Override
-    public UnsignedShortSource wrapFile(Path path) throws IOException {
-      return new UnsignedShortSource(SHORT_BUILDER.wrapFile(path));
-    }
-
-    @Override
-    public UnsignedShortSource wrapFile(FileChannel channel, long offset, long length) throws
-        IOException {
-      return new UnsignedShortSource(SHORT_BUILDER.wrapFile(channel, offset, length));
-    }
-  };
-
   private static final Builder<UnsignedIntSource, int[], IntBuffer> UNSIGNED_INT_BUILDER = new Builder<UnsignedIntSource, int[], IntBuffer>() {
     @Override
     public UnsignedIntSource ofArray(long length) {
@@ -709,6 +671,38 @@ public final class DataSources {
     public UnsignedIntSource wrapFile(FileChannel channel, long offset, long length) throws
         IOException {
       return new UnsignedIntSource(INT_BUILDER.wrapFile(channel, offset, length));
+    }
+  };
+  private static final Builder<UnsignedShortSource, short[], ShortBuffer> UNSIGNED_SHORT_BUILDER = new Builder<UnsignedShortSource, short[], ShortBuffer>() {
+    @Override
+    public UnsignedShortSource ofArray(long length) {
+      return new UnsignedShortSource(SHORT_BUILDER.ofArray(length));
+    }
+
+    @Override
+    public UnsignedShortSource ofBuffer(long length) {
+      return new UnsignedShortSource(SHORT_BUILDER.ofBuffer(length));
+    }
+
+    @Override
+    public UnsignedShortSource wrapArray(short[] array) {
+      return new UnsignedShortSource(SHORT_BUILDER.wrapArray(array));
+    }
+
+    @Override
+    public UnsignedShortSource wrapBuffer(ShortBuffer buffer) {
+      return new UnsignedShortSource(SHORT_BUILDER.wrapBuffer(buffer));
+    }
+
+    @Override
+    public UnsignedShortSource wrapFile(Path path) throws IOException {
+      return new UnsignedShortSource(SHORT_BUILDER.wrapFile(path));
+    }
+
+    @Override
+    public UnsignedShortSource wrapFile(FileChannel channel, long offset, long length) throws
+        IOException {
+      return new UnsignedShortSource(SHORT_BUILDER.wrapFile(channel, offset, length));
     }
   };
 }

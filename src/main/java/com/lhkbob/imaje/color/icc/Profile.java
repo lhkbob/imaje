@@ -22,7 +22,9 @@ import java.util.Map;
  */
 public final class Profile {
   public static class Builder {
+    private final Map<RenderingIntent, Transform> inverseTransforms;
     private final ProfileClass profileClass;
+    private final Map<RenderingIntent, Transform> transforms;
     private final long version;
     private ColorSpace aSide;
     private ColorSpace bSide;
@@ -36,8 +38,10 @@ public final class Profile {
     private LocalizedString copyright;
     private ZonedDateTime creationTime;
     private Signature creator;
+    private Transform defaultTransform;
     private ProfileDescription description;
     private long flags;
+    private Transform gamutTest;
     private GenericColorValue illuminant;
     private Double luminance;
     private Measurement measurement;
@@ -51,11 +55,6 @@ public final class Profile {
     private RenderingIntent renderingIntent;
     private RenderingIntentGamut saturationGamut;
     private ViewingCondition viewingCondition;
-
-    private final Map<RenderingIntent, Transform> transforms;
-    private final Map<RenderingIntent, Transform> inverseTransforms;
-    private Transform defaultTransform;
-    private Transform gamutTest;
 
     private Builder(ProfileClass profileClass, long version) {
       this.profileClass = profileClass;
@@ -77,16 +76,6 @@ public final class Profile {
           saturationGamut, version, viewingCondition,
           Collections.unmodifiableMap(new HashMap<>(transforms)),
           Collections.unmodifiableMap(new HashMap<>(inverseTransforms)));
-    }
-
-    public Builder setDefaultTransform(Transform transform) {
-      defaultTransform = transform;
-      return this;
-    }
-
-    public Builder setGamutTest(Transform gamut) {
-      gamutTest = gamut;
-      return this;
     }
 
     public Builder setASideColorSpace(ColorSpace aSide) {
@@ -149,6 +138,11 @@ public final class Profile {
       return this;
     }
 
+    public Builder setDefaultTransform(Transform transform) {
+      defaultTransform = transform;
+      return this;
+    }
+
     public Builder setDescription(ProfileDescription desc) {
       description = desc;
       return this;
@@ -159,8 +153,22 @@ public final class Profile {
       return this;
     }
 
+    public Builder setGamutTest(Transform gamut) {
+      gamutTest = gamut;
+      return this;
+    }
+
     public Builder setIlluminant(GenericColorValue illuminant) {
       this.illuminant = illuminant;
+      return this;
+    }
+
+    public Builder setInverseTransform(RenderingIntent intent, Transform transform) {
+      if (transform != null) {
+        inverseTransforms.put(intent, transform);
+      } else {
+        inverseTransforms.remove(intent);
+      }
       return this;
     }
 
@@ -219,11 +227,6 @@ public final class Profile {
       return this;
     }
 
-    public Builder setViewingCondition(ViewingCondition view) {
-      viewingCondition = view;
-      return this;
-    }
-
     public Builder setTransform(RenderingIntent intent, Transform transform) {
       if (transform != null) {
         transforms.put(intent, transform);
@@ -233,12 +236,8 @@ public final class Profile {
       return this;
     }
 
-    public Builder setInverseTransform(RenderingIntent intent, Transform transform) {
-      if (transform != null) {
-        inverseTransforms.put(intent, transform);
-      } else {
-        inverseTransforms.remove(intent);
-      }
+    public Builder setViewingCondition(ViewingCondition view) {
+      viewingCondition = view;
       return this;
     }
 
@@ -536,7 +535,9 @@ public final class Profile {
   }
 
   private final ColorSpace aSide;
+  private final Map<RenderingIntent, Transform> aToBTransforms;
   private final ColorSpace bSide;
+  private final Map<RenderingIntent, Transform> bToATransforms;
   private final ZonedDateTime calibrationTime;
   private final String charTarget;
   private final Matrix chromaticAdaptation;
@@ -566,19 +567,16 @@ public final class Profile {
   private final long version;
   private final ViewingCondition viewingCondition;
 
-  private final Map<RenderingIntent, Transform> aToBTransforms;
-  private final Map<RenderingIntent, Transform> bToATransforms;
-
   private Profile(
       ColorSpace aSide, ColorSpace bSide, ZonedDateTime calibrationTime, String charTarget,
       Matrix chromaticAdaptation, Colorant chromaticity, List<NamedColor> colorantInTable,
       List<NamedColor> colorantOutTable, ColorimetricIntent colorimetricIntent,
       LocalizedString copyright, ZonedDateTime creationTime, Signature creator,
-      ProfileDescription description, long flags, Transform gamutTest,
-      GenericColorValue illuminant, double luminance, Measurement measurement,
-      GenericColorValue mediaWhitePoint, List<NamedColor> namedColors,
-      ResponseCurveSet outputResponse, RenderingIntentGamut perceptualGamut,
-      Signature preferredCMMType, PrimaryPlatform primaryPlatform, ProfileClass profileClass,
+      ProfileDescription description, long flags, Transform gamutTest, GenericColorValue illuminant,
+      double luminance, Measurement measurement, GenericColorValue mediaWhitePoint,
+      List<NamedColor> namedColors, ResponseCurveSet outputResponse,
+      RenderingIntentGamut perceptualGamut, Signature preferredCMMType,
+      PrimaryPlatform primaryPlatform, ProfileClass profileClass,
       List<ProfileDescription> profileSequence, RenderingIntent renderingIntent,
       RenderingIntentGamut saturationGamut, long version, ViewingCondition viewingCondition,
       Map<RenderingIntent, Transform> aToBTransforms,
@@ -617,22 +615,6 @@ public final class Profile {
     this.bToATransforms = bToATransforms;
   }
 
-  public static Profile readProfile(File file) throws IOException {
-    return readProfile(file.toPath());
-  }
-
-  public static Profile readProfile(Path path) throws IOException {
-    return ProfileReader.readProfile(path);
-  }
-
-  public static Profile readProfile(String path) throws IOException {
-   return ProfileReader.readProfile(Paths.get(path));
-  }
-
-  public static Profile readProfile(InputStream in) throws IOException {
-    return ProfileReader.readProfile(in);
-  }
-
   public static Profile fromBytes(ByteBuffer data) {
     return ProfileReader.parse(data);
   }
@@ -645,29 +627,40 @@ public final class Profile {
     return new Builder(profileClass, version);
   }
 
+  public static Profile readProfile(InputStream in) throws IOException {
+    return ProfileReader.readProfile(in);
+  }
+
+  public static Profile readProfile(File file) throws IOException {
+    return readProfile(file.toPath());
+  }
+
+  public static Profile readProfile(Path path) throws IOException {
+    return ProfileReader.readProfile(path);
+  }
+
+  public static Profile readProfile(String path) throws IOException {
+    return ProfileReader.readProfile(Paths.get(path));
+  }
+
+  public ColorSpace getASideColorSpace() {
+    return aSide;
+  }
+
   public Transform getAToBTransform(RenderingIntent intent) {
     return aToBTransforms.get(intent);
+  }
+
+  public ColorSpace getBSideColorSpace() {
+    return bSide;
   }
 
   public Transform getBToATransform(RenderingIntent intent) {
     return bToATransforms.get(intent);
   }
 
-  public boolean inGamut(double[] aColor) {
-    if (aColor.length != aSide.getChannelCount()) {
-      throw new IllegalArgumentException(
-          "Color must have " + aSide.getChannelCount() + " channels");
-    }
-    if (gamutTest == null) {
-      // FIXME should this be replaced with checking channel ranges or something? for at least a semblence of a gamut test?
-      return true;
-    }
-
-    // gamut transform was verified to have an output of 1 channel in the profile builder
-    double[] test = new double[1];
-    gamutTest.transform(aColor, test);
-
-    return Double.compare(test[0], 0.0) == 0;
+  public int getBugFixVersion() {
+    return (int) ((version >> 16) & 0xf);
   }
 
   public ZonedDateTime getCalibrationDate() {
@@ -702,54 +695,6 @@ public final class Profile {
     return copyright;
   }
 
-  public double getLuminance() {
-    return luminance;
-  }
-
-  public Measurement getMeasurement() {
-    return measurement;
-  }
-
-  public GenericColorValue getMediaWhitePoint() {
-    return mediaWhitePoint;
-  }
-
-  public List<NamedColor> getNamedColors() {
-    return namedColors;
-  }
-
-  public ResponseCurveSet getOutputResponse() {
-    return outputResponse;
-  }
-
-  public RenderingIntentGamut getPerceptualRenderingIntentGamut() {
-    return perceptualGamut;
-  }
-
-  public List<ProfileDescription> getProfileSequence() {
-    return profileSequence;
-  }
-
-  public RenderingIntentGamut getSaturationRenderingIntentGamut() {
-    return saturationGamut;
-  }
-
-  public ViewingCondition getViewingCondition() {
-    return viewingCondition;
-  }
-
-  public ColorSpace getASideColorSpace() {
-    return aSide;
-  }
-
-  public ColorSpace getBSideColorSpace() {
-    return bSide;
-  }
-
-  public int getBugFixVersion() {
-    return (int) ((version >> 16) & 0xf);
-  }
-
   public ZonedDateTime getCreationDate() {
     return creationTime;
   }
@@ -770,12 +715,36 @@ public final class Profile {
     return illuminant;
   }
 
+  public double getLuminance() {
+    return luminance;
+  }
+
   public int getMajorVersion() {
     return (int) ((version >> 24) & 0xff);
   }
 
+  public Measurement getMeasurement() {
+    return measurement;
+  }
+
+  public GenericColorValue getMediaWhitePoint() {
+    return mediaWhitePoint;
+  }
+
   public int getMinorVersion() {
     return (int) ((version >> 20) & 0xf);
+  }
+
+  public List<NamedColor> getNamedColors() {
+    return namedColors;
+  }
+
+  public ResponseCurveSet getOutputResponse() {
+    return outputResponse;
+  }
+
+  public RenderingIntentGamut getPerceptualRenderingIntentGamut() {
+    return perceptualGamut;
   }
 
   public Signature getPreferredCMMType() {
@@ -790,12 +759,41 @@ public final class Profile {
     return profileClass;
   }
 
+  public List<ProfileDescription> getProfileSequence() {
+    return profileSequence;
+  }
+
   public RenderingIntent getRenderingIntent() {
     return renderingIntent;
   }
 
+  public RenderingIntentGamut getSaturationRenderingIntentGamut() {
+    return saturationGamut;
+  }
+
   public String getVersion() {
     return String.format("%d.%d.%d.0", getMajorVersion(), getMinorVersion(), getBugFixVersion());
+  }
+
+  public ViewingCondition getViewingCondition() {
+    return viewingCondition;
+  }
+
+  public boolean inGamut(double[] aColor) {
+    if (aColor.length != aSide.getChannelCount()) {
+      throw new IllegalArgumentException(
+          "Color must have " + aSide.getChannelCount() + " channels");
+    }
+    if (gamutTest == null) {
+      // FIXME should this be replaced with checking channel ranges or something? for at least a semblence of a gamut test?
+      return true;
+    }
+
+    // gamut transform was verified to have an output of 1 channel in the profile builder
+    double[] test = new double[1];
+    gamutTest.transform(aColor, test);
+
+    return Double.compare(test[0], 0.0) == 0;
   }
 
   public boolean isEmbedded() {

@@ -11,23 +11,18 @@ import java.util.List;
  */
 public enum ColorSpace {
   CIEXYZ("XYZ", 3, 0.0, 1.0 + 32767.0 / 32768.0, "X tristimulus", "Y tristimulus", "Z tristimulus"),
-  CIELAB(
-      "Lab", 3, new double[] { 0.0, -128.0, -128.0 }, new double[] { 100.0, 127.0, 127.0 }, "L*",
+  CIELAB("Lab", 3, new double[] { 0.0, -128.0, -128.0 }, new double[] { 100.0, 127.0, 127.0 }, "L*",
       "a*", "b*"),
-  CIELUV(
-      "Luv", 3, new double[] { 0.0, -128.0, -128.0 }, new double[] { 100.0, 127.0, 127.0 }, "L*",
+  CIELUV("Luv", 3, new double[] { 0.0, -128.0, -128.0 }, new double[] { 100.0, 127.0, 127.0 }, "L*",
       "u*", "v*"),
-  YCbCr(
-      "YCbr", 3, new double[] { 0.0, -0.5, -0.5 }, new double[] { 1.0, 0.5, 0.5 }, "Y (luminance)",
-      "Cb", "Cr"),
+  YCbCr("YCbr", 3, new double[] { 0.0, -0.5, -0.5 }, new double[] { 1.0, 0.5, 0.5 },
+      "Y (luminance)", "Cb", "Cr"),
   CIEYxy("Yxy", 3, 0.0, 1.0, "Y (luminance)", "x chromaticity", "y chromaticity"),
   RGB("RGB", 3, 0.0, 1.0, "Red", "Green", "Blue "),
   GRAY("GRAY", 1, 0.0, 1.0, "Luminance"),
-  HSV(
-      "HSV", 3, new double[] { 0.0, 0.0, 0.0 }, new double[] { 360.0, 1.0, 1.0 }, "Hue",
+  HSV("HSV", 3, new double[] { 0.0, 0.0, 0.0 }, new double[] { 360.0, 1.0, 1.0 }, "Hue",
       "Saturation", "Value"),
-  HLS(
-      "HLS", 3, new double[] { 0.0, 0.0, 0.0 }, new double[] { 360.0, 1.0, 1.0 }, "Hue",
+  HLS("HLS", 3, new double[] { 0.0, 0.0, 0.0 }, new double[] { 360.0, 1.0, 1.0 }, "Hue",
       "Lightness", "Saturation"),
   CMYK("CMYK", 4, 0.0, 1.0, "Cyan", "Magenta", "Yellow", "Black"),
   CMY("CMY", 3, 0.0, 1.0, "Cyan", "Magenta", "Yellow"),
@@ -47,9 +42,9 @@ public enum ColorSpace {
   FIFTEEN_COLOR("FCLR", 15, 0.0, 1.0);
 
   private final int channelCount;
-  private final Signature signature;
-  private final NormalizeChannels normalizingFunction;
   private final List<String> channelNames;
+  private final NormalizeChannels normalizingFunction;
+  private final Signature signature;
 
   ColorSpace(String signature, int channelCount, double min, double max, String... channelNames) {
     if (channelNames.length > 0 && channelNames.length != channelCount) {
@@ -93,6 +88,10 @@ public enum ColorSpace {
     throw new IllegalArgumentException("Unknown signature: " + s);
   }
 
+  public int getChannelCount() {
+    return channelCount;
+  }
+
   public String getChannelName(int channel) {
     if (channelNames.isEmpty()) {
       return "";
@@ -105,19 +104,15 @@ public enum ColorSpace {
     return channelNames;
   }
 
-  public boolean hasChannelNames() {
-    return !channelNames.isEmpty();
-  }
-
   public NormalizeChannels getNormalizingFunction() {
     return normalizingFunction;
   }
 
-  public int getChannelCount() {
-    return channelCount;
-  }
-
   public Signature getSignature() {
     return signature;
+  }
+
+  public boolean hasChannelNames() {
+    return !channelNames.isEmpty();
   }
 }

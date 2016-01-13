@@ -16,10 +16,6 @@ public class MultiByteToLongSource implements LongSource, DataView<ByteSource> {
     this.bigEndian = bigEndian;
   }
 
-  public boolean isBigEndian() {
-    return bigEndian;
-  }
-
   @Override
   public long get(long index) {
     // Java is big Endian so combination is always the same, just the order in which we look them
@@ -59,6 +55,10 @@ public class MultiByteToLongSource implements LongSource, DataView<ByteSource> {
   @Override
   public ByteSource getSource() {
     return source;
+  }
+
+  public boolean isBigEndian() {
+    return bigEndian;
   }
 
   @Override

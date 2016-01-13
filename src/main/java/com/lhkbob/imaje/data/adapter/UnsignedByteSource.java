@@ -15,22 +15,22 @@ public class UnsignedByteSource implements IntSource, DataView<ByteSource> {
   }
 
   @Override
-  public long getLength() {
-    return source.getLength();
-  }
-
-  @Override
   public int get(long index) {
     return (short) Byte.toUnsignedInt(source.get(index));
   }
 
   @Override
-  public void set(long index, int value) {
-    source.set(index, (byte) value);
+  public long getLength() {
+    return source.getLength();
   }
 
   @Override
   public ByteSource getSource() {
     return source;
+  }
+
+  @Override
+  public void set(long index, int value) {
+    source.set(index, (byte) value);
   }
 }

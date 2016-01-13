@@ -10,29 +10,26 @@ import java.util.Spliterator;
  *
  */
 public class TiledLayout implements PixelLayout {
-  // Number of pixels to advance to go to start of next tile along top row.
-  // NOTE: this is 0 if the image dimensions are an integer number of tiles along y axis
-  private final long topTileSkip;
+  // Number of full rows per image.
+  private final int fullRowsPerImage;
   // Number of pixels to advance to go to start of next full tile
   private final long fullTileSkip;
+  // Number of full tiles in a row.
+  private final int fullTilesPerRow;
+  private final int height;
   // Number of pixels to advance to go to start of the next row of tiles (not bottom).
   private final long imageRowSkip;
-
   // Number of pixels to advance to start of next pixel row when in a right-edge tile.
   // NOTE this is 0 if the image dimensions are an integer number of tiles along x axis
   private final int rightTileWidth;
-  // Number of pixels per tile row.
-  private final int tileWidth;
   // Number of pixels per tile height.
   private final int tileHeight;
-
-  // Number of full tiles in a row.
-  private final int fullTilesPerRow;
-  // Number of full rows per image.
-  private final int fullRowsPerImage;
-
+  // Number of pixels per tile row.
+  private final int tileWidth;
+  // Number of pixels to advance to go to start of next tile along top row.
+  // NOTE: this is 0 if the image dimensions are an integer number of tiles along y axis
+  private final long topTileSkip;
   private final int width;
-  private final int height;
 
   public TiledLayout(int pixelsPerRow, int numRows, int tileWidth, int tileHeight) {
     width = pixelsPerRow;
@@ -55,11 +52,6 @@ public class TiledLayout implements PixelLayout {
   }
 
   @Override
-  public int getWidth() {
-    return width;
-  }
-
-  @Override
   public int getHeight() {
     return height;
   }
@@ -78,6 +70,11 @@ public class TiledLayout implements PixelLayout {
     offset += subTileX;
 
     return offset;
+  }
+
+  @Override
+  public int getWidth() {
+    return width;
   }
 
   @Override

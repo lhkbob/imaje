@@ -27,13 +27,6 @@ public class HLSAdapter implements PixelAdapter<HLS> {
   }
 
   @Override
-  public void set(long pixelIndex, HLS value) {
-    h.set(pixelIndex, value.h());
-    l.set(pixelIndex, value.l());
-    s.set(pixelIndex, value.s());
-  }
-
-  @Override
   public LinkedHashMap<String, DoubleSource> getChannels() {
     LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
     channels.put(HLS.HUE, h);
@@ -45,5 +38,12 @@ public class HLSAdapter implements PixelAdapter<HLS> {
   @Override
   public Class<HLS> getType() {
     return HLS.class;
+  }
+
+  @Override
+  public void set(long pixelIndex, HLS value) {
+    h.set(pixelIndex, value.h());
+    l.set(pixelIndex, value.l());
+    s.set(pixelIndex, value.s());
   }
 }

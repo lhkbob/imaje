@@ -10,7 +10,7 @@ public interface TransformFactory<I extends Color, O extends Color> {
 
   Class<O> getOutputType();
 
-  ColorTransform<I, O> newTransform();
-
   ColorTransform<O, I> newInverseTransform();
+
+  ColorTransform<I, O> newTransform();
 }

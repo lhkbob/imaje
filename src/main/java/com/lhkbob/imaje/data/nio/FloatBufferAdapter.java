@@ -20,6 +20,11 @@ public class FloatBufferAdapter implements FloatSource {
     this.buffer = buffer;
   }
 
+  @Override
+  public float get(long index) {
+    return buffer.get(Math.toIntExact(index));
+  }
+
   public FloatBuffer getBuffer() {
     return buffer;
   }
@@ -27,11 +32,6 @@ public class FloatBufferAdapter implements FloatSource {
   @Override
   public long getLength() {
     return buffer.capacity();
-  }
-
-  @Override
-  public float get(long index) {
-    return buffer.get(Math.toIntExact(index));
   }
 
   @Override

@@ -27,13 +27,6 @@ public class HSVAdapter implements PixelAdapter<HSV> {
   }
 
   @Override
-  public void set(long pixelIndex, HSV value) {
-    h.set(pixelIndex, value.h());
-    s.set(pixelIndex, value.s());
-    v.set(pixelIndex, value.v());
-  }
-
-  @Override
   public LinkedHashMap<String, DoubleSource> getChannels() {
     LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
     channels.put(HSV.HUE, h);
@@ -45,5 +38,12 @@ public class HSVAdapter implements PixelAdapter<HSV> {
   @Override
   public Class<HSV> getType() {
     return HSV.class;
+  }
+
+  @Override
+  public void set(long pixelIndex, HSV value) {
+    h.set(pixelIndex, value.h());
+    s.set(pixelIndex, value.s());
+    v.set(pixelIndex, value.v());
   }
 }

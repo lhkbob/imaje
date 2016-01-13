@@ -17,10 +17,6 @@ public enum ColorimetricIntent {
     this.signature = signature;
   }
 
-  public Signature getSignature() {
-    return signature;
-  }
-
   public static ColorimetricIntent fromSignature(Signature sig) {
     for (ColorimetricIntent v : values()) {
       if (v.getSignature().equals(sig)) {
@@ -29,5 +25,9 @@ public enum ColorimetricIntent {
     }
 
     throw new IllegalArgumentException("Unknown signature: " + sig);
+  }
+
+  public Signature getSignature() {
+    return signature;
   }
 }

@@ -10,17 +10,12 @@ import java.util.Spliterator;
  *
  */
 public class RowMajorLayout implements PixelLayout {
-  private final int width;
   private final int height;
+  private final int width;
 
   public RowMajorLayout(int pixelsPerRow, int numRows) {
     width = pixelsPerRow;
     height = numRows;
-  }
-
-  @Override
-  public int getWidth() {
-    return width;
   }
 
   @Override
@@ -31,6 +26,11 @@ public class RowMajorLayout implements PixelLayout {
   @Override
   public long getIndex(int x, int y) {
     return y * width + x;
+  }
+
+  @Override
+  public int getWidth() {
+    return width;
   }
 
   @Override

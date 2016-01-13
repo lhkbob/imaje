@@ -3,15 +3,14 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({Yyx.Y, Yyx.X_CHROMATICITY, Yyx.Y_CHROMATICITY})
+@Channels({ Yyx.Y, Yyx.X_CHROMATICITY, Yyx.Y_CHROMATICITY })
 public class Yyx implements Color {
-  public static final String Y = "Y";
   public static final String X_CHROMATICITY = "x";
+  public static final String Y = "Y";
   public static final String Y_CHROMATICITY = "y";
-
+  private double luminance;
   private double x;
   private double y;
-  private double luminance;
 
   public Yyx() {
     this(0.33333, 0.33333);
@@ -28,13 +27,24 @@ public class Yyx implements Color {
   }
 
   @Override
-  public int getChannelCount() {
-    return 3;
+  public Yyx clone() {
+    try {
+      return (Yyx) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException("Should not happen");
+    }
+  }
+
+  @Override
+  public void fromArray(double[] array) {
+    luminance = array[0];
+    x = array[1];
+    y = array[2];
   }
 
   @Override
   public double get(int channel) {
-    switch(channel) {
+    switch (channel) {
     case 0:
       return luminance;
     case 1:
@@ -47,26 +57,51 @@ public class Yyx implements Color {
   }
 
   @Override
+  public int getChannelCount() {
+    return 3;
+  }
+
+  public double getLuminance() {
+    return luminance;
+  }
+
+  public double getX() {
+    return x;
+  }
+
+  public double getY() {
+    return y;
+  }
+
+  public double getZ() {
+    return 1.0 - x - y;
+  }
+
+  public double lum() {
+    return getLuminance();
+  }
+
+  public void lum(double l) {
+    setLuminance(l);
+  }
+
+  public void setLuminance(double luminance) {
+    this.luminance = luminance;
+  }
+
+  public void setX(double x) {
+    this.x = x;
+  }
+
+  public void setY(double y) {
+    this.y = y;
+  }
+
+  @Override
   public void toArray(double[] array) {
     array[0] = luminance;
     array[1] = x;
     array[2] = y;
-  }
-
-  @Override
-  public void fromArray(double[] array) {
-    luminance = array[0];
-    x = array[1];
-    y = array[2];
-  }
-
-  @Override
-  public Yyx clone() {
-    try {
-      return (Yyx) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Should not happen");
-    }
   }
 
   public double x() {
@@ -87,41 +122,5 @@ public class Yyx implements Color {
 
   public double z() {
     return getZ();
-  }
-
-  public double lum() {
-    return getLuminance();
-  }
-
-  public void lum(double l) {
-    setLuminance(l);
-  }
-
-  public double getX() {
-    return x;
-  }
-
-  public void setX(double x) {
-    this.x = x;
-  }
-
-  public double getY() {
-    return y;
-  }
-
-  public void setY(double y) {
-    this.y = y;
-  }
-
-  public double getLuminance() {
-    return luminance;
-  }
-
-  public void setLuminance(double luminance) {
-    this.luminance = luminance;
-  }
-
-  public double getZ() {
-    return 1.0 - x - y;
   }
 }

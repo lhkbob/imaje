@@ -7,10 +7,10 @@ import com.lhkbob.imaje.color.transform.general.Transform;
  *
  */
 public class GeneralTransformFactory<I extends Color, O extends Color> implements TransformFactory<I, O> {
-  private final Class<I> inType;
-  private final Class<O> outType;
   private final Transform inToOut;
+  private final Class<I> inType;
   private final Transform outToIn;
+  private final Class<O> outType;
 
   public GeneralTransformFactory(Class<I> in, Class<O> out, Transform inToOut, Transform outToIn) {
     inType = in;
@@ -30,13 +30,13 @@ public class GeneralTransformFactory<I extends Color, O extends Color> implement
   }
 
   @Override
-  public ColorTransform<I, O> newTransform() {
-    return new ColorTransformAdapter<>(inToOut.getLocallySafeInstance());
+  public ColorTransform<O, I> newInverseTransform() {
+    return new ColorTransformAdapter<>(outToIn.getLocallySafeInstance());
   }
 
   @Override
-  public ColorTransform<O, I> newInverseTransform() {
-    return new ColorTransformAdapter<>(outToIn.getLocallySafeInstance());
+  public ColorTransform<I, O> newTransform() {
+    return new ColorTransformAdapter<>(inToOut.getLocallySafeInstance());
   }
 
   private static class ColorTransformAdapter<I extends Color, O extends Color> implements ColorTransform<I, O> {

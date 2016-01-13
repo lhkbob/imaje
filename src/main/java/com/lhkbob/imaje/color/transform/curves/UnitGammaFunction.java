@@ -21,6 +21,7 @@ public class UnitGammaFunction implements Curve {
   private final double powerXOffset;
   private final double powerXScalar;
   private final double powerYOffset;
+
   public UnitGammaFunction(
       double gamma, double powerXScalar, double powerXOffset, double powerYOffset,
       double linearXScalar, double linearYOffset, double linearThreshold) {
@@ -179,5 +180,6 @@ public class UnitGammaFunction implements Curve {
     }
     return power;
   }
+
   private static final double EPS = 1e-8;
 }

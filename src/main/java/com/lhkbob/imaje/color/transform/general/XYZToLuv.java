@@ -18,8 +18,25 @@ public class XYZToLuv implements Transform {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof XYZToLuv)) {
+      return false;
+    }
+    return ((XYZToLuv) o).referenceWhitepoint.equals(referenceWhitepoint);
+  }
+
+  @Override
   public int getInputChannels() {
     return 3;
+  }
+
+  @Override
+  public XYZToLuv getLocallySafeInstance() {
+    // This is purely functional (with constant parameters) so the instance can be used by any thread
+    return this;
   }
 
   @Override
@@ -28,8 +45,18 @@ public class XYZToLuv implements Transform {
   }
 
   @Override
+  public int hashCode() {
+    return referenceWhitepoint.hashCode();
+  }
+
+  @Override
   public LuvToXYZ inverted() {
     return new LuvToXYZ(referenceWhitepoint);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("XYZ -> L*u*v* Transform (whitepoint: %s)", referenceWhitepoint);
   }
 
   @Override
@@ -43,38 +70,11 @@ public class XYZToLuv implements Transform {
     output[2] = 13.0 * output[0] * (vp - vWhite); // v*
   }
 
-  @Override
-  public XYZToLuv getLocallySafeInstance() {
-    // This is purely functional (with constant parameters) so the instance can be used by any thread
-    return this;
-  }
-
   static double uPrime(double x, double y, double z) {
     return 4.0 * x / (x + 15.0 * y + 3.0 * z);
   }
 
   static double vPrime(double x, double y, double z) {
     return 9.0 * y / (x + 15.0 * y + 3.0 * z);
-  }
-
-  @Override
-  public int hashCode() {
-    return referenceWhitepoint.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (!(o instanceof XYZToLuv)) {
-      return false;
-    }
-    return ((XYZToLuv) o).referenceWhitepoint.equals(referenceWhitepoint);
-  }
-
-  @Override
-  public String toString() {
-    return String.format("XYZ -> L*u*v* Transform (whitepoint: %s)", referenceWhitepoint);
   }
 }

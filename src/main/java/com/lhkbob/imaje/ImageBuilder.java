@@ -44,26 +44,21 @@ import java.util.List;
  *
  */
 public class ImageBuilder<T extends Color> {
-  private boolean useNIOBuffers;
+  private final Class<T> colorType;
+  private int bitDepth;
   // FIXME this needs something special to distinguish between the 24-8 packed depth stencil
   // and just wanting two equal bit-depth'ed depth/stencil channels
   private boolean fixedPoint;
-  private int bitDepth;
   // FIXME also need options to provide already existing underlying data
-
-  private int width;
   private int height;
-
-  private int tileWidth;
-  private int tileHeight;
-
-  private boolean parallelChannels;
   private boolean includeAlpha;
-
+  private boolean parallelChannels;
   private boolean storeMipmapsHighToLow;
   private boolean storeMipmapsTogether;
-
-  private final Class<T> colorType;
+  private int tileHeight;
+  private int tileWidth;
+  private boolean useNIOBuffers;
+  private int width;
 
   public ImageBuilder(Class<T> colorType) {
     this.colorType = colorType;
@@ -80,31 +75,8 @@ public class ImageBuilder<T extends Color> {
     tileHeight = -1;
   }
 
-  public ImageBuilder<T> sized(int width, int height) {
-    this.width = width;
-    this.height = height;
-    return this;
-  }
-
-  public ImageBuilder<T> tiled(int tileWidth, int tileHeight) {
-    this.tileWidth = tileWidth;
-    this.tileHeight = tileHeight;
-    return this;
-  }
-
-  public ImageBuilder<T> notTiled() {
-    tileWidth = -1;
-    tileHeight = -1;
-    return this;
-  }
-
-  public ImageBuilder<T> groupMipmapsByLayer() {
-    storeMipmapsTogether = true;
-    return this;
-  }
-
-  public ImageBuilder<T> groupLayersByMipmap() {
-    storeMipmapsTogether = false;
+  public ImageBuilder<T> baseMipmapStoredFirst() {
+    storeMipmapsHighToLow = false;
     return this;
   }
 
@@ -113,50 +85,13 @@ public class ImageBuilder<T extends Color> {
     return this;
   }
 
-  public ImageBuilder<T> baseMipmapStoredFirst() {
-    storeMipmapsHighToLow = false;
+  public ImageBuilder<T> groupLayersByMipmap() {
+    storeMipmapsTogether = false;
     return this;
   }
 
-  public ImageBuilder<T> withParallelChannels() {
-    parallelChannels = true;
-    return this;
-  }
-
-  public ImageBuilder<T> withPackedChannels() {
-    parallelChannels = false;
-    return this;
-  }
-
-  public ImageBuilder<T> usingNativeBuffers() {
-    useNIOBuffers = true;
-    return this;
-  }
-
-  public ImageBuilder<T> usingArrays() {
-    useNIOBuffers = false;
-    return this;
-  }
-
-  public ImageBuilder<T> withFixedPoint(int bitDepth) {
-    fixedPoint = true;
-    this.bitDepth = bitDepth;
-    return this;
-  }
-
-  public ImageBuilder<T> withFloatingPoint(int bitDepth) {
-    fixedPoint = false;
-    this.bitDepth = bitDepth;
-    return this;
-  }
-
-  public ImageBuilder<T> transparent() {
-    includeAlpha = true;
-    return this;
-  }
-
-  public ImageBuilder<T> opaque() {
-    includeAlpha = false;
+  public ImageBuilder<T> groupMipmapsByLayer() {
+    storeMipmapsTogether = true;
     return this;
   }
 
@@ -198,73 +133,133 @@ public class ImageBuilder<T extends Color> {
     return new DefaultMipmapImageArray<>(layers);
   }
 
-  @SuppressWarnings("unchecked")
-  private RasterImage<T> createRaster(DoubleSource data, int mipmapLevel, int arrayLayer, int maxLayers) {
-    // Create layout for image
-    int rasterWidth, rasterHeight;
-    if (mipmapLevel < 0) {
-      // No mipmaps
-      rasterWidth = width;
-      rasterHeight = height;
-    } else {
-      rasterWidth = Image.getMipmapDimension(width, mipmapLevel);
-      rasterHeight = Image.getMipmapDimension(height, mipmapLevel);
-    }
-
-    PixelLayout layout;
-    if (tileWidth < 0 || tileHeight < 0) {
-      // Use default row major layout
-      layout = new RowMajorLayout(rasterWidth, rasterHeight);
-    } else {
-      // Tiled image requested
-      layout = new TiledLayout(rasterWidth, rasterHeight, tileWidth, tileHeight);
-    }
-
-    // Create channels, separate alpha channel, and map o appropriate color adapter
-    List<DoubleChannel> channels = createChannelsForRaster(data, mipmapLevel, arrayLayer, maxLayers);
-    DoubleChannel alpha = includeAlpha ? channels.remove(channels.size() - 1) : null;
-
-    PixelAdapter adapter;
-    if (CMYK.class.isAssignableFrom(colorType)) {
-      adapter = new CMYKAdapter(channels.get(0), channels.get(1), channels.get(2), channels.get(3));
-    } else if (Depth.class.isAssignableFrom(colorType)) {
-      adapter = new DepthAdapter(colorType, channels.get(0));
-    } else if (DepthStencil.class.isAssignableFrom(colorType)) {
-      // FIXME this needs an int source, so it needs special handling from much higher up
-      throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
-    } else if (HLS.class.isAssignableFrom(colorType)) {
-      adapter = new HLSAdapter(channels.get(0), channels.get(1), channels.get(2));
-    } else if (HSV.class.isAssignableFrom(colorType)) {
-      adapter = new HSVAdapter(channels.get(0), channels.get(1), channels.get(2));
-    } else if (Lab.class.isAssignableFrom(colorType)) {
-      adapter = new LabAdapter(colorType, channels.get(0), channels.get(1), channels.get(2));
-    } else if (LMS.class.isAssignableFrom(colorType)) {
-      adapter = new LMSAdapter(channels.get(0), channels.get(1), channels.get(2));
-    } else if (Luminance.class.isAssignableFrom(colorType)) {
-      adapter = new LuminanceAdapter(channels.get(0));
-    } else if (Luv.class.isAssignableFrom(colorType)) {
-      adapter = new LuvAdapter(channels.get(0), channels.get(1), channels.get(2));
-    } else if (RGB.class.isAssignableFrom(colorType)) {
-      adapter = new RGBAdapter(colorType, channels.get(0), channels.get(1), channels.get(2));
-    } else if (XYZ.class.isAssignableFrom(colorType)) {
-      adapter = new XYZAdapter(channels.get(0), channels.get(1), channels.get(2));
-    } else if (YCbCr.class.isAssignableFrom(colorType)) {
-      adapter = new YCbCrAdapter(colorType, channels.get(0), channels.get(1), channels.get(2));
-    } else if (YUV.class.isAssignableFrom(colorType)) {
-      adapter = new YUVAdapter(colorType, channels.get(0), channels.get(1), channels.get(2));
-    } else if (Yyx.class.isAssignableFrom(colorType)) {
-      adapter = new YyxAdapter(channels.get(0), channels.get(1), channels.get(2));
-    } else {
-      throw new UnsupportedOperationException("Unknown color type with no default adapter: " + colorType);
-    }
-
-    return new DefaultRasterImage<>(layout, adapter, alpha);
+  public ImageBuilder<T> notTiled() {
+    tileWidth = -1;
+    tileHeight = -1;
+    return this;
   }
 
-  private List<DoubleChannel> createChannelsForRaster(DoubleSource data, int mipmapLevel, int arrayLayer, int maxLayers) {
+  public ImageBuilder<T> opaque() {
+    includeAlpha = false;
+    return this;
+  }
+
+  public ImageBuilder<T> sized(int width, int height) {
+    this.width = width;
+    this.height = height;
+    return this;
+  }
+
+  public ImageBuilder<T> tiled(int tileWidth, int tileHeight) {
+    this.tileWidth = tileWidth;
+    this.tileHeight = tileHeight;
+    return this;
+  }
+
+  public ImageBuilder<T> transparent() {
+    includeAlpha = true;
+    return this;
+  }
+
+  public ImageBuilder<T> usingArrays() {
+    useNIOBuffers = false;
+    return this;
+  }
+
+  public ImageBuilder<T> usingNativeBuffers() {
+    useNIOBuffers = true;
+    return this;
+  }
+
+  public ImageBuilder<T> withFixedPoint(int bitDepth) {
+    fixedPoint = true;
+    this.bitDepth = bitDepth;
+    return this;
+  }
+
+  public ImageBuilder<T> withFloatingPoint(int bitDepth) {
+    fixedPoint = false;
+    this.bitDepth = bitDepth;
+    return this;
+  }
+
+  public ImageBuilder<T> withPackedChannels() {
+    parallelChannels = false;
+    return this;
+  }
+
+  public ImageBuilder<T> withParallelChannels() {
+    parallelChannels = true;
+    return this;
+  }
+
+  private DoubleSource createBackingData(boolean mipmapped, int layers) {
+    long primitiveCount =
+        getPixelCount(width, height, layers, mipmapped) * getChannelCount(colorType);
+    DataSource<?> base;
+    if (fixedPoint) {
+      if (bitDepth == 8) {
+        if (useNIOBuffers) {
+          base = DataSources.newUnsignedByteSource().ofBuffer(primitiveCount);
+        } else {
+          base = DataSources.newUnsignedByteSource().ofArray(primitiveCount);
+        }
+      } else if (bitDepth == 16) {
+        if (useNIOBuffers) {
+          base = DataSources.newUnsignedShortSource().ofBuffer(primitiveCount);
+        } else {
+          base = DataSources.newUnsignedShortSource().ofArray(primitiveCount);
+        }
+      } else if (bitDepth == 32) {
+        if (useNIOBuffers) {
+          base = DataSources.newUnsignedIntSource().ofBuffer(primitiveCount);
+        } else {
+          base = DataSources.newUnsignedIntSource().ofArray(primitiveCount);
+        }
+      } else if (bitDepth == 64) {
+        if (useNIOBuffers) {
+          base = DataSources.newLongSource().ofBuffer(primitiveCount);
+        } else {
+          base = DataSources.newLongSource().ofArray(primitiveCount);
+        }
+      } else {
+        throw new UnsupportedOperationException(
+            "Unsupported bit depth for fixed-point data: " + bitDepth);
+      }
+    } else {
+      if (bitDepth == 16) {
+        if (useNIOBuffers) {
+          base = DataSources.newHalfSource().ofBuffer(primitiveCount);
+        } else {
+          base = DataSources.newHalfSource().ofArray(primitiveCount);
+        }
+      } else if (bitDepth == 32) {
+        if (useNIOBuffers) {
+          base = DataSources.newFloatSource().ofBuffer(primitiveCount);
+        } else {
+          base = DataSources.newFloatSource().ofArray(primitiveCount);
+        }
+      } else if (bitDepth == 64) {
+        if (useNIOBuffers) {
+          base = DataSources.newDoubleSource().ofBuffer(primitiveCount);
+        } else {
+          base = DataSources.newDoubleSource().ofArray(primitiveCount);
+        }
+      } else {
+        throw new UnsupportedOperationException(
+            "Unsupported bit depth for floating-point data: " + bitDepth);
+      }
+    }
+
+    return DataSources.asDoubleSource(base);
+  }
+
+  private List<DoubleChannel> createChannelsForRaster(
+      DoubleSource data, int mipmapLevel, int arrayLayer, int maxLayers) {
     int channelCount = getChannelCount(colorType);
-    if (includeAlpha)
+    if (includeAlpha) {
       channelCount++;
+    }
 
     long channelLength;
     long baseOffset;
@@ -320,62 +315,94 @@ public class ImageBuilder<T extends Color> {
     return channels;
   }
 
-  private DoubleSource createBackingData(boolean mipmapped, int layers) {
-    long primitiveCount = getPixelCount(width, height, layers, mipmapped) * getChannelCount(colorType);
-    DataSource<?> base;
-    if (fixedPoint) {
-      if (bitDepth == 8) {
-        if (useNIOBuffers) {
-          base = DataSources.newUnsignedByteSource().ofBuffer(primitiveCount);
-        } else {
-          base = DataSources.newUnsignedByteSource().ofArray(primitiveCount);
-        }
-      } else if (bitDepth == 16) {
-        if (useNIOBuffers) {
-          base = DataSources.newUnsignedShortSource().ofBuffer(primitiveCount);
-        } else {
-          base = DataSources.newUnsignedShortSource().ofArray(primitiveCount);
-        }
-      } else if (bitDepth == 32) {
-        if (useNIOBuffers) {
-          base = DataSources.newUnsignedIntSource().ofBuffer(primitiveCount);
-        } else {
-          base = DataSources.newUnsignedIntSource().ofArray(primitiveCount);
-        }
-      } else if (bitDepth == 64) {
-        if (useNIOBuffers) {
-          base = DataSources.newLongSource().ofBuffer(primitiveCount);
-        } else {
-          base = DataSources.newLongSource().ofArray(primitiveCount);
-        }
-      } else {
-        throw new UnsupportedOperationException("Unsupported bit depth for fixed-point data: " + bitDepth);
-      }
+  @SuppressWarnings("unchecked")
+  private RasterImage<T> createRaster(
+      DoubleSource data, int mipmapLevel, int arrayLayer, int maxLayers) {
+    // Create layout for image
+    int rasterWidth, rasterHeight;
+    if (mipmapLevel < 0) {
+      // No mipmaps
+      rasterWidth = width;
+      rasterHeight = height;
     } else {
-      if (bitDepth == 16) {
-        if (useNIOBuffers) {
-          base = DataSources.newHalfSource().ofBuffer(primitiveCount);
-        } else {
-          base = DataSources.newHalfSource().ofArray(primitiveCount);
-        }
-      } else if (bitDepth == 32) {
-        if (useNIOBuffers) {
-          base = DataSources.newFloatSource().ofBuffer(primitiveCount);
-        } else {
-          base = DataSources.newFloatSource().ofArray(primitiveCount);
-        }
-      } else if (bitDepth == 64) {
-        if (useNIOBuffers) {
-          base = DataSources.newDoubleSource().ofBuffer(primitiveCount);
-        } else {
-          base = DataSources.newDoubleSource().ofArray(primitiveCount);
-        }
-      } else {
-        throw new UnsupportedOperationException("Unsupported bit depth for floating-point data: " + bitDepth);
-      }
+      rasterWidth = Image.getMipmapDimension(width, mipmapLevel);
+      rasterHeight = Image.getMipmapDimension(height, mipmapLevel);
     }
 
-    return DataSources.asDoubleSource(base);
+    PixelLayout layout;
+    if (tileWidth < 0 || tileHeight < 0) {
+      // Use default row major layout
+      layout = new RowMajorLayout(rasterWidth, rasterHeight);
+    } else {
+      // Tiled image requested
+      layout = new TiledLayout(rasterWidth, rasterHeight, tileWidth, tileHeight);
+    }
+
+    // Create channels, separate alpha channel, and map o appropriate color adapter
+    List<DoubleChannel> channels = createChannelsForRaster(
+        data, mipmapLevel, arrayLayer, maxLayers);
+    DoubleChannel alpha = includeAlpha ? channels.remove(channels.size() - 1) : null;
+
+    PixelAdapter adapter;
+    if (CMYK.class.isAssignableFrom(colorType)) {
+      adapter = new CMYKAdapter(channels.get(0), channels.get(1), channels.get(2), channels.get(3));
+    } else if (Depth.class.isAssignableFrom(colorType)) {
+      adapter = new DepthAdapter(colorType, channels.get(0));
+    } else if (DepthStencil.class.isAssignableFrom(colorType)) {
+      // FIXME this needs an int source, so it needs special handling from much higher up
+      throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
+    } else if (HLS.class.isAssignableFrom(colorType)) {
+      adapter = new HLSAdapter(channels.get(0), channels.get(1), channels.get(2));
+    } else if (HSV.class.isAssignableFrom(colorType)) {
+      adapter = new HSVAdapter(channels.get(0), channels.get(1), channels.get(2));
+    } else if (Lab.class.isAssignableFrom(colorType)) {
+      adapter = new LabAdapter(colorType, channels.get(0), channels.get(1), channels.get(2));
+    } else if (LMS.class.isAssignableFrom(colorType)) {
+      adapter = new LMSAdapter(channels.get(0), channels.get(1), channels.get(2));
+    } else if (Luminance.class.isAssignableFrom(colorType)) {
+      adapter = new LuminanceAdapter(channels.get(0));
+    } else if (Luv.class.isAssignableFrom(colorType)) {
+      adapter = new LuvAdapter(channels.get(0), channels.get(1), channels.get(2));
+    } else if (RGB.class.isAssignableFrom(colorType)) {
+      adapter = new RGBAdapter(colorType, channels.get(0), channels.get(1), channels.get(2));
+    } else if (XYZ.class.isAssignableFrom(colorType)) {
+      adapter = new XYZAdapter(channels.get(0), channels.get(1), channels.get(2));
+    } else if (YCbCr.class.isAssignableFrom(colorType)) {
+      adapter = new YCbCrAdapter(colorType, channels.get(0), channels.get(1), channels.get(2));
+    } else if (YUV.class.isAssignableFrom(colorType)) {
+      adapter = new YUVAdapter(colorType, channels.get(0), channels.get(1), channels.get(2));
+    } else if (Yyx.class.isAssignableFrom(colorType)) {
+      adapter = new YyxAdapter(channels.get(0), channels.get(1), channels.get(2));
+    } else {
+      throw new UnsupportedOperationException(
+          "Unknown color type with no default adapter: " + colorType);
+    }
+
+    return new DefaultRasterImage<>(layout, adapter, alpha);
+  }
+
+  private static int getChannelCount(Class<? extends Color> colorType) {
+    if (CMYK.class.isAssignableFrom(colorType)) {
+      return 4;
+    } else if (DepthStencil.class.isAssignableFrom(colorType)) {
+      return 2;
+    } else if (Depth.class.isAssignableFrom(colorType) || Luminance.class
+        .isAssignableFrom(colorType)) {
+      return 1;
+    } else {
+      return 3;
+    }
+  }
+
+  private static long getPixelCount(int width, int height, int layers, boolean mipmapped) {
+    long size = mipmapped ? getPixelCountForMipmapSet(width, height)
+        : getPixelCountForRaster(width, height);
+    return size * layers;
+  }
+
+  private static long getPixelCountForMipmap(int width, int height, int level) {
+    return getPixelCountForRaster(
+        Image.getMipmapDimension(width, level), Image.getMipmapDimension(height, level));
   }
 
   private static long getPixelCountForMipmapSet(int width, int height) {
@@ -389,26 +416,5 @@ public class ImageBuilder<T extends Color> {
 
   private static long getPixelCountForRaster(int width, int height) {
     return width * height;
-  }
-
-  private static long getPixelCountForMipmap(int width, int height, int level) {
-    return getPixelCountForRaster(Image.getMipmapDimension(width, level), Image.getMipmapDimension(height, level));
-  }
-
-  private static long getPixelCount(int width, int height, int layers, boolean mipmapped) {
-    long size = mipmapped ? getPixelCountForMipmapSet(width, height) : getPixelCountForRaster(width, height);
-    return size * layers;
-  }
-
-  private static int getChannelCount(Class<? extends Color> colorType) {
-    if (CMYK.class.isAssignableFrom(colorType)) {
-      return 4;
-    } else if (DepthStencil.class.isAssignableFrom(colorType)) {
-      return 2;
-    } else if (Depth.class.isAssignableFrom(colorType) || Luminance.class.isAssignableFrom(colorType)) {
-      return 1;
-    } else {
-      return 3;
-    }
   }
 }

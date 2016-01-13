@@ -15,8 +15,8 @@ public class HalfSource implements FloatSource, DataView<ShortSource> {
   }
 
   @Override
-  public ShortSource getSource() {
-    return source;
+  public float get(long index) {
+    return halfToFloat(source.get(index));
   }
 
   @Override
@@ -25,8 +25,8 @@ public class HalfSource implements FloatSource, DataView<ShortSource> {
   }
 
   @Override
-  public float get(long index) {
-    return halfToFloat(source.get(index));
+  public ShortSource getSource() {
+    return source;
   }
 
   @Override
@@ -34,11 +34,11 @@ public class HalfSource implements FloatSource, DataView<ShortSource> {
     source.set(index, floatToHalf(value));
   }
 
-  private static float halfToFloat(short halfValue) {
-    return HalfFloat.halfToFloat(halfValue);
-  }
-
   private static short floatToHalf(float value) {
     return HalfFloat.floatToHalf(value);
+  }
+
+  private static float halfToFloat(short halfValue) {
+    return HalfFloat.halfToFloat(halfValue);
   }
 }

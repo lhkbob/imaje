@@ -71,8 +71,8 @@ public final class Measurement {
 
   @Override
   public String toString() {
-    return String
-        .format("Measurement (geometry: %s, illuminant: %s, observer: %s, flare: %.4f, value: %s)",
-            geometry, illuminant, observer, flare, measurement);
+    return String.format(
+        "Measurement (geometry: %s, illuminant: %s, observer: %s, flare: %.4f, value: %s)",
+        geometry, illuminant, observer, flare, measurement);
   }
 }

@@ -46,12 +46,13 @@ import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt32Number
 public final class ProfileReader {
   private ProfileReader() {}
 
-  public static Profile readProfile(Path path) throws IOException {
-    try (
-        FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
-      ByteBuffer data = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
-      return parse(data);
-    }
+  public static Profile parse(ByteBuffer data) {
+    int dataStart = data.position();
+    data.limit(dataStart + 128);
+    Header header = Header.fromBytes(data);
+    data.limit(dataStart + Math.toIntExact(header.getProfileSize()));
+    TagTable table = TagTable.fromBytes(header, data);
+    return combine(header, table);
   }
 
   public static Profile readProfile(InputStream in) throws IOException {
@@ -64,31 +65,12 @@ public final class ProfileReader {
     return parse(profileData);
   }
 
-  private static int getProfileSize(InputStream in) throws IOException {
-    // Assumes stream is buffered
-    in.mark(4);
-    int profileSize = Math.toIntExact(nextUInt32Number(readBytes(in, 4)));
-    in.reset();
-    return profileSize;
-  }
-
-  private static ByteBuffer readBytes(InputStream in, int count) throws IOException {
-    byte[] data = new byte[count];
-    int nread = 0;
-    int n;
-    while ((n = in.read(data, nread, data.length - nread)) >= 0) {
-      nread += n;
+  public static Profile readProfile(Path path) throws IOException {
+    try (
+        FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
+      ByteBuffer data = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
+      return parse(data);
     }
-    return ByteBuffer.wrap(data);
-  }
-
-  public static Profile parse(ByteBuffer data) {
-    int dataStart = data.position();
-    data.limit(dataStart + 128);
-    Header header = Header.fromBytes(data);
-    data.limit(dataStart + Math.toIntExact(header.getProfileSize()));
-    TagTable table = TagTable.fromBytes(header, data);
-    return combine(header, table);
   }
 
   private static Profile combine(Header header, TagTable tags) {
@@ -265,37 +247,6 @@ public final class ProfileReader {
     return b.build();
   }
 
-  private static List<NamedColor> reorderColorants(
-      List<NamedColor> colorants, int[] colorantOrder) {
-    if (colorants.size() != colorantOrder.length) {
-      throw new IllegalStateException(
-          "Colorant order tag length different than colorant table tag length");
-    }
-
-    List<NamedColor> reordered = new ArrayList<>();
-    for (int i = 0; i < colorantOrder.length; i++) {
-      if (colorantOrder[i] >= colorants.size()) {
-        throw new IllegalStateException("Colorant order table references bad channel");
-      }
-      reordered.add(colorants.get(colorantOrder[i]));
-    }
-
-    return reordered;
-  }
-
-  @SafeVarargs
-  private static Transform getTransform(
-      TagTable tags, Tag.Definition<Transform>... precedence) {
-    for (Tag.Definition<Transform> def : precedence) {
-      Transform t = tags.getTagValue(def);
-      if (t != null) {
-        return t;
-      }
-    }
-
-    return null;
-  }
-
   private static Transform constructMatrixTRCTransform(Header header, TagTable tags) {
     GenericColorValue matrixRed = getSingleColor(tags, Tag.RED_MATRIX_COLUMN);
     GenericColorValue matrixGreen = getSingleColor(tags, Tag.GREEN_MATRIX_COLUMN);
@@ -346,6 +297,14 @@ public final class ProfileReader {
     return null;
   }
 
+  private static int getProfileSize(InputStream in) throws IOException {
+    // Assumes stream is buffered
+    in.mark(4);
+    int profileSize = Math.toIntExact(nextUInt32Number(readBytes(in, 4)));
+    in.reset();
+    return profileSize;
+  }
+
   private static GenericColorValue getSingleColor(
       TagTable tags, Tag.Definition<List<GenericColorValue>> def) {
     List<GenericColorValue> colors = tags.getTagValue(def);
@@ -354,5 +313,46 @@ public final class ProfileReader {
     } else {
       return null;
     }
+  }
+
+  @SafeVarargs
+  private static Transform getTransform(
+      TagTable tags, Tag.Definition<Transform>... precedence) {
+    for (Tag.Definition<Transform> def : precedence) {
+      Transform t = tags.getTagValue(def);
+      if (t != null) {
+        return t;
+      }
+    }
+
+    return null;
+  }
+
+  private static ByteBuffer readBytes(InputStream in, int count) throws IOException {
+    byte[] data = new byte[count];
+    int nread = 0;
+    int n;
+    while ((n = in.read(data, nread, data.length - nread)) >= 0) {
+      nread += n;
+    }
+    return ByteBuffer.wrap(data);
+  }
+
+  private static List<NamedColor> reorderColorants(
+      List<NamedColor> colorants, int[] colorantOrder) {
+    if (colorants.size() != colorantOrder.length) {
+      throw new IllegalStateException(
+          "Colorant order tag length different than colorant table tag length");
+    }
+
+    List<NamedColor> reordered = new ArrayList<>();
+    for (int i = 0; i < colorantOrder.length; i++) {
+      if (colorantOrder[i] >= colorants.size()) {
+        throw new IllegalStateException("Colorant order table references bad channel");
+      }
+      reordered.add(colorants.get(colorantOrder[i]));
+    }
+
+    return reordered;
   }
 }

@@ -7,9 +7,9 @@ import java.util.function.LongConsumer;
  *
  */
 public class IndexSpliterator implements Spliterator.OfLong {
+  private final long minimumSplit;
   private long indexFence;
   private long nextIndex;
-  private final long minimumSplit;
 
   public IndexSpliterator(long size, long minimumSplit) {
     this(0, size, minimumSplit);
@@ -20,6 +20,28 @@ public class IndexSpliterator implements Spliterator.OfLong {
 
     this.indexFence = indexFence;
     this.nextIndex = nextIndex;
+  }
+
+  @Override
+  public int characteristics() {
+    return Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.SORTED
+        | Spliterator.ORDERED;
+  }
+
+  @Override
+  public long estimateSize() {
+    return indexFence - nextIndex;
+  }
+
+  @Override
+  public boolean tryAdvance(LongConsumer action) {
+    if (nextIndex < indexFence) {
+      long report = nextIndex++;
+      action.accept(report);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   @Override
@@ -34,26 +56,5 @@ public class IndexSpliterator implements Spliterator.OfLong {
     OfLong prefix = new IndexSpliterator(nextIndex, split, minimumSplit);
     nextIndex = split;
     return prefix;
-  }
-
-  @Override
-  public long estimateSize() {
-    return indexFence - nextIndex;
-  }
-
-  @Override
-  public int characteristics() {
-    return Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.SORTED | Spliterator.ORDERED;
-  }
-
-  @Override
-  public boolean tryAdvance(LongConsumer action) {
-    if (nextIndex < indexFence) {
-      long report = nextIndex++;
-      action.accept(report);
-      return true;
-    } else {
-      return false;
-    }
   }
 }

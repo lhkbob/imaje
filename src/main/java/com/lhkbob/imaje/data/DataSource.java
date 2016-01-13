@@ -4,11 +4,11 @@ package com.lhkbob.imaje.data;
  *
  */
 public interface DataSource<T extends Number> {
-  long getLength();
+  Class<T> getBoxedElementType();
 
   T getElement(long index);
 
-  void setElement(long index, T value);
+  long getLength();
 
-  Class<T> getBoxedElementType();
+  void setElement(long index, T value);
 }

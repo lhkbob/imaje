@@ -61,6 +61,7 @@ public final class Signature {
   public String toString() {
     return String.format("%s (%s)", text, Long.toHexString(uint32));
   }
+
   private static final char PADDING = ' ';
   private static final int SIGNATURE_BYTE_LENGTH = 4;
 }

@@ -23,12 +23,12 @@ public class InverseTransformFactory<I extends Color, O extends Color> implement
   }
 
   @Override
-  public ColorTransform<I, O> newTransform() {
-    return inverted.newInverseTransform();
+  public ColorTransform<O, I> newInverseTransform() {
+    return inverted.newTransform();
   }
 
   @Override
-  public ColorTransform<O, I> newInverseTransform() {
-    return inverted.newTransform();
+  public ColorTransform<I, O> newTransform() {
+    return inverted.newInverseTransform();
   }
 }

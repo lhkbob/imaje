@@ -27,13 +27,6 @@ public class YyxAdapter implements PixelAdapter<Yyx> {
   }
 
   @Override
-  public void set(long pixelIndex, Yyx value) {
-    l.set(pixelIndex, value.lum());
-    x.set(pixelIndex, value.x());
-    y.set(pixelIndex, value.y());
-  }
-
-  @Override
   public LinkedHashMap<String, DoubleSource> getChannels() {
     LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
     channels.put(Yyx.Y, l);
@@ -45,5 +38,12 @@ public class YyxAdapter implements PixelAdapter<Yyx> {
   @Override
   public Class<Yyx> getType() {
     return Yyx.class;
+  }
+
+  @Override
+  public void set(long pixelIndex, Yyx value) {
+    l.set(pixelIndex, value.lum());
+    x.set(pixelIndex, value.x());
+    y.set(pixelIndex, value.y());
   }
 }

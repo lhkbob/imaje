@@ -20,6 +20,11 @@ public class LongBufferAdapter implements LongSource {
     this.buffer = buffer;
   }
 
+  @Override
+  public long get(long index) {
+    return buffer.get(Math.toIntExact(index));
+  }
+
   public LongBuffer getBuffer() {
     return buffer;
   }
@@ -27,11 +32,6 @@ public class LongBufferAdapter implements LongSource {
   @Override
   public long getLength() {
     return buffer.capacity();
-  }
-
-  @Override
-  public long get(long index) {
-    return buffer.get(Math.toIntExact(index));
   }
 
   @Override

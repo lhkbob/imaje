@@ -17,11 +17,6 @@ public class MultiByteToIntSource implements IntSource, DataView<ByteSource> {
   }
 
   @Override
-  public long getLength() {
-    return source.getLength() >> 2;
-  }
-
-  @Override
   public int get(long index) {
     // Java is big Endian so combination is always the same, just the order in which we look them
     // up from the byte source changes.
@@ -41,6 +36,20 @@ public class MultiByteToIntSource implements IntSource, DataView<ByteSource> {
     }
 
     return ((b3 << 24) | ((0xff & b2) << 16) | ((0xff & b1) << 8) | (0xff & b0));
+  }
+
+  @Override
+  public long getLength() {
+    return source.getLength() >> 2;
+  }
+
+  @Override
+  public ByteSource getSource() {
+    return source;
+  }
+
+  public boolean isBigEndian() {
+    return bigEndian;
   }
 
   @Override
@@ -65,15 +74,6 @@ public class MultiByteToIntSource implements IntSource, DataView<ByteSource> {
       source.set(bidx + 2, b2);
       source.set(bidx + 3, b3);
     }
-  }
-
-  public boolean isBigEndian() {
-    return bigEndian;
-  }
-
-  @Override
-  public ByteSource getSource() {
-    return source;
   }
 
   private static long byteSourceIndex(long index) {

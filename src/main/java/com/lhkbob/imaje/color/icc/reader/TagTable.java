@@ -31,56 +31,6 @@ public final class TagTable {
   }
 
   @SuppressWarnings("unchecked")
-  public <T> Tag<? extends T> getTag(Tag.Definition<T> tagDef) {
-    Tag<?> tag = tags.get(tagDef.getSignature());
-    if (tag != null) {
-      return (Tag<? extends T>) tag;
-    } else {
-      // Tag was not present, or for some reason wasn't of the expected type
-      return null;
-    }
-  }
-
-  public <T> T getTagValue(Tag.Definition<T> tag) {
-    return getTagValue(tag, null);
-  }
-
-  public <T> T getTagValue(Tag.Definition<T> tag, T dflt) {
-    Tag<? extends T> value = getTag(tag);
-    return (value != null ? value.getData() : dflt);
-  }
-
-  public Map<Signature, Tag<?>> getTags() {
-    return tags;
-  }
-
-  @Override
-  public int hashCode() {
-    return tags.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (!(o instanceof TagTable)) {
-      return false;
-    }
-
-    return ((TagTable) o).tags.equals(tags);
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder("Tags:\n");
-    for (Tag<?> t : tags.values()) {
-      sb.append(t.toString()).append('\n');
-    }
-    return sb.toString();
-  }
-
-  @SuppressWarnings("unchecked")
   public static TagTable fromBytes(Header header, ByteBuffer data) {
     int profileStart = data.position() - 128;
 
@@ -113,5 +63,55 @@ public final class TagTable {
     }
 
     return new TagTable(tags);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof TagTable)) {
+      return false;
+    }
+
+    return ((TagTable) o).tags.equals(tags);
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T> Tag<? extends T> getTag(Tag.Definition<T> tagDef) {
+    Tag<?> tag = tags.get(tagDef.getSignature());
+    if (tag != null) {
+      return (Tag<? extends T>) tag;
+    } else {
+      // Tag was not present, or for some reason wasn't of the expected type
+      return null;
+    }
+  }
+
+  public <T> T getTagValue(Tag.Definition<T> tag, T dflt) {
+    Tag<? extends T> value = getTag(tag);
+    return (value != null ? value.getData() : dflt);
+  }
+
+  public <T> T getTagValue(Tag.Definition<T> tag) {
+    return getTagValue(tag, null);
+  }
+
+  public Map<Signature, Tag<?>> getTags() {
+    return tags;
+  }
+
+  @Override
+  public int hashCode() {
+    return tags.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("Tags:\n");
+    for (Tag<?> t : tags.values()) {
+      sb.append(t.toString()).append('\n');
+    }
+    return sb.toString();
   }
 }

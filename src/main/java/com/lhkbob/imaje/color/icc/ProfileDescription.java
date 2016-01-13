@@ -4,11 +4,11 @@ package com.lhkbob.imaje.color.icc;
  *
  */
 public final class ProfileDescription {
-  private final ProfileID id;
-  private final LocalizedString description;
   private final DeviceAttributes attributes;
+  private final LocalizedString description;
   private final Signature deviceManufacturer;
   private final Signature deviceModel;
+  private final ProfileID id;
   private final LocalizedString manufacturerDesc;
   private final LocalizedString modelDesc;
   private final DeviceTechnology technology;

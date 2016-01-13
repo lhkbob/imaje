@@ -25,9 +25,10 @@ public class IteratorChain<T> implements Iterator<T> {
     removeFrom = null;
   }
 
-  public static <T> IteratorChain<T> newIteratorChain(Collection<? extends Iterable<T>> iteratorSources) {
+  public static <T> IteratorChain<T> newIteratorChain(
+      Collection<? extends Iterable<T>> iteratorSources) {
     IteratorChain<T> chain = new IteratorChain<>();
-    for (Iterable<T> source: iteratorSources) {
+    for (Iterable<T> source : iteratorSources) {
       chain.iterators.add(source.iterator());
     }
     return chain;
@@ -47,10 +48,11 @@ public class IteratorChain<T> implements Iterator<T> {
     }
 
     // No current iterator, so pull the next iterator from the queue until it reports it has elements
-    while(!iterators.isEmpty()) {
+    while (!iterators.isEmpty()) {
       current = iterators.poll();
-      if (current.hasNext())
+      if (current.hasNext()) {
         return true;
+      }
     }
 
     // Exhausted all iterators, so clear references for GC (can't clear removeFrom since it could
@@ -61,8 +63,9 @@ public class IteratorChain<T> implements Iterator<T> {
 
   @Override
   public T next() {
-    if (!hasNext())
+    if (!hasNext()) {
       throw new NoSuchElementException();
+    }
     T value = current.next();
     removeFrom = current;
     return value;
@@ -70,8 +73,9 @@ public class IteratorChain<T> implements Iterator<T> {
 
   @Override
   public void remove() {
-    if (removeFrom == null)
+    if (removeFrom == null) {
       throw new IllegalStateException("Must call next() first");
+    }
     removeFrom.remove();
     removeFrom = null;
   }

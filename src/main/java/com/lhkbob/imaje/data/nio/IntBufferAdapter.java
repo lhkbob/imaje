@@ -20,6 +20,11 @@ public class IntBufferAdapter implements IntSource {
     this.buffer = buffer;
   }
 
+  @Override
+  public int get(long index) {
+    return buffer.get(Math.toIntExact(index));
+  }
+
   public IntBuffer getBuffer() {
     return buffer;
   }
@@ -27,11 +32,6 @@ public class IntBufferAdapter implements IntSource {
   @Override
   public long getLength() {
     return buffer.capacity();
-  }
-
-  @Override
-  public int get(long index) {
-    return buffer.get(Math.toIntExact(index));
   }
 
   @Override

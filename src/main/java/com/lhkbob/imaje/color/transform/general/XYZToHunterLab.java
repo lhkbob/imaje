@@ -6,9 +6,9 @@ import com.lhkbob.imaje.color.XYZ;
  *
  */
 public class XYZToHunterLab implements Transform {
-  private final XYZ whitepoint;
   private final double ka;
   private final double kb;
+  private final XYZ whitepoint;
 
   public XYZToHunterLab(XYZ whitepoint) {
     this(whitepoint, false);
@@ -18,45 +18,6 @@ public class XYZToHunterLab implements Transform {
     this.whitepoint = (ownWhite ? whitepoint : whitepoint.clone());
     ka = calculateKA(whitepoint);
     kb = calculateKB(whitepoint);
-  }
-
-  @Override
-  public int getInputChannels() {
-    return 3;
-  }
-
-  @Override
-  public int getOutputChannels() {
-    return 3;
-  }
-
-  @Override
-  public HunterLabToXYZ inverted() {
-    return new HunterLabToXYZ(whitepoint, true);
-  }
-
-  @Override
-  public void transform(double[] input, double[] output) {
-    Transform.validateDimensions(this, input, output);
-
-    double xp = input[0] / whitepoint.x();
-    double yp = input[1] / whitepoint.y();
-    double rootYP = Math.sqrt(yp);
-    double zp = input[2] / whitepoint.z();
-
-    output[0] = 100.0 * rootYP;
-    output[1] = ka * (xp - yp) / rootYP;
-    output[2] = kb * (yp - zp) / rootYP;
-  }
-
-  @Override
-  public XYZToHunterLab getLocallySafeInstance() {
-    return this;
-  }
-
-  @Override
-  public int hashCode() {
-    return whitepoint.hashCode();
   }
 
   @Override
@@ -71,8 +32,47 @@ public class XYZToHunterLab implements Transform {
   }
 
   @Override
+  public int getInputChannels() {
+    return 3;
+  }
+
+  @Override
+  public XYZToHunterLab getLocallySafeInstance() {
+    return this;
+  }
+
+  @Override
+  public int getOutputChannels() {
+    return 3;
+  }
+
+  @Override
+  public int hashCode() {
+    return whitepoint.hashCode();
+  }
+
+  @Override
+  public HunterLabToXYZ inverted() {
+    return new HunterLabToXYZ(whitepoint, true);
+  }
+
+  @Override
   public String toString() {
     return String.format("XYZ -> Hunter Lab (whitepoint: %s)", whitepoint);
+  }
+
+  @Override
+  public void transform(double[] input, double[] output) {
+    Transform.validateDimensions(this, input, output);
+
+    double xp = input[0] / whitepoint.x();
+    double yp = input[1] / whitepoint.y();
+    double rootYP = Math.sqrt(yp);
+    double zp = input[2] / whitepoint.z();
+
+    output[0] = 100.0 * rootYP;
+    output[1] = ka * (xp - yp) / rootYP;
+    output[2] = kb * (yp - zp) / rootYP;
   }
 
   static double calculateKA(XYZ whitepoint) {

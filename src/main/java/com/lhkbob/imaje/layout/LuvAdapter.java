@@ -27,13 +27,6 @@ public class LuvAdapter implements PixelAdapter<Luv> {
   }
 
   @Override
-  public void set(long pixelIndex, Luv value) {
-    l.set(pixelIndex, value.l());
-    u.set(pixelIndex, value.u());
-    v.set(pixelIndex, value.v());
-  }
-
-  @Override
   public LinkedHashMap<String, DoubleSource> getChannels() {
     LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
     channels.put(Luv.L, l);
@@ -45,5 +38,12 @@ public class LuvAdapter implements PixelAdapter<Luv> {
   @Override
   public Class<Luv> getType() {
     return Luv.class;
+  }
+
+  @Override
+  public void set(long pixelIndex, Luv value) {
+    l.set(pixelIndex, value.l());
+    u.set(pixelIndex, value.u());
+    v.set(pixelIndex, value.v());
   }
 }

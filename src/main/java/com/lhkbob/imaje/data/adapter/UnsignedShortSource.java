@@ -15,22 +15,22 @@ public class UnsignedShortSource implements IntSource, DataView<ShortSource> {
   }
 
   @Override
-  public long getLength() {
-    return source.getLength();
-  }
-
-  @Override
   public int get(long index) {
     return Short.toUnsignedInt(source.get(index));
   }
 
   @Override
-  public void set(long index, int value) {
-    source.set(index, (short) value);
+  public long getLength() {
+    return source.getLength();
   }
 
   @Override
   public ShortSource getSource() {
     return source;
+  }
+
+  @Override
+  public void set(long index, int value) {
+    source.set(index, (short) value);
   }
 }

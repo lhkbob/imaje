@@ -16,13 +16,12 @@ import java.util.function.Consumer;
  *
  */
 public class DefaultMipmapImageArray<T extends Color> implements MipmapImageArray<T> {
-  private final List<MipmapImage<T>> layers;
-  private final List<ImageArray<T>> levels; // Built up based on provided layers
-
-  private final int width;
-  private final int height;
   private final Class<T> colorType;
   private final boolean hasAlpha;
+  private final int height;
+  private final List<MipmapImage<T>> layers;
+  private final List<ImageArray<T>> levels; // Built up based on provided layers
+  private final int width;
 
   public DefaultMipmapImageArray(List<MipmapImage<T>> layers) {
     if (layers.isEmpty()) {
@@ -36,13 +35,16 @@ public class DefaultMipmapImageArray<T extends Color> implements MipmapImageArra
     colorType = layers.get(0).getColorType();
 
     for (int i = 1; i < layers.size(); i++) {
-      if (layers.get(i).getWidth() != width || layers.get(i).getHeight() != height)
+      if (layers.get(i).getWidth() != width || layers.get(i).getHeight() != height) {
         throw new IllegalArgumentException(String
             .format("All images must be the same size (%d x %d) vs (%d x %d)", width, height,
                 layers.get(i).getWidth(), layers.get(i).getHeight()));
-      if (hasAlpha != layers.get(i).hasAlphaChannel())
-        throw new IllegalArgumentException(String.format("All images must have equivalent alpha channel state (expected %s, but was %s)",
-            hasAlpha, layers.get(i).hasAlphaChannel()));
+      }
+      if (hasAlpha != layers.get(i).hasAlphaChannel()) {
+        throw new IllegalArgumentException(String
+            .format("All images must have equivalent alpha channel state (expected %s, but was %s)",
+                hasAlpha, layers.get(i).hasAlphaChannel()));
+      }
       if (!colorType.equals(layers.get(i).getColorType())) {
         throw new IllegalArgumentException(String
             .format("All images must have the same color type (expected %s, but was %s)", colorType,
@@ -65,8 +67,23 @@ public class DefaultMipmapImageArray<T extends Color> implements MipmapImageArra
   }
 
   @Override
+  public Class<T> getColorType() {
+    return colorType;
+  }
+
+  @Override
+  public int getHeight() {
+    return height;
+  }
+
+  @Override
   public MipmapImage<T> getLayer(int index) {
     return layers.get(index);
+  }
+
+  @Override
+  public int getLayerCount() {
+    return layers.size();
   }
 
   @Override
@@ -85,6 +102,24 @@ public class DefaultMipmapImageArray<T extends Color> implements MipmapImageArra
   }
 
   @Override
+  public Map<String, String> getMetadata() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int getMipmapCount() {
+    return levels.size();
+  }
+
+  @Override
+  public Pixel<T> getPixel(int x, int y, int level, int index) {
+    ArrayPixel p = new ArrayPixel();
+    p.fromLayer = getLayer(index).getPixel(x, y, level);
+    p.layer = index;
+    return p;
+  }
+
+  @Override
   public RasterImage<T> getRaster(int level, int index) {
     return layers.get(index).getLevel(level);
   }
@@ -95,41 +130,8 @@ public class DefaultMipmapImageArray<T extends Color> implements MipmapImageArra
   }
 
   @Override
-  public int getHeight() {
-    return height;
-  }
-
-  @Override
-  public int getLayerCount() {
-    return layers.size();
-  }
-
-  @Override
-  public int getMipmapCount() {
-    return levels.size();
-  }
-
-  @Override
   public boolean hasAlphaChannel() {
     return hasAlpha;
-  }
-
-  @Override
-  public Class<T> getColorType() {
-    return colorType;
-  }
-
-  @Override
-  public Map<String, String> getMetadata() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Pixel<T> getPixel(int x, int y, int level, int index) {
-    ArrayPixel p = new ArrayPixel();
-    p.fromLayer = getLayer(index).getPixel(x, y, level);
-    p.layer = index;
-    return p;
   }
 
   @Override
@@ -177,14 +179,69 @@ public class DefaultMipmapImageArray<T extends Color> implements MipmapImageArra
     }
   }
 
+  private class ArrayPixel implements Pixel<T> {
+    private Pixel<T> fromLayer;
+    private int layer;
+
+    @Override
+    public void get(T result) {
+      fromLayer.get(result);
+    }
+
+    @Override
+    public double getAlpha() {
+      return fromLayer.getAlpha();
+    }
+
+    @Override
+    public int getLayer() {
+      return layer;
+    }
+
+    @Override
+    public int getLevel() {
+      return fromLayer.getLevel();
+    }
+
+    @Override
+    public int getX() {
+      return fromLayer.getX();
+    }
+
+    @Override
+    public int getY() {
+      return fromLayer.getY();
+    }
+
+    @Override
+    public void set(T value) {
+      fromLayer.set(value);
+    }
+
+    @Override
+    public void setAlpha(double a) {
+      fromLayer.setAlpha(a);
+    }
+  }
+
   private class ArraySpliterator implements Spliterator<Pixel<T>> {
-    private final ArrayPixel pixel;
     private final Spliterator<Pixel<T>> layerSpliterator;
+    private final ArrayPixel pixel;
 
     public ArraySpliterator(int layer, Spliterator<Pixel<T>> layerSpliterator) {
       this.layerSpliterator = layerSpliterator;
       pixel = new ArrayPixel();
       pixel.layer = layer;
+    }
+
+    @Override
+    public int characteristics() {
+      return layerSpliterator.characteristics();
+    }
+
+    @Override
+    public long estimateSize() {
+      return layerSpliterator.estimateSize();
     }
 
     @Override
@@ -203,61 +260,6 @@ public class DefaultMipmapImageArray<T extends Color> implements MipmapImageArra
       } else {
         return null;
       }
-    }
-
-    @Override
-    public long estimateSize() {
-      return layerSpliterator.estimateSize();
-    }
-
-    @Override
-    public int characteristics() {
-      return layerSpliterator.characteristics();
-    }
-  }
-
-  private class ArrayPixel implements Pixel<T> {
-    private Pixel<T> fromLayer;
-    private int layer;
-
-    @Override
-    public int getX() {
-      return fromLayer.getX();
-    }
-
-    @Override
-    public int getY() {
-      return fromLayer.getY();
-    }
-
-    @Override
-    public int getLevel() {
-      return fromLayer.getLevel();
-    }
-
-    @Override
-    public int getLayer() {
-      return layer;
-    }
-
-    @Override
-    public void get(T result) {
-      fromLayer.get(result);
-    }
-
-    @Override
-    public void set(T value) {
-      fromLayer.set(value);
-    }
-
-    @Override
-    public double getAlpha() {
-      return fromLayer.getAlpha();
-    }
-
-    @Override
-    public void setAlpha(double a) {
-      fromLayer.setAlpha(a);
     }
   }
 }

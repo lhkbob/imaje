@@ -79,8 +79,11 @@ public final class Header {
     int dataStart = data.position();
     data.limit(dataStart + 40).position(dataStart + 36);
     Signature signature = nextSignature(data);
-    if (!PROFILE_SIGNATURE.equals(signature))
-      throw new IllegalArgumentException("Header does not contain expected signature ('acsp') at required byte position: " + signature);
+    if (!PROFILE_SIGNATURE.equals(signature)) {
+      throw new IllegalArgumentException(
+          "Header does not contain expected signature ('acsp') at required byte position: "
+              + signature);
+    }
     // Signature is valid, assume header is accurate and resume parsing
     data.limit(dataStart + 128).position(dataStart);
 
@@ -98,8 +101,7 @@ public final class Header {
     Signature model = nextSignature(data);
     DeviceAttributes attrs = new DeviceAttributes(nextUInt64Number(data));
     RenderingIntent intent = RenderingIntent.values()[Math.toIntExact(nextUInt32Number(data))];
-    GenericColorValue illuminant = nextXYZNumber(
-        data, GenericColorValue.ColorType.PCSXYZ);
+    GenericColorValue illuminant = nextXYZNumber(data, GenericColorValue.ColorType.PCSXYZ);
     Signature creator = nextSignature(data);
 
     byte[] idBits = new byte[16];

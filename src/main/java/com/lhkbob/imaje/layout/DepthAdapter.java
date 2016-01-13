@@ -10,8 +10,8 @@ import java.util.LinkedHashMap;
  * are frequently stored in 24-bit precision; perhaps that just demands a custom data source?
  */
 public class DepthAdapter<T extends Depth> implements PixelAdapter<T> {
-  private final Class<T> type;
   private final DoubleSource d;
+  private final Class<T> type;
 
   public DepthAdapter(Class<T> type, DoubleSource d) {
     this.type = type;
@@ -24,11 +24,6 @@ public class DepthAdapter<T extends Depth> implements PixelAdapter<T> {
   }
 
   @Override
-  public void set(long pixelIndex, T value) {
-    d.set(pixelIndex, value.z());
-  }
-
-  @Override
   public LinkedHashMap<String, DoubleSource> getChannels() {
     LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
     channels.put(Depth.Z, d);
@@ -38,5 +33,10 @@ public class DepthAdapter<T extends Depth> implements PixelAdapter<T> {
   @Override
   public Class<T> getType() {
     return type;
+  }
+
+  @Override
+  public void set(long pixelIndex, T value) {
+    d.set(pixelIndex, value.z());
   }
 }

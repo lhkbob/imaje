@@ -15,12 +15,8 @@ public class MultiByteToFloatSource implements FloatSource, DataView<ByteSource>
   }
 
   @Override
-  public ByteSource getSource() {
-    return source.getSource();
-  }
-
-  public boolean isBigEndian() {
-    return source.isBigEndian();
+  public float get(long index) {
+    return Float.intBitsToFloat(source.get(index));
   }
 
   @Override
@@ -29,8 +25,12 @@ public class MultiByteToFloatSource implements FloatSource, DataView<ByteSource>
   }
 
   @Override
-  public float get(long index) {
-    return Float.intBitsToFloat(source.get(index));
+  public ByteSource getSource() {
+    return source.getSource();
+  }
+
+  public boolean isBigEndian() {
+    return source.isBigEndian();
   }
 
   @Override

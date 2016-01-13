@@ -14,10 +14,21 @@ public class LuvToXYZ implements Transform {
 
   public LuvToXYZ(XYZ referenceWhitepoint) {
     this.referenceWhitepoint = referenceWhitepoint.clone();
-    uWhite = XYZToLuv.uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(),
-        referenceWhitepoint.z());
-    vWhite = XYZToLuv.vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(),
-        referenceWhitepoint.z());
+    uWhite = XYZToLuv
+        .uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
+    vWhite = XYZToLuv
+        .vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof LuvToXYZ)) {
+      return false;
+    }
+    return ((LuvToXYZ) o).referenceWhitepoint.equals(referenceWhitepoint);
   }
 
   @Override
@@ -26,13 +37,29 @@ public class LuvToXYZ implements Transform {
   }
 
   @Override
+  public LuvToXYZ getLocallySafeInstance() {
+    // This is purely functional (with constant parameters) so the instance can be used by any thread
+    return this;
+  }
+
+  @Override
   public int getOutputChannels() {
     return 3;
   }
 
   @Override
+  public int hashCode() {
+    return referenceWhitepoint.hashCode();
+  }
+
+  @Override
   public XYZToLuv inverted() {
     return new XYZToLuv(referenceWhitepoint);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("L*u*v* -> XYZ Transform (whitepoint: %s)", referenceWhitepoint);
   }
 
   @Override
@@ -49,30 +76,5 @@ public class LuvToXYZ implements Transform {
     output[0] = 0.25 * up * denom;
     // Z from Y, X, and denom
     output[2] = (denom - output[0] - 15.0 * output[1]) / 3.0;
-  }
-
-  @Override
-  public LuvToXYZ getLocallySafeInstance() {
-    // This is purely functional (with constant parameters) so the instance can be used by any thread
-    return this;
-  }
-
-  @Override
-  public int hashCode() {
-    return referenceWhitepoint.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this)
-      return true;
-    if (!(o instanceof LuvToXYZ))
-      return false;
-    return ((LuvToXYZ) o).referenceWhitepoint.equals(referenceWhitepoint);
-  }
-
-  @Override
-  public String toString() {
-    return String.format("L*u*v* -> XYZ Transform (whitepoint: %s)", referenceWhitepoint);
   }
 }

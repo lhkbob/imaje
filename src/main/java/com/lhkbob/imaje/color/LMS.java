@@ -23,6 +23,74 @@ public class LMS implements Color {
     this.s = s;
   }
 
+  @Override
+  public LMS clone() {
+    try {
+      return (LMS) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException("Should not happen");
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (o == null || o.getClass() != getClass()) {
+      return false;
+    }
+    LMS c = (LMS) o;
+    return Double.compare(c.l, l) == 0 && Double.compare(c.m, m) == 0
+        && Double.compare(c.s, s) == 0;
+  }
+
+  @Override
+  public void fromArray(double[] array) {
+    l = array[0];
+    m = array[1];
+    s = array[2];
+  }
+
+  @Override
+  public double get(int channel) {
+    switch (channel) {
+    case 0:
+      return l;
+    case 1:
+      return m;
+    case 2:
+      return s;
+    default:
+      throw new IndexOutOfBoundsException("Bad channel: " + channel);
+    }
+  }
+
+  @Override
+  public int getChannelCount() {
+    return 3;
+  }
+
+  public double getLong() {
+    return l;
+  }
+
+  public double getMedium() {
+    return m;
+  }
+
+  public double getShort() {
+    return s;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Double.hashCode(l);
+    result = 31 * result + Double.hashCode(m);
+    result = 31 * result + Double.hashCode(s);
+    return result;
+  }
+
   public double l() {
     return l;
   }
@@ -47,24 +115,12 @@ public class LMS implements Color {
     this.s = s;
   }
 
-  public double getLong() {
-    return l;
-  }
-
   public void setLong(double l) {
     this.l = l;
   }
 
-  public double getMedium() {
-    return m;
-  }
-
   public void setMedium(double m) {
     this.m = m;
-  }
-
-  public double getShort() {
-    return s;
   }
 
   public void setShort(double s) {
@@ -72,66 +128,10 @@ public class LMS implements Color {
   }
 
   @Override
-  public int getChannelCount() {
-    return 3;
-  }
-
-  @Override
-  public double get(int channel) {
-    switch (channel) {
-    case 0:
-      return l;
-    case 1:
-      return m;
-    case 2:
-      return s;
-    default:
-      throw new IndexOutOfBoundsException("Bad channel: " + channel);
-    }
-  }
-
-  @Override
   public void toArray(double[] array) {
     array[0] = l;
     array[1] = m;
     array[2] = s;
-  }
-
-  @Override
-  public void fromArray(double[] array) {
-    l = array[0];
-    m = array[1];
-    s = array[2];
-  }
-
-  @Override
-  public LMS clone() {
-    try {
-      return (LMS) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Should not happen");
-    }
-  }
-
-  @Override
-  public int hashCode() {
-    int result = Double.hashCode(l);
-    result = 31 * result + Double.hashCode(m);
-    result = 31 * result + Double.hashCode(s);
-    return result;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (o == null || o.getClass() != getClass()) {
-      return false;
-    }
-    LMS c = (LMS) o;
-    return Double.compare(c.l, l) == 0 && Double.compare(c.m, m) == 0
-        && Double.compare(c.s, s) == 0;
   }
 
   @Override

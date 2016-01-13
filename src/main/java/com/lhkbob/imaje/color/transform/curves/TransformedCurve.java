@@ -109,5 +109,6 @@ public final class TransformedCurve implements Curve {
         .format("x in [%.3f, %.3f], y(x) = %s where\n f: %s", getDomainMin(), getDomainMax(), func,
             f);
   }
+
   private static final double EPS = 1e-8;
 }

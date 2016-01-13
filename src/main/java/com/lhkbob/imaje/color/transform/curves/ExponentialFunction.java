@@ -9,6 +9,7 @@ public final class ExponentialFunction implements Curve {
   private final double xScalar;
   private final double yOffset;
   private final double yScalar;
+
   public ExponentialFunction(
       double base, double xScalar, double xOffset, double yScalar, double yOffset) {
     this.base = base;
@@ -88,5 +89,6 @@ public final class ExponentialFunction implements Curve {
     }
     return "y(x) = " + func;
   }
+
   private static final double EPS = 1e-8;
 }

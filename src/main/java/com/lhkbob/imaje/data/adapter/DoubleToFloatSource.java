@@ -15,8 +15,8 @@ public class DoubleToFloatSource implements FloatSource, DataView<DoubleSource> 
   }
 
   @Override
-  public DoubleSource getSource() {
-    return source;
+  public float get(long index) {
+    return (float) source.get(index);
   }
 
   @Override
@@ -25,8 +25,8 @@ public class DoubleToFloatSource implements FloatSource, DataView<DoubleSource> 
   }
 
   @Override
-  public float get(long index) {
-    return (float) source.get(index);
+  public DoubleSource getSource() {
+    return source;
   }
 
   @Override

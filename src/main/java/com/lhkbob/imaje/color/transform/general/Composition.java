@@ -32,13 +32,37 @@ public class Composition implements Transform {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof Composition)) {
+      return false;
+    }
+    return ((Composition) o).transforms.equals(transforms);
+  }
+
+  @Override
   public int getInputChannels() {
     return transforms.get(0).getInputChannels();
   }
 
   @Override
+  public Transform getLocallySafeInstance() {
+    // A composition's locally safe instance is locally safe instances of its composed functions
+    // and new working arrays.
+    return new Composition(
+        transforms.stream().map(Transform::getLocallySafeInstance).collect(Collectors.toList()));
+  }
+
+  @Override
   public int getOutputChannels() {
     return transforms.get(transforms.size() - 1).getOutputChannels();
+  }
+
+  @Override
+  public int hashCode() {
+    return transforms.hashCode();
   }
 
   @Override
@@ -55,6 +79,16 @@ public class Composition implements Transform {
   }
 
   @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("Sequential Transform (in: ").append(getInputChannels())
+        .append(", out: ").append(getOutputChannels()).append("):");
+    for (int i = 0; i < transforms.size(); i++) {
+      sb.append("\n  ").append(i + 1).append(": ").append(transforms.get(i));
+    }
+    return sb.toString();
+  }
+
+  @Override
   public void transform(double[] input, double[] output) {
     Transform.validateDimensions(this, input, output);
 
@@ -65,39 +99,5 @@ public class Composition implements Transform {
       transforms.get(i).transform(in, out);
       in = out;
     }
-  }
-
-  @Override
-  public Transform getLocallySafeInstance() {
-    // A composition's locally safe instance is locally safe instances of its composed functions
-    // and new working arrays.
-    return new Composition(
-        transforms.stream().map(Transform::getLocallySafeInstance).collect(Collectors.toList()));
-  }
-
-  @Override
-  public int hashCode() {
-    return transforms.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (!(o instanceof Composition)) {
-      return false;
-    }
-    return ((Composition) o).transforms.equals(transforms);
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder("Sequential Transform (in: ").append(getInputChannels())
-        .append(", out: ").append(getOutputChannels()).append("):");
-    for (int i = 0; i < transforms.size(); i++) {
-      sb.append("\n  ").append(i + 1).append(": ").append(transforms.get(i));
-    }
-    return sb.toString();
   }
 }

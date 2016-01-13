@@ -13,8 +13,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Gamma {
-  double gamma();
-
   double a() default 1.0;
 
   double b() default 0.0;
@@ -26,4 +24,6 @@ public @interface Gamma {
   double e() default 1.0;
 
   double f() default 0.0;
+
+  double gamma();
 }

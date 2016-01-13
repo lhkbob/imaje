@@ -3,17 +3,16 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({CMYK.CYAN, CMYK.MAGENTA, CMYK.YELLOW, CMYK.KEY})
+@Channels({ CMYK.CYAN, CMYK.MAGENTA, CMYK.YELLOW, CMYK.KEY })
 public class CMYK implements Color {
   public static final String CYAN = "Cyan";
+  public static final String KEY = "Key";
   public static final String MAGENTA = "Magenta";
   public static final String YELLOW = "Yellow";
-  public static final String KEY = "Key";
-
+  private double black;
   private double cyan;
   private double magenta;
   private double yellow;
-  private double black;
 
   public CMYK() {
     this(0.0, 0.0, 0.0, 1.0);
@@ -34,65 +33,34 @@ public class CMYK implements Color {
     cyan = c;
   }
 
-  public double m() {
-    return magenta;
-  }
-
-  public void m(double m) {
-    magenta = m;
-  }
-
-  public double y() {
-    return yellow;
-  }
-
-  public void y(double y) {
-    yellow = y;
-  }
-
-  public double k() {
-    return black;
-  }
-
-  public void k(double k) {
-    black = k;
-  }
-
-  public double getCyan() {
-    return cyan;
-  }
-
-  public void setCyan(double cyan) {
-    this.cyan = cyan;
-  }
-
-  public double getBlack() {
-    return black;
-  }
-
-  public void setBlack(double black) {
-    this.black = black;
-  }
-
-  public double getYellow() {
-    return yellow;
-  }
-
-  public void setYellow(double yellow) {
-    this.yellow = yellow;
-  }
-
-  public double getMagenta() {
-    return magenta;
-  }
-
-  public void setMagenta(double magenta) {
-    this.magenta = magenta;
+  @Override
+  public CMYK clone() {
+    try {
+      return (CMYK) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException("Should not happen");
+    }
   }
 
   @Override
-  public int getChannelCount() {
-    return 4;
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (o == null || o.getClass() != getClass()) {
+      return false;
+    }
+    CMYK c = (CMYK) o;
+    return Double.compare(c.cyan, cyan) == 0 && Double.compare(c.magenta, magenta) == 0 &&
+        Double.compare(c.yellow, yellow) == 0 && Double.compare(c.black, black) == 0;
+  }
+
+  @Override
+  public void fromArray(double[] array) {
+    cyan = array[0];
+    magenta = array[1];
+    yellow = array[2];
+    black = array[3];
   }
 
   @Override
@@ -111,29 +79,25 @@ public class CMYK implements Color {
     }
   }
 
-  @Override
-  public void toArray(double[] array) {
-    array[0] = cyan;
-    array[1] = magenta;
-    array[2] = yellow;
-    array[3] = black;
+  public double getBlack() {
+    return black;
   }
 
   @Override
-  public void fromArray(double[] array) {
-    cyan = array[0];
-    magenta = array[1];
-    yellow = array[2];
-    black = array[3];
+  public int getChannelCount() {
+    return 4;
   }
 
-  @Override
-  public CMYK clone() {
-    try {
-      return (CMYK) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Should not happen");
-    }
+  public double getCyan() {
+    return cyan;
+  }
+
+  public double getMagenta() {
+    return magenta;
+  }
+
+  public double getYellow() {
+    return yellow;
   }
 
   @Override
@@ -145,21 +109,58 @@ public class CMYK implements Color {
     return result;
   }
 
+  public double k() {
+    return black;
+  }
+
+  public void k(double k) {
+    black = k;
+  }
+
+  public double m() {
+    return magenta;
+  }
+
+  public void m(double m) {
+    magenta = m;
+  }
+
+  public void setBlack(double black) {
+    this.black = black;
+  }
+
+  public void setCyan(double cyan) {
+    this.cyan = cyan;
+  }
+
+  public void setMagenta(double magenta) {
+    this.magenta = magenta;
+  }
+
+  public void setYellow(double yellow) {
+    this.yellow = yellow;
+  }
+
   @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (o == null || o.getClass() != getClass()) {
-      return false;
-    }
-    CMYK c = (CMYK) o;
-    return Double.compare(c.cyan, cyan) == 0 && Double.compare(c.magenta, magenta) == 0 &&
-        Double.compare(c.yellow, yellow) == 0 && Double.compare(c.black, black) == 0;
+  public void toArray(double[] array) {
+    array[0] = cyan;
+    array[1] = magenta;
+    array[2] = yellow;
+    array[3] = black;
   }
 
   @Override
   public String toString() {
-    return String.format("%s(%.3f, %.3f, %.3f, %.3f)", getClass().getSimpleName(), cyan, magenta, yellow, black);
+    return String
+        .format("%s(%.3f, %.3f, %.3f, %.3f)", getClass().getSimpleName(), cyan, magenta, yellow,
+            black);
+  }
+
+  public double y() {
+    return yellow;
+  }
+
+  public void y(double y) {
+    yellow = y;
   }
 }

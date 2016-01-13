@@ -3,7 +3,7 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({XYZ.X, XYZ.Y, XYZ.Z})
+@Channels({ XYZ.X, XYZ.Y, XYZ.Z })
 public class XYZ implements Color {
   public static final String X = "X";
   public static final String Y = "Y";
@@ -24,8 +24,32 @@ public class XYZ implements Color {
   }
 
   @Override
-  public int getChannelCount() {
-    return 3;
+  public XYZ clone() {
+    try {
+      return (XYZ) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException("Should not happen", e);
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (o == null || o.getClass() != getClass()) {
+      return false;
+    }
+    XYZ c = (XYZ) o;
+    return Double.compare(c.x, x) == 0 && Double.compare(c.y, y) == 0
+        && Double.compare(c.z, z) == 0;
+  }
+
+  @Override
+  public void fromArray(double[] array) {
+    x = array[0];
+    y = array[1];
+    z = array[2];
   }
 
   @Override
@@ -43,6 +67,43 @@ public class XYZ implements Color {
   }
 
   @Override
+  public int getChannelCount() {
+    return 3;
+  }
+
+  public double getX() {
+    return x;
+  }
+
+  public double getY() {
+    return y;
+  }
+
+  public double getZ() {
+    return z;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Double.hashCode(x);
+    result = 31 * result + Double.hashCode(y);
+    result = 31 * result + Double.hashCode(z);
+    return result;
+  }
+
+  public void setX(double x) {
+    this.x = x;
+  }
+
+  public void setY(double y) {
+    this.y = y;
+  }
+
+  public void setZ(double z) {
+    this.z = z;
+  }
+
+  @Override
   public void toArray(double[] array) {
     array[0] = x;
     array[1] = y;
@@ -50,19 +111,8 @@ public class XYZ implements Color {
   }
 
   @Override
-  public void fromArray(double[] array) {
-    x = array[0];
-    y = array[1];
-    z = array[2];
-  }
-
-  @Override
-  public XYZ clone() {
-    try {
-      return (XYZ) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Should not happen", e);
-    }
+  public String toString() {
+    return String.format("%s(%.3f, %.3f, %.3f)", getClass().getSimpleName(), x, y, z);
   }
 
   public double x() {
@@ -87,55 +137,5 @@ public class XYZ implements Color {
 
   public void z(double z) {
     this.z = z;
-  }
-
-  public double getX() {
-    return x;
-  }
-
-  public void setX(double x) {
-    this.x = x;
-  }
-
-  public double getY() {
-    return y;
-  }
-
-  public void setY(double y) {
-    this.y = y;
-  }
-
-  public double getZ() {
-    return z;
-  }
-
-  public void setZ(double z) {
-    this.z = z;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = Double.hashCode(x);
-    result = 31 * result + Double.hashCode(y);
-    result = 31 * result + Double.hashCode(z);
-    return result;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (o == null || o.getClass() != getClass()) {
-      return false;
-    }
-    XYZ c = (XYZ) o;
-    return Double.compare(c.x, x) == 0 && Double.compare(c.y, y) == 0
-        && Double.compare(c.z, z) == 0;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("%s(%.3f, %.3f, %.3f)", getClass().getSimpleName(), x, y, z);
   }
 }

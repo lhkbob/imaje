@@ -4,11 +4,31 @@ package com.lhkbob.imaje.color.transform.general;
  *
  */
 public class RGBToHSV extends AbstractRGBToHueTransform {
-  private static final double EPS = 1e-8;
+  @Override
+  public boolean equals(Object o) {
+    return o instanceof RGBToHSV;
+  }
+
+  @Override
+  public RGBToHSV getLocallySafeInstance() {
+    // This reuses the output array as a work array (unlike its partner HSVToRGB, which requires a
+    // new instance to be locally safe)
+    return this;
+  }
+
+  @Override
+  public int hashCode() {
+    return RGBToHSV.class.hashCode();
+  }
 
   @Override
   public HSVToRGB inverted() {
     return new HSVToRGB();
+  }
+
+  @Override
+  public String toString() {
+    return "RGB -> HSV Transform";
   }
 
   @Override
@@ -33,26 +53,5 @@ public class RGBToHSV extends AbstractRGBToHueTransform {
     output[1] = saturation;
     output[2] = value;
   }
-
-  @Override
-  public RGBToHSV getLocallySafeInstance() {
-    // This reuses the output array as a work array (unlike its partner HSVToRGB, which requires a
-    // new instance to be locally safe)
-    return this;
-  }
-
-  @Override
-  public int hashCode() {
-    return RGBToHSV.class.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    return o instanceof RGBToHSV;
-  }
-
-  @Override
-  public String toString() {
-    return "RGB -> HSV Transform";
-  }
+  private static final double EPS = 1e-8;
 }

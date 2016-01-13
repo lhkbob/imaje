@@ -10,9 +10,9 @@ import java.util.LinkedHashMap;
  */
 public class YUVAdapter<T extends YUV> implements PixelAdapter<T> {
   private final Class<T> type;
-  private final DoubleSource y;
   private final DoubleSource u;
   private final DoubleSource v;
+  private final DoubleSource y;
 
   public YUVAdapter(Class<T> type, DoubleSource y, DoubleSource u, DoubleSource v) {
     this.type = type;
@@ -29,13 +29,6 @@ public class YUVAdapter<T extends YUV> implements PixelAdapter<T> {
   }
 
   @Override
-  public void set(long pixelIndex, T value) {
-    y.set(pixelIndex, value.y());
-    u.set(pixelIndex, value.u());
-    v.set(pixelIndex, value.v());
-  }
-
-  @Override
   public LinkedHashMap<String, DoubleSource> getChannels() {
     LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
     channels.put(YUV.Y, y);
@@ -47,5 +40,12 @@ public class YUVAdapter<T extends YUV> implements PixelAdapter<T> {
   @Override
   public Class<T> getType() {
     return type;
+  }
+
+  @Override
+  public void set(long pixelIndex, T value) {
+    y.set(pixelIndex, value.y());
+    u.set(pixelIndex, value.u());
+    v.set(pixelIndex, value.v());
   }
 }

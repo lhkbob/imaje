@@ -9,6 +9,7 @@ public class LogGammaFunction implements Curve {
   private final double xScalar;
   private final double yOffset;
   private final double yScalar;
+
   public LogGammaFunction(
       double gamma, double xScalar, double xOffset, double yScalar, double yOffset) {
     this.gamma = gamma;
@@ -98,5 +99,6 @@ public class LogGammaFunction implements Curve {
 
     return "y(x) = " + func;
   }
+
   private static final double EPS = 1e-8;
 }

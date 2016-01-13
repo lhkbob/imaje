@@ -17,11 +17,6 @@ public class MultiByteToShortSource implements ShortSource, DataView<ByteSource>
   }
 
   @Override
-  public long getLength() {
-    return source.getLength() >> 1;
-  }
-
-  @Override
   public short get(long index) {
     // Java is big Endian so combination is always the same, just the order in which we look them
     // up from the byte source changes.
@@ -40,6 +35,20 @@ public class MultiByteToShortSource implements ShortSource, DataView<ByteSource>
   }
 
   @Override
+  public long getLength() {
+    return source.getLength() >> 1;
+  }
+
+  @Override
+  public ByteSource getSource() {
+    return source;
+  }
+
+  public boolean isBigEndian() {
+    return bigEndian;
+  }
+
+  @Override
   public void set(long index, short value) {
     // Java is big Endian so separation is always the same, just the order in which we place them
     // into the byte source changes.
@@ -55,15 +64,6 @@ public class MultiByteToShortSource implements ShortSource, DataView<ByteSource>
       source.set(bidx, b0);
       source.set(bidx + 1, b1);
     }
-  }
-
-  public boolean isBigEndian() {
-    return bigEndian;
-  }
-
-  @Override
-  public ByteSource getSource() {
-    return source;
   }
 
   private static long byteSourceIndex(long index) {

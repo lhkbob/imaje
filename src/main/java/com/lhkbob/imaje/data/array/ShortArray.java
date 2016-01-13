@@ -16,6 +16,11 @@ public class ShortArray implements ShortSource {
     this.array = array;
   }
 
+  @Override
+  public short get(long index) {
+    return array[Math.toIntExact(index)];
+  }
+
   public short[] getArray() {
     return array;
   }
@@ -23,11 +28,6 @@ public class ShortArray implements ShortSource {
   @Override
   public long getLength() {
     return array.length;
-  }
-
-  @Override
-  public short get(long index) {
-    return array[Math.toIntExact(index)];
   }
 
   @Override

@@ -15,22 +15,22 @@ public class UnsignedIntSource implements LongSource, DataView<IntSource> {
   }
 
   @Override
-  public long getLength() {
-    return source.getLength();
-  }
-
-  @Override
   public long get(long index) {
     return Integer.toUnsignedLong(source.get(index));
   }
 
   @Override
-  public void set(long index, long value) {
-    source.set(index, (int) value);
+  public long getLength() {
+    return source.getLength();
   }
 
   @Override
   public IntSource getSource() {
     return source;
+  }
+
+  @Override
+  public void set(long index, long value) {
+    source.set(index, (int) value);
   }
 }

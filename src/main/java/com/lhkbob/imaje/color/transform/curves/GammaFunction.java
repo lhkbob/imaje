@@ -8,6 +8,7 @@ public final class GammaFunction implements Curve {
   private final double xOffset;
   private final double xScalar;
   private final double yOffset;
+
   public GammaFunction(
       double gamma, double xScalar, double xOffset, double yOffset) {
     this.gamma = gamma;
@@ -82,5 +83,6 @@ public final class GammaFunction implements Curve {
 
     return "y(x) = " + func;
   }
+
   private static final double EPS = 1e-8;
 }

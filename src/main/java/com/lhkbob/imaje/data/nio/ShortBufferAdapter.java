@@ -20,6 +20,11 @@ public class ShortBufferAdapter implements ShortSource {
     this.buffer = buffer;
   }
 
+  @Override
+  public short get(long index) {
+    return buffer.get(Math.toIntExact(index));
+  }
+
   public ShortBuffer getBuffer() {
     return buffer;
   }
@@ -27,11 +32,6 @@ public class ShortBufferAdapter implements ShortSource {
   @Override
   public long getLength() {
     return buffer.capacity();
-  }
-
-  @Override
-  public short get(long index) {
-    return buffer.get(Math.toIntExact(index));
   }
 
   @Override

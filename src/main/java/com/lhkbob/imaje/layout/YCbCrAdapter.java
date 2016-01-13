@@ -9,10 +9,10 @@ import java.util.LinkedHashMap;
  *
  */
 public class YCbCrAdapter<T extends YCbCr> implements PixelAdapter<T> {
-  private final Class<T> type;
-  private final DoubleSource y;
   private final DoubleSource cb;
   private final DoubleSource cr;
+  private final Class<T> type;
+  private final DoubleSource y;
 
   public YCbCrAdapter(Class<T> type, DoubleSource y, DoubleSource cb, DoubleSource cr) {
     this.type = type;
@@ -29,13 +29,6 @@ public class YCbCrAdapter<T extends YCbCr> implements PixelAdapter<T> {
   }
 
   @Override
-  public void set(long pixelIndex, T value) {
-    y.set(pixelIndex, value.y());
-    cb.set(pixelIndex, value.cb());
-    cr.set(pixelIndex, value.cr());
-  }
-
-  @Override
   public LinkedHashMap<String, DoubleSource> getChannels() {
     LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
     channels.put(YCbCr.Y, y);
@@ -47,5 +40,12 @@ public class YCbCrAdapter<T extends YCbCr> implements PixelAdapter<T> {
   @Override
   public Class<T> getType() {
     return type;
+  }
+
+  @Override
+  public void set(long pixelIndex, T value) {
+    y.set(pixelIndex, value.y());
+    cb.set(pixelIndex, value.cb());
+    cr.set(pixelIndex, value.cr());
   }
 }

@@ -8,9 +8,9 @@ import java.util.Arrays;
  *
  */
 public class LargeDoubleSource implements DoubleSource {
+  private final long repeatedSourceLength;
   private final DoubleSource[] subSources;
   private final long totalLength;
-  private final long repeatedSourceLength;
 
   public LargeDoubleSource(DoubleSource[] sources) {
     subSources = Arrays.copyOf(sources, sources.length);
@@ -26,8 +26,11 @@ public class LargeDoubleSource implements DoubleSource {
     totalLength = total;
   }
 
-  public DoubleSource[] getSources() {
-    return Arrays.copyOf(subSources, subSources.length);
+  @Override
+  public double get(long index) {
+    int sourceIndex = (int) (index / repeatedSourceLength);
+    long withinSourceIndex = index % repeatedSourceLength;
+    return subSources[sourceIndex].get(withinSourceIndex);
   }
 
   @Override
@@ -35,11 +38,8 @@ public class LargeDoubleSource implements DoubleSource {
     return totalLength;
   }
 
-  @Override
-  public double get(long index) {
-    int sourceIndex = (int) (index / repeatedSourceLength);
-    long withinSourceIndex = index % repeatedSourceLength;
-    return subSources[sourceIndex].get(withinSourceIndex);
+  public DoubleSource[] getSources() {
+    return Arrays.copyOf(subSources, subSources.length);
   }
 
   @Override

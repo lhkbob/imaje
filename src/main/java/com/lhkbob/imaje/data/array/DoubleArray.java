@@ -16,6 +16,11 @@ public class DoubleArray implements DoubleSource {
     this.array = array;
   }
 
+  @Override
+  public double get(long index) {
+    return array[Math.toIntExact(index)];
+  }
+
   public double[] getArray() {
     return array;
   }
@@ -23,11 +28,6 @@ public class DoubleArray implements DoubleSource {
   @Override
   public long getLength() {
     return array.length;
-  }
-
-  @Override
-  public double get(long index) {
-    return array[Math.toIntExact(index)];
   }
 
   @Override

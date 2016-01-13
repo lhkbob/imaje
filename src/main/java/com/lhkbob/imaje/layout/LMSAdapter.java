@@ -27,13 +27,6 @@ public class LMSAdapter implements PixelAdapter<LMS> {
   }
 
   @Override
-  public void set(long pixelIndex, LMS value) {
-    l.set(pixelIndex, value.l());
-    m.set(pixelIndex, value.m());
-    s.set(pixelIndex, value.s());
-  }
-
-  @Override
   public LinkedHashMap<String, DoubleSource> getChannels() {
     LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
     channels.put(LMS.LONG, l);
@@ -45,5 +38,12 @@ public class LMSAdapter implements PixelAdapter<LMS> {
   @Override
   public Class<LMS> getType() {
     return LMS.class;
+  }
+
+  @Override
+  public void set(long pixelIndex, LMS value) {
+    l.set(pixelIndex, value.l());
+    m.set(pixelIndex, value.m());
+    s.set(pixelIndex, value.s());
   }
 }

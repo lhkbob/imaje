@@ -19,6 +19,11 @@ public class ByteBufferAdapter implements ByteSource {
     this.buffer = buffer;
   }
 
+  @Override
+  public byte get(long index) {
+    return buffer.get(Math.toIntExact(index));
+  }
+
   public ByteBuffer getBuffer() {
     return buffer;
   }
@@ -26,11 +31,6 @@ public class ByteBufferAdapter implements ByteSource {
   @Override
   public long getLength() {
     return buffer.capacity();
-  }
-
-  @Override
-  public byte get(long index) {
-    return buffer.get(Math.toIntExact(index));
   }
 
   @Override

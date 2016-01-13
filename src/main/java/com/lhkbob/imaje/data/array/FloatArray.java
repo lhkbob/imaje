@@ -16,6 +16,11 @@ public class FloatArray implements FloatSource {
     this.array = array;
   }
 
+  @Override
+  public float get(long index) {
+    return array[Math.toIntExact(index)];
+  }
+
   public float[] getArray() {
     return array;
   }
@@ -23,11 +28,6 @@ public class FloatArray implements FloatSource {
   @Override
   public long getLength() {
     return array.length;
-  }
-
-  @Override
-  public float get(long index) {
-    return array[Math.toIntExact(index)];
   }
 
   @Override

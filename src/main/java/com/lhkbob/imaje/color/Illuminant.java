@@ -19,11 +19,11 @@ public @interface Illuminant {
     CHROMATICITY
   }
 
-  Type type();
-
   Chromaticity chromaticity() default @Chromaticity(x = 0.3333, y = 0.3333);
+
+  double luminance() default 1.0;
 
   double temperature() default 5000;
 
-  double luminance() default 1.0;
+  Type type();
 }

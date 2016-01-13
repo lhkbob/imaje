@@ -6,6 +6,7 @@ package com.lhkbob.imaje.color.transform.curves;
 public final class LinearFunction implements Curve {
   private final double offset;
   private final double slope;
+
   public LinearFunction(double slope, double offset) {
     this.slope = slope;
     this.offset = offset;
@@ -66,5 +67,6 @@ public final class LinearFunction implements Curve {
 
     return "y(x) = " + base;
   }
+
   private static final double EPS = 1e-8;
 }

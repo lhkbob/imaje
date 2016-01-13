@@ -5,113 +5,9 @@ package com.lhkbob.imaje.color;
  */
 @Channels({ YCbCr.Y, YCbCr.CB, YCbCr.CR })
 public class YCbCr implements Color {
-  public static final String Y = "Y";
   public static final String CB = "Cb";
   public static final String CR = "Cr";
-
-  private double y;
-  private double cb;
-  private double cr;
-
-  public YCbCr() {
-    this(0.0, 0.0, 0.0);
-  }
-
-  public YCbCr(double y, double cb, double cr) {
-    this.y = y;
-    this.cb = cb;
-    this.cr = cr;
-  }
-
-  public double y() {
-    return y;
-  }
-
-  public void y(double y) {
-    this.y = y;
-  }
-
-  public double cb() {
-    return cb;
-  }
-
-  public void cb(double cb) {
-    this.cb = cb;
-  }
-
-  public double cr() {
-    return cr;
-  }
-
-  public void cr(double cr) {
-    this.cr = cr;
-  }
-
-  public double getY() {
-    return y;
-  }
-
-  public void setY(double y) {
-    this.y = y;
-  }
-
-  public double getCb() {
-    return cb;
-  }
-
-  public void setCb(double cb) {
-    this.cb = cb;
-  }
-
-  public double getCr() {
-    return cr;
-  }
-
-  public void setCr(double cr) {
-    this.cr = cr;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = Double.hashCode(y);
-    result = 31 * result + Double.hashCode(cb);
-    result = 31 * result + Double.hashCode(cr);
-    return result;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (o == null || o.getClass() != getClass()) {
-      return false;
-    }
-    YCbCr c = (YCbCr) o;
-    return Double.compare(c.y, y) == 0 && Double.compare(c.cb, cb) == 0
-        && Double.compare(c.cr, cr) == 0;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("%s(%.3f, %.3f, %.3f)", getClass().getSimpleName(), y, cb, cr);
-  }
-
-  @OpponentAxis(aWeight = 0.0722, bWeight = 0.2126)
-  public static class REC709 extends YCbCr {
-    public REC709() {
-
-    }
-
-    public REC709(double y, double cb, double cr) {
-      super(y, cb, cr);
-    }
-
-    @Override
-    public REC709 clone() {
-      return (REC709) super.clone();
-    }
-  }
+  public static final String Y = "Y";
 
   @OpponentAxis(aWeight = 0.0593, bWeight = 0.2627)
   public static class REC2020 extends YCbCr {
@@ -145,9 +41,78 @@ public class YCbCr implements Color {
     }
   }
 
+  @OpponentAxis(aWeight = 0.0722, bWeight = 0.2126)
+  public static class REC709 extends YCbCr {
+    public REC709() {
+
+    }
+
+    public REC709(double y, double cb, double cr) {
+      super(y, cb, cr);
+    }
+
+    @Override
+    public REC709 clone() {
+      return (REC709) super.clone();
+    }
+  }
+  private double cb;
+  private double cr;
+  private double y;
+
+  public YCbCr() {
+    this(0.0, 0.0, 0.0);
+  }
+
+  public YCbCr(double y, double cb, double cr) {
+    this.y = y;
+    this.cb = cb;
+    this.cr = cr;
+  }
+
+  public double cb() {
+    return cb;
+  }
+
+  public void cb(double cb) {
+    this.cb = cb;
+  }
+
   @Override
-  public int getChannelCount() {
-    return 3;
+  public YCbCr clone() {
+    try {
+      return (YCbCr) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException("Should not happen");
+    }
+  }
+
+  public double cr() {
+    return cr;
+  }
+
+  public void cr(double cr) {
+    this.cr = cr;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (o == null || o.getClass() != getClass()) {
+      return false;
+    }
+    YCbCr c = (YCbCr) o;
+    return Double.compare(c.y, y) == 0 && Double.compare(c.cb, cb) == 0
+        && Double.compare(c.cr, cr) == 0;
+  }
+
+  @Override
+  public void fromArray(double[] array) {
+    y = array[0];
+    cb = array[1];
+    cr = array[2];
   }
 
   @Override
@@ -164,6 +129,43 @@ public class YCbCr implements Color {
     }
   }
 
+  public double getCb() {
+    return cb;
+  }
+
+  @Override
+  public int getChannelCount() {
+    return 3;
+  }
+
+  public double getCr() {
+    return cr;
+  }
+
+  public double getY() {
+    return y;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Double.hashCode(y);
+    result = 31 * result + Double.hashCode(cb);
+    result = 31 * result + Double.hashCode(cr);
+    return result;
+  }
+
+  public void setCb(double cb) {
+    this.cb = cb;
+  }
+
+  public void setCr(double cr) {
+    this.cr = cr;
+  }
+
+  public void setY(double y) {
+    this.y = y;
+  }
+
   @Override
   public void toArray(double[] array) {
     array[0] = y;
@@ -172,18 +174,15 @@ public class YCbCr implements Color {
   }
 
   @Override
-  public void fromArray(double[] array) {
-    y = array[0];
-    cb = array[1];
-    cr = array[2];
+  public String toString() {
+    return String.format("%s(%.3f, %.3f, %.3f)", getClass().getSimpleName(), y, cb, cr);
   }
 
-  @Override
-  public YCbCr clone() {
-    try {
-      return (YCbCr) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Should not happen");
-    }
+  public double y() {
+    return y;
+  }
+
+  public void y(double y) {
+    this.y = y;
   }
 }

@@ -15,12 +15,8 @@ public class MultiByteToDoubleSource implements DoubleSource, DataView<ByteSourc
   }
 
   @Override
-  public ByteSource getSource() {
-    return source.getSource();
-  }
-
-  public boolean isBigEndian() {
-    return source.isBigEndian();
+  public double get(long index) {
+    return Double.longBitsToDouble(source.get(index));
   }
 
   @Override
@@ -29,8 +25,12 @@ public class MultiByteToDoubleSource implements DoubleSource, DataView<ByteSourc
   }
 
   @Override
-  public double get(long index) {
-    return Double.longBitsToDouble(source.get(index));
+  public ByteSource getSource() {
+    return source.getSource();
+  }
+
+  public boolean isBigEndian() {
+    return source.isBigEndian();
   }
 
   @Override

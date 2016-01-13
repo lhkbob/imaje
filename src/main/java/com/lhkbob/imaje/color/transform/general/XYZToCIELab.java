@@ -6,14 +6,20 @@ import com.lhkbob.imaje.color.XYZ;
  *
  */
 public class XYZToCIELab implements Transform {
-  static final double LINEAR_THRESHOLD = Math.pow(6.0 / 29.0, 3.0); // ~0.009
-  static final double LINEAR_SLOPE = Math.pow(29.0 / 6.0, 2.0) / 3.0; // ~7.787
-  static final double LINEAR_OFFSET = 4.0 / 29.0; // ~0.138
-
   private final XYZ referenceWhitepoint;
-
   public XYZToCIELab(XYZ referenceWhitepoint) {
     this.referenceWhitepoint = referenceWhitepoint.clone();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof XYZToCIELab)) {
+      return false;
+    }
+    return ((XYZToCIELab) o).referenceWhitepoint.equals(referenceWhitepoint);
   }
 
   @Override
@@ -22,13 +28,29 @@ public class XYZToCIELab implements Transform {
   }
 
   @Override
+  public XYZToCIELab getLocallySafeInstance() {
+    // This is purely functional (with constant parameters) so the instance can be used by any thread
+    return this;
+  }
+
+  @Override
   public int getOutputChannels() {
     return 3;
   }
 
   @Override
+  public int hashCode() {
+    return referenceWhitepoint.hashCode();
+  }
+
+  @Override
   public CIELabToXYZ inverted() {
     return new CIELabToXYZ(referenceWhitepoint);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("XYZ -> CIELAB Transform (whitepoint: %s)", referenceWhitepoint);
   }
 
   @Override
@@ -44,12 +66,6 @@ public class XYZToCIELab implements Transform {
     output[2] = 200 * (fy - fz); // b*
   }
 
-  @Override
-  public XYZToCIELab getLocallySafeInstance() {
-    // This is purely functional (with constant parameters) so the instance can be used by any thread
-    return this;
-  }
-
   static double f(double r) {
     if (r > LINEAR_THRESHOLD) {
       return Math.cbrt(r);
@@ -57,25 +73,7 @@ public class XYZToCIELab implements Transform {
       return LINEAR_SLOPE * r + LINEAR_OFFSET;
     }
   }
-
-  @Override
-  public int hashCode() {
-    return referenceWhitepoint.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (!(o instanceof XYZToCIELab)) {
-      return false;
-    }
-    return ((XYZToCIELab) o).referenceWhitepoint.equals(referenceWhitepoint);
-  }
-
-  @Override
-  public String toString() {
-    return String.format("XYZ -> CIELAB Transform (whitepoint: %s)", referenceWhitepoint);
-  }
+  static final double LINEAR_OFFSET = 4.0 / 29.0; // ~0.138
+  static final double LINEAR_SLOPE = Math.pow(29.0 / 6.0, 2.0) / 3.0; // ~7.787
+  static final double LINEAR_THRESHOLD = Math.pow(6.0 / 29.0, 3.0); // ~0.009
 }

@@ -23,12 +23,37 @@ public class SpliteratorChain<T> implements Spliterator<T> {
     current = null;
   }
 
-  public static <T> SpliteratorChain<T> newSpliteratorChain(Collection<? extends Iterable<T>> splitSources) {
+  public static <T> SpliteratorChain<T> newSpliteratorChain(
+      Collection<? extends Iterable<T>> splitSources) {
     SpliteratorChain<T> split = new SpliteratorChain<>();
     for (Iterable<T> source : splitSources) {
       split.spliterators.add(source.spliterator());
     }
     return split;
+  }
+
+  @Override
+  public int characteristics() {
+    int caps = ~0;
+    for (Spliterator<T> s : spliterators) {
+      caps &= s.characteristics();
+    }
+    return caps;
+  }
+
+  @Override
+  public long estimateSize() {
+    long size = 0;
+    for (Spliterator<T> s : spliterators) {
+      long subSize = s.estimateSize();
+      // Prevent overflow if a sub-spliterator is unable to estimate the size or has an infinite
+      // number of elements. In that case this spliterator should report the same
+      if (subSize == Long.MAX_VALUE) {
+        return Long.MAX_VALUE;
+      }
+      size += subSize;
+    }
+    return size;
   }
 
   @Override
@@ -44,7 +69,7 @@ public class SpliteratorChain<T> implements Spliterator<T> {
       }
     }
 
-    while(!spliterators.isEmpty()) {
+    while (!spliterators.isEmpty()) {
       current = spliterators.poll();
       if (current.tryAdvance(action)) {
         // Found a spliterator with elements
@@ -60,8 +85,9 @@ public class SpliteratorChain<T> implements Spliterator<T> {
   @Override
   public Spliterator<T> trySplit() {
     // Fast path optimization for when the spliterator is empty
-    if (current == null && spliterators.isEmpty())
+    if (current == null && spliterators.isEmpty()) {
       return null;
+    }
 
     // If this spliterator is on the last subspliterator, try splitting the current one directly
     // (and since current is properly updated internally to be the postfix then this has the
@@ -75,8 +101,9 @@ public class SpliteratorChain<T> implements Spliterator<T> {
 
     // However, if there are infinite elements, or unknown elements, then don't split
     long size = estimateSize();
-    if (size == Long.MAX_VALUE)
+    if (size == Long.MAX_VALUE) {
       return null;
+    }
 
     long splitSize = 0;
     SpliteratorChain<T> split = new SpliteratorChain<>();
@@ -89,7 +116,7 @@ public class SpliteratorChain<T> implements Spliterator<T> {
 
     // Move sub-spliterators over until about half the elements are covered, but make sure to
     // leave at least one spliterator in this one
-    while(spliterators.size() > 1) {
+    while (spliterators.size() > 1) {
       Spliterator<T> next = spliterators.peek();
       long nextSize = next.estimateSize();
       // FIXME update this logic to always take at least one (e.g. if current == null we ought
@@ -112,28 +139,5 @@ public class SpliteratorChain<T> implements Spliterator<T> {
     } else {
       return split;
     }
-  }
-
-  @Override
-  public long estimateSize() {
-    long size = 0;
-    for (Spliterator<T> s : spliterators) {
-      long subSize = s.estimateSize();
-      // Prevent overflow if a sub-spliterator is unable to estimate the size or has an infinite
-      // number of elements. In that case this spliterator should report the same
-      if (subSize == Long.MAX_VALUE)
-        return Long.MAX_VALUE;
-      size += subSize;
-    }
-    return size;
-  }
-
-  @Override
-  public int characteristics() {
-    int caps = ~0;
-    for (Spliterator<T> s: spliterators) {
-      caps &= s.characteristics();
-    }
-    return caps;
   }
 }

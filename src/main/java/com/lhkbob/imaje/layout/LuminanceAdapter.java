@@ -21,11 +21,6 @@ public class LuminanceAdapter implements PixelAdapter<Luminance> {
   }
 
   @Override
-  public void set(long pixelIndex, Luminance value) {
-    l.set(pixelIndex, value.l());
-  }
-
-  @Override
   public LinkedHashMap<String, DoubleSource> getChannels() {
     LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
     channels.put(Luminance.LUMINANCE, l);
@@ -35,5 +30,10 @@ public class LuminanceAdapter implements PixelAdapter<Luminance> {
   @Override
   public Class<Luminance> getType() {
     return Luminance.class;
+  }
+
+  @Override
+  public void set(long pixelIndex, Luminance value) {
+    l.set(pixelIndex, value.l());
   }
 }

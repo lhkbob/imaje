@@ -76,18 +76,8 @@ public class LookupTable implements Transform {
   }
 
   @Override
-  public int hashCode() {
-    return System.identityHashCode(this);
-  }
-
-  @Override
   public boolean equals(Object o) {
     return o == this;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("CLUT (in: %d, out: %d,  grid: %s,)", inputChannels, outputChannels, Arrays.toString(gridSizes));
   }
 
   @Override
@@ -96,14 +86,33 @@ public class LookupTable implements Transform {
   }
 
   @Override
+  public Transform getLocallySafeInstance() {
+    // The majority of a lookup-table's data is constant, except for two working arrays. Use this
+    // private constructor to share data references where possible and allocate new safe member
+    // instances for the working arrays.
+    return new LookupTable(this);
+  }
+
+  @Override
   public int getOutputChannels() {
     return outputChannels;
+  }
+
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(this);
   }
 
   @Override
   public Transform inverted() {
     // FIXME is this even a reasonable thing to implement for a CLUT?
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("CLUT (in: %d, out: %d,  grid: %s,)", inputChannels, outputChannels,
+        Arrays.toString(gridSizes));
   }
 
   @Override
@@ -160,14 +169,6 @@ public class LookupTable implements Transform {
         output[o] += w * values[d + o];
       }
     }
-  }
-
-  @Override
-  public Transform getLocallySafeInstance() {
-    // The majority of a lookup-table's data is constant, except for two working arrays. Use this
-    // private constructor to share data references where possible and allocate new safe member
-    // instances for the working arrays.
-    return new LookupTable(this);
   }
 
   private static int[] createSimpleSizes(int inputChannels, int gridSize) {

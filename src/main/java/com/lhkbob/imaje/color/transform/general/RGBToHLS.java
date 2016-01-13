@@ -4,11 +4,31 @@ package com.lhkbob.imaje.color.transform.general;
  *
  */
 public class RGBToHLS extends AbstractRGBToHueTransform {
-  private static final double EPS = 1e-8;
+  @Override
+  public boolean equals(Object o) {
+    return o instanceof RGBToHLS;
+  }
+
+  @Override
+  public RGBToHLS getLocallySafeInstance() {
+    // This reuses the output array as a work array (unlike its partner HLSToRGB, which requires a
+    // new instance to be locally safe)
+    return this;
+  }
+
+  @Override
+  public int hashCode() {
+    return RGBToHLS.class.hashCode();
+  }
 
   @Override
   public HLSToRGB inverted() {
     return new HLSToRGB();
+  }
+
+  @Override
+  public String toString() {
+    return "RGB -> HLS Transform";
   }
 
   @Override
@@ -33,26 +53,5 @@ public class RGBToHLS extends AbstractRGBToHueTransform {
     output[1] = lightness;
     output[2] = saturation;
   }
-
-  @Override
-  public RGBToHLS getLocallySafeInstance() {
-    // This reuses the output array as a work array (unlike its partner HLSToRGB, which requires a
-    // new instance to be locally safe)
-    return this;
-  }
-
-  @Override
-  public int hashCode() {
-    return RGBToHLS.class.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    return o instanceof RGBToHLS;
-  }
-
-  @Override
-  public String toString() {
-    return "RGB -> HLS Transform";
-  }
+  private static final double EPS = 1e-8;
 }

@@ -4,9 +4,9 @@ package com.lhkbob.imaje.data.channel;
  *
  */
 public abstract class AbstractChannel {
+  private final long numPixels;
   private final long offset;
   private final long stride;
-  private final long numPixels;
 
   public AbstractChannel(long offset, long stride, long numPixels) {
     this.offset = offset;

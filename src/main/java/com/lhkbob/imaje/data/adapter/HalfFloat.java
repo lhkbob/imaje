@@ -5,32 +5,86 @@ package com.lhkbob.imaje.data.adapter;
  * library as part of OpenEXR.
  */
 public class HalfFloat {
-  private static final short[] exponentLUT = new short[1 << 9];
-  private static final float[] halfLUT = new float[1 << 16];
-
-  static {
-    initializeExponentLUT();
-    initializeHalfLUT();
-  }
-
-  private static void initializeExponentLUT() {
-    for (int i = 0; i < 0x100; i++) {
-      int e = (i & 0x0ff) - (127 - 15);
-
-      if (e <= 0 || e >= 30) {
-        // special case (can't be normalized)
-        exponentLUT[i] = 0;
-        exponentLUT[i | 0x100] = 0;
+  public static short floatToHalf(float v) {
+    int floatBits = Float.floatToIntBits(v);
+    short h;
+    if (v == 0) {
+      // special case, preserve sign bit
+      h = (short) (floatBits >> 16);
+    } else {
+      // get the sign and exponent from the float and lookup the corresponding
+      // half values from the table
+      int e = (floatBits >> 23) & 0x000001ff;
+      e = exponentLUT[e];
+      if (e != 0) {
+        // normal case, round the significant to 10 bits and combine with exponent
+        int m = (floatBits & 0x007fffff);
+        h = (short) (e + ((m + 0x00000fff + ((m >> 13) & 1)) >> 13));
       } else {
-        exponentLUT[i] = (short) (e << 10);
-        exponentLUT[i | 0x100] = (short) ((e << 10) | 0x8000);
+        // not a fast case so use general method
+        h = floatBitsToHalf(floatBits);
       }
     }
+
+    return h;
   }
 
-  private static void initializeHalfLUT() {
-    for (int i = 0; i < halfLUT.length; i++) {
-      halfLUT[i] = Float.intBitsToFloat(halfToFloatBits((short) i));
+  public static float halfToFloat(short half) {
+    return halfLUT[(0xffff) & half];
+  }
+
+  private static short floatBitsToHalf(int bits) {
+    int s = (bits >> 16) & 0x00008000;
+    int e = ((bits >> 23) & 0x000000ff) - (127 - 15);
+    int m = bits & 0x007fffff;
+
+    if (e <= 0) {
+      if (e < -10) {
+        // exponent of float is less than -10, so the absolute value of
+        // the float is less than the resolution of half, so turn it
+        // to an appropriately signed 0
+        return (short) s;
+      }
+
+      // exponent is between -10 and 0, so the float is a normalized float
+      // but less than the normalized representation in half so make
+      // it a denormalized half
+      m = m | 0x00800000;
+      int t = 14 - e;
+      int a = (1 << (t - 1)) - 1;
+      int b = (m >> t) & 1;
+      m = (m + a + b) >> t; // round m to nearest (10+e) value, rounding to even on a tie
+      return (short) (s | m);
+    } else if (e == 0xff - (127 - 15)) {
+      if (m == 0) {
+        // float is infinity
+        return (short) (s | 0x7c00);
+      } else {
+        // float is NaN, so make a half NaN that preserves sign and 10
+        // leftmost bits of significand
+        m >>= 13;
+        if (m == 0) {
+          m = 1; // make sure there's at least some non-zero in the mantissa so it doesn't look like infiity
+        }
+        return (short) (s | 0x7c00 | m);
+      }
+    } else {
+      // exponent greater than 0, float is normalized and should be convertable
+      // to a normalized half float
+
+      m = m + 0x00000fff + ((m >> 13) & 1);
+      if ((m & 0x00800000) != 0) {
+        // overflow in mantissa
+        m = 0;
+        e += 1;
+      }
+
+      if (e > 30) {
+        // overflow in exponent
+        return (short) (s | 0x7c00);
+      } else {
+        return (short) (s | (e << 10) | (m >> 13));
+      }
     }
   }
 
@@ -69,85 +123,31 @@ public class HalfFloat {
     return (s << 31) | (e << 23) | m;
   }
 
-  private static short floatBitsToHalf(int bits) {
-    int s = (bits >> 16) & 0x00008000;
-    int e = ((bits >> 23) & 0x000000ff) - (127 - 15);
-    int m = bits & 0x007fffff;
+  private static void initializeExponentLUT() {
+    for (int i = 0; i < 0x100; i++) {
+      int e = (i & 0x0ff) - (127 - 15);
 
-    if (e <= 0) {
-      if (e < -10) {
-        // exponent of float is less than -10, so the absolute value of
-        // the float is less than the resolution of half, so turn it
-        // to an appropriately signed 0
-        return (short) s;
-      }
-
-      // exponent is between -10 and 0, so the float is a normalized float
-      // but less than the normalized representation in half so make
-      // it a denormalized half
-      m = m | 0x00800000;
-      int t = 14 - e;
-      int a = (1 << (t - 1)) - 1;
-      int b = (m >> t) & 1;
-      m = (m + a + b) >> t; // round m to nearest (10+e) value, rounding to even on a tie
-      return (short) (s | m);
-    } else if (e == 0xff - (127 - 15)) {
-      if (m == 0) {
-        // float is infinity
-        return (short) (s | 0x7c00);
+      if (e <= 0 || e >= 30) {
+        // special case (can't be normalized)
+        exponentLUT[i] = 0;
+        exponentLUT[i | 0x100] = 0;
       } else {
-        // float is NaN, so make a half NaN that preserves sign and 10
-        // leftmost bits of significand
-        m >>= 13;
-        if (m == 0)
-          m = 1; // make sure there's at least some non-zero in the mantissa so it doesn't look like infiity
-        return (short) (s | 0x7c00 | m);
-      }
-    } else {
-      // exponent greater than 0, float is normalized and should be convertable
-      // to a normalized half float
-
-      m = m + 0x00000fff + ((m >> 13) & 1);
-      if ((m & 0x00800000) != 0) {
-        // overflow in mantissa
-        m = 0;
-        e += 1;
-      }
-
-      if (e > 30) {
-        // overflow in exponent
-        return (short) (s | 0x7c00);
-      } else {
-        return (short) (s | (e << 10) | (m >> 13));
+        exponentLUT[i] = (short) (e << 10);
+        exponentLUT[i | 0x100] = (short) ((e << 10) | 0x8000);
       }
     }
   }
 
-  public static float halfToFloat(short half) {
-    return halfLUT[(0xffff) & half];
-  }
-
-  public static short floatToHalf(float v) {
-    int floatBits = Float.floatToIntBits(v);
-    short h;
-    if (v == 0) {
-      // special case, preserve sign bit
-      h = (short) (floatBits >> 16);
-    } else {
-      // get the sign and exponent from the float and lookup the corresponding
-      // half values from the table
-      int e = (floatBits >> 23) & 0x000001ff;
-      e = exponentLUT[e];
-      if (e != 0) {
-        // normal case, round the significant to 10 bits and combine with exponent
-        int m = (floatBits & 0x007fffff);
-        h = (short) (e + ((m + 0x00000fff + ((m >> 13) & 1)) >> 13));
-      } else {
-        // not a fast case so use general method
-        h = floatBitsToHalf(floatBits);
-      }
+  private static void initializeHalfLUT() {
+    for (int i = 0; i < halfLUT.length; i++) {
+      halfLUT[i] = Float.intBitsToFloat(halfToFloatBits((short) i));
     }
+  }
+  private static final short[] exponentLUT = new short[1 << 9];
+  private static final float[] halfLUT = new float[1 << 16];
 
-    return h;
+  static {
+    initializeExponentLUT();
+    initializeHalfLUT();
   }
 }

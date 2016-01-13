@@ -16,6 +16,11 @@ public class ByteArray implements ByteSource {
     this.array = array;
   }
 
+  @Override
+  public byte get(long index) {
+    return array[Math.toIntExact(index)];
+  }
+
   public byte[] getArray() {
     return array;
   }
@@ -23,11 +28,6 @@ public class ByteArray implements ByteSource {
   @Override
   public long getLength() {
     return array.length;
-  }
-
-  @Override
-  public byte get(long index) {
-    return array[Math.toIntExact(index)];
   }
 
   @Override

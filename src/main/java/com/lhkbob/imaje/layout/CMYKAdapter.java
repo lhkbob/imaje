@@ -10,9 +10,9 @@ import java.util.LinkedHashMap;
  */
 public class CMYKAdapter implements PixelAdapter<CMYK> {
   private final DoubleSource c;
+  private final DoubleSource k;
   private final DoubleSource m;
   private final DoubleSource y;
-  private final DoubleSource k;
 
   public CMYKAdapter(DoubleSource c, DoubleSource m, DoubleSource y, DoubleSource k) {
     this.c = c;
@@ -30,14 +30,6 @@ public class CMYKAdapter implements PixelAdapter<CMYK> {
   }
 
   @Override
-  public void set(long pixelIndex, CMYK value) {
-    c.set(pixelIndex, value.c());
-    m.set(pixelIndex, value.m());
-    y.set(pixelIndex, value.y());
-    k.set(pixelIndex, value.k());
-  }
-
-  @Override
   public LinkedHashMap<String, DoubleSource> getChannels() {
     LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
     channels.put(CMYK.CYAN, c);
@@ -50,5 +42,13 @@ public class CMYKAdapter implements PixelAdapter<CMYK> {
   @Override
   public Class<CMYK> getType() {
     return CMYK.class;
+  }
+
+  @Override
+  public void set(long pixelIndex, CMYK value) {
+    c.set(pixelIndex, value.c());
+    m.set(pixelIndex, value.m());
+    y.set(pixelIndex, value.y());
+    k.set(pixelIndex, value.k());
   }
 }

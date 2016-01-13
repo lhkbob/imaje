@@ -27,13 +27,6 @@ public class XYZAdapter implements PixelAdapter<XYZ> {
   }
 
   @Override
-  public void set(long pixelIndex, XYZ value) {
-    x.set(pixelIndex, value.x());
-    y.set(pixelIndex, value.y());
-    z.set(pixelIndex, value.z());
-  }
-
-  @Override
   public LinkedHashMap<String, DoubleSource> getChannels() {
     LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
     channels.put(XYZ.X, x);
@@ -45,5 +38,12 @@ public class XYZAdapter implements PixelAdapter<XYZ> {
   @Override
   public Class<XYZ> getType() {
     return XYZ.class;
+  }
+
+  @Override
+  public void set(long pixelIndex, XYZ value) {
+    x.set(pixelIndex, value.x());
+    y.set(pixelIndex, value.y());
+    z.set(pixelIndex, value.z());
   }
 }

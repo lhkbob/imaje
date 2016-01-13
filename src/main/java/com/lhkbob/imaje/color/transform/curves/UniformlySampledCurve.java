@@ -88,6 +88,13 @@ public class UniformlySampledCurve implements Curve {
     }
   }
 
+  @Override
+  public String toString() {
+    return String
+        .format("x in [%.3f, %.3f], y(x) = piecewise-linear function from %d uniform samples",
+            domainMin, domainMax, values.length);
+  }
+
   private double[] generateXAxis(boolean reverse) {
     double[] xs = new double[values.length];
     for (int i = 0; i < xs.length; i++) {
@@ -95,12 +102,5 @@ public class UniformlySampledCurve implements Curve {
       xs[i] = a * (domainMax - domainMin) + domainMin;
     }
     return xs;
-  }
-
-  @Override
-  public String toString() {
-    return String
-        .format("x in [%.3f, %.3f], y(x) = piecewise-linear function from %d uniform samples",
-            domainMin, domainMax, values.length);
   }
 }

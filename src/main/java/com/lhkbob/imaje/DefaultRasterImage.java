@@ -16,9 +16,9 @@ import java.util.function.Consumer;
  *
  */
 public class DefaultRasterImage<T extends Color> implements RasterImage<T> {
-  private final PixelLayout layout;
   private final DoubleSource alphas;
   private final PixelAdapter<T> colors;
+  private final PixelLayout layout;
 
   public DefaultRasterImage(PixelLayout layout, PixelAdapter<T> colors) {
     this(layout, colors, null);
@@ -27,11 +27,15 @@ public class DefaultRasterImage<T extends Color> implements RasterImage<T> {
   public DefaultRasterImage(PixelLayout layout, PixelAdapter<T> colors, DoubleSource alphas) {
     long numPixels = layout.getWidth() * layout.getHeight();
     if (alphas != null && alphas.getLength() != numPixels) {
-      throw new IllegalArgumentException("Alpha channel does not have expected number of values, was: " + alphas.getLength() + ", expected: " + numPixels);
+      throw new IllegalArgumentException(
+          "Alpha channel does not have expected number of values, was: " + alphas.getLength()
+              + ", expected: " + numPixels);
     }
     for (Map.Entry<String, ? extends DataSource<?>> c : colors.getChannels().entrySet()) {
       if (c.getValue().getLength() != numPixels) {
-        throw new IllegalArgumentException(c.getKey() + " channel does not have expected number of values, was: " + c.getValue().getLength() + ", expected: " + numPixels);
+        throw new IllegalArgumentException(
+            c.getKey() + " channel does not have expected number of values, was: " + c.getValue()
+                .getLength() + ", expected: " + numPixels);
       }
     }
 
@@ -41,22 +45,18 @@ public class DefaultRasterImage<T extends Color> implements RasterImage<T> {
   }
 
   @Override
-  public Pixel<T> getPixel(int x, int y) {
-    checkImageCoordinates(x, y);
-    RasterPixel p = new RasterPixel();
-    p.x = x;
-    p.y = y;
-    return p;
-  }
-
-  @Override
   public void get(int x, int y, T result) {
     colors.get(getPixelIndex(x, y), result);
   }
 
   @Override
-  public int getWidth() {
-    return layout.getWidth();
+  public double getAlpha(int x, int y) {
+    return alphas.get(getPixelIndex(x, y));
+  }
+
+  @Override
+  public Class<T> getColorType() {
+    return colors.getType();
   }
 
   @Override
@@ -70,23 +70,22 @@ public class DefaultRasterImage<T extends Color> implements RasterImage<T> {
   }
 
   @Override
+  public Map<String, String> getMetadata() {
+    throw new UnsupportedOperationException("NOT IMPLEMENTED");
+  }
+
+  @Override
   public int getMipmapCount() {
     return 1;
   }
 
   @Override
-  public boolean hasAlphaChannel() {
-    return alphas != null;
-  }
-
-  @Override
-  public Class<T> getColorType() {
-    return colors.getType();
-  }
-
-  @Override
-  public Map<String, String> getMetadata() {
-    throw new UnsupportedOperationException("NOT IMPLEMENTED");
+  public Pixel<T> getPixel(int x, int y) {
+    checkImageCoordinates(x, y);
+    RasterPixel p = new RasterPixel();
+    p.x = x;
+    p.y = y;
+    return p;
   }
 
   @Override
@@ -101,13 +100,18 @@ public class DefaultRasterImage<T extends Color> implements RasterImage<T> {
   }
 
   @Override
-  public Iterator<Pixel<T>> iterator() {
-    return new RasterIterator();
+  public int getWidth() {
+    return layout.getWidth();
   }
 
   @Override
-  public Spliterator<Pixel<T>> spliterator() {
-    return new RasterSpliterator();
+  public boolean hasAlphaChannel() {
+    return alphas != null;
+  }
+
+  @Override
+  public Iterator<Pixel<T>> iterator() {
+    return new RasterIterator();
   }
 
   @Override
@@ -116,18 +120,13 @@ public class DefaultRasterImage<T extends Color> implements RasterImage<T> {
   }
 
   @Override
-  public double getAlpha(int x, int y) {
-    return alphas.get(getPixelIndex(x, y));
-  }
-
-  @Override
   public void setAlpha(int x, int y, double alpha) {
     alphas.set(getPixelIndex(x, y), alpha);
   }
 
-  private long getPixelIndex(int x, int y) {
-    checkImageCoordinates(x, y);
-    return layout.getIndex(x, y);
+  @Override
+  public Spliterator<Pixel<T>> spliterator() {
+    return new RasterSpliterator();
   }
 
   private void checkImageCoordinates(int x, int y) {
@@ -137,49 +136,9 @@ public class DefaultRasterImage<T extends Color> implements RasterImage<T> {
     }
   }
 
-  private class RasterPixel implements Pixel<T> {
-    private int x;
-    private int y;
-
-    @Override
-    public int getX() {
-      return x;
-    }
-
-    @Override
-    public int getY() {
-      return y;
-    }
-
-    @Override
-    public int getLevel() {
-      return 0;
-    }
-
-    @Override
-    public int getLayer() {
-      return 0;
-    }
-
-    @Override
-    public void get(T result) {
-      DefaultRasterImage.this.get(x, y, result);
-    }
-
-    @Override
-    public void set(T value) {
-      DefaultRasterImage.this.set(x, y, value);
-    }
-
-    @Override
-    public double getAlpha() {
-      return DefaultRasterImage.this.getAlpha(x, y);
-    }
-
-    @Override
-    public void setAlpha(double a) {
-      DefaultRasterImage.this.setAlpha(x, y, a);
-    }
+  private long getPixelIndex(int x, int y) {
+    checkImageCoordinates(x, y);
+    return layout.getIndex(x, y);
   }
 
   private class RasterIterator implements Iterator<Pixel<T>> {
@@ -205,6 +164,51 @@ public class DefaultRasterImage<T extends Color> implements RasterImage<T> {
     }
   }
 
+  private class RasterPixel implements Pixel<T> {
+    private int x;
+    private int y;
+
+    @Override
+    public void get(T result) {
+      DefaultRasterImage.this.get(x, y, result);
+    }
+
+    @Override
+    public double getAlpha() {
+      return DefaultRasterImage.this.getAlpha(x, y);
+    }
+
+    @Override
+    public int getLayer() {
+      return 0;
+    }
+
+    @Override
+    public int getLevel() {
+      return 0;
+    }
+
+    @Override
+    public int getX() {
+      return x;
+    }
+
+    @Override
+    public int getY() {
+      return y;
+    }
+
+    @Override
+    public void set(T value) {
+      DefaultRasterImage.this.set(x, y, value);
+    }
+
+    @Override
+    public void setAlpha(double a) {
+      DefaultRasterImage.this.setAlpha(x, y, a);
+    }
+  }
+
   private class RasterSpliterator implements Spliterator<Pixel<T>> {
     private final Spliterator<ImageCoordinate> coords;
     private final RasterPixel pixel;
@@ -216,6 +220,16 @@ public class DefaultRasterImage<T extends Color> implements RasterImage<T> {
     public RasterSpliterator(Spliterator<ImageCoordinate> coords) {
       this.coords = coords;
       pixel = new RasterPixel();
+    }
+
+    @Override
+    public int characteristics() {
+      return coords.characteristics();
+    }
+
+    @Override
+    public long estimateSize() {
+      return coords.estimateSize();
     }
 
     @Override
@@ -235,16 +249,6 @@ public class DefaultRasterImage<T extends Color> implements RasterImage<T> {
       } else {
         return new RasterSpliterator(split);
       }
-    }
-
-    @Override
-    public long estimateSize() {
-      return coords.estimateSize();
-    }
-
-    @Override
-    public int characteristics() {
-      return coords.characteristics();
     }
   }
 }

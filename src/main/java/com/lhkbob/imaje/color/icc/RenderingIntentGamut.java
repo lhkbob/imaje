@@ -13,10 +13,6 @@ public enum RenderingIntentGamut {
     this.signature = signature;
   }
 
-  public Signature getSignature() {
-    return signature;
-  }
-
   public static RenderingIntentGamut fromSignature(Signature sig) {
     for (RenderingIntentGamut v : values()) {
       if (v.getSignature().equals(sig)) {
@@ -25,5 +21,9 @@ public enum RenderingIntentGamut {
     }
 
     throw new IllegalArgumentException("Unknown signature: " + sig);
+  }
+
+  public Signature getSignature() {
+    return signature;
   }
 }

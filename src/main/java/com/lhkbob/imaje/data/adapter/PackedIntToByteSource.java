@@ -8,24 +8,14 @@ import com.lhkbob.imaje.data.IntSource;
  *
  */
 public class PackedIntToByteSource implements ByteSource, DataView<IntSource> {
-  private final IntSource source;
   private final boolean bigEndian;
   private final int indexScale;
+  private final IntSource source;
 
   public PackedIntToByteSource(IntSource source, boolean bigEndian, boolean ignoreFourthByte) {
     this.source = source;
     this.bigEndian = bigEndian;
     indexScale = (ignoreFourthByte ? 3 : 4);
-  }
-
-  @Override
-  public IntSource getSource() {
-    return source;
-  }
-
-  @Override
-  public long getLength() {
-    return indexScale * source.getLength();
   }
 
   @Override
@@ -41,6 +31,16 @@ public class PackedIntToByteSource implements ByteSource, DataView<IntSource> {
     }
 
     return (byte) (source.get(sourceIndex) >> shift);
+  }
+
+  @Override
+  public long getLength() {
+    return indexScale * source.getLength();
+  }
+
+  @Override
+  public IntSource getSource() {
+    return source;
   }
 
   @Override

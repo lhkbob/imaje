@@ -40,6 +40,32 @@ public class SampledCurve implements Curve {
     }
   }
 
+  public static int calculateStrictMonotonicity(double[] ys) {
+    if (ys.length < 2) {
+      return 0;
+    }
+    boolean positive = ys[1] > ys[0];
+    boolean negative = ys[1] < ys[0];
+
+    // If the first segment is neither positive or negatively sloped, then it was
+    // flat so it's not monotonic
+    if (!positive && !negative) {
+      return 0;
+    }
+
+    for (int i = 2; i < ys.length; i++) {
+      if (positive && ys[i] <= ys[i - 1]) {
+        // positive monotonicity hypothesis is incorrect
+        return 0;
+      } else if (negative && ys[i] >= ys[i - 1]) {
+        // negative monotonicity hypothesis is incorrect
+        return 0;
+      }
+    }
+
+    return (positive ? 1 : -1);
+  }
+
   @Override
   public boolean equals(Object o) {
     return o == this;
@@ -105,30 +131,6 @@ public class SampledCurve implements Curve {
 
       return new SampledCurve(reversedYs, reversedXs, true);
     }
-  }
-
-  public static int calculateStrictMonotonicity(double[] ys) {
-    if (ys.length < 2)
-      return 0;
-    boolean positive = ys[1] > ys[0];
-    boolean negative = ys[1] < ys[0];
-
-    // If the first segment is neither positive or negatively sloped, then it was
-    // flat so it's not monotonic
-    if (!positive && !negative)
-      return 0;
-
-    for (int i = 2; i < ys.length; i++) {
-      if (positive && ys[i] <= ys[i - 1]) {
-        // positive monotonicity hypothesis is incorrect
-        return 0;
-      } else if (negative && ys[i] >= ys[i - 1]) {
-        // negative monotonicity hypothesis is incorrect
-        return 0;
-      }
-    }
-
-    return (positive ? 1 : -1);
   }
 
   @Override
