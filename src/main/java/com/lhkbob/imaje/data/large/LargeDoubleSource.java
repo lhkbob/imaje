@@ -1,51 +1,28 @@
 package com.lhkbob.imaje.data.large;
 
+import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.DoubleSource;
-
-import java.util.Arrays;
 
 /**
  *
  */
-public class LargeDoubleSource implements DoubleSource {
-  private final long repeatedSourceLength;
-  private final DoubleSource[] subSources;
-  private final long totalLength;
-
+public class LargeDoubleSource extends AbstractLargeDataSource<Double, DoubleSource> implements DoubleSource {
   public LargeDoubleSource(DoubleSource[] sources) {
-    subSources = Arrays.copyOf(sources, sources.length);
-    repeatedSourceLength = sources[0].getLength();
-    long total = repeatedSourceLength;
-    for (int i = 1; i < sources.length; i++) {
-      if (i < sources.length - 1 && sources[i].getLength() != repeatedSourceLength) {
-        throw new IllegalArgumentException(
-            "All but last source must have the same size, expected: " + repeatedSourceLength);
-      }
-      total += sources[i].getLength();
-    }
-    totalLength = total;
+    super(sources);
   }
 
   @Override
   public double get(long index) {
-    int sourceIndex = (int) (index / repeatedSourceLength);
-    long withinSourceIndex = index % repeatedSourceLength;
-    return subSources[sourceIndex].get(withinSourceIndex);
+    return getSource(index).get(getIndexInSource(index));
   }
 
   @Override
-  public long getLength() {
-    return totalLength;
-  }
-
-  public DoubleSource[] getSources() {
-    return Arrays.copyOf(subSources, subSources.length);
+  public DataType getDataType() {
+    return DataType.FLOAT64;
   }
 
   @Override
   public void set(long index, double value) {
-    int sourceIndex = (int) (index / repeatedSourceLength);
-    long withinSourceIndex = index % repeatedSourceLength;
-    subSources[sourceIndex].set(withinSourceIndex, value);
+    getSource(index).set(getIndexInSource(index), value);
   }
 }
