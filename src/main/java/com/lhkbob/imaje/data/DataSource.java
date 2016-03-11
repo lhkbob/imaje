@@ -11,4 +11,10 @@ public interface DataSource<T extends Number> {
   long getLength();
 
   void setElement(long index, T value);
+
+  boolean isBigEndian();
+
+  DataType getDataType();
+
+  boolean isGPUAccessible();
 }
