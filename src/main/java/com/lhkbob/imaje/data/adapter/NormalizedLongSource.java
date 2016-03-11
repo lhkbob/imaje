@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.data.adapter;
 
+import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.DoubleSource;
 import com.lhkbob.imaje.data.LongSource;
@@ -10,6 +11,9 @@ import com.lhkbob.imaje.data.LongSource;
 public class NormalizedLongSource implements DoubleSource, DataView<LongSource> {
   private LongSource source;
   public NormalizedLongSource(LongSource source) {
+    if (source.getDataType() != DataType.SINT64)
+      throw new IllegalArgumentException(
+          "Source type must be SINT64 to ensure no undue bit manipulation occurs");
     this.source = source;
   }
 
@@ -26,6 +30,21 @@ public class NormalizedLongSource implements DoubleSource, DataView<LongSource> 
   @Override
   public LongSource getSource() {
     return source;
+  }
+
+  @Override
+  public boolean isBigEndian() {
+    return source.isBigEndian();
+  }
+
+  @Override
+  public DataType getDataType() {
+    return DataType.SFIXED64;
+  }
+
+  @Override
+  public boolean isGPUAccessible() {
+    return source.isGPUAccessible();
   }
 
   @Override

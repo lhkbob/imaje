@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.data.adapter;
 
+import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.DoubleSource;
 import com.lhkbob.imaje.data.ShortSource;
@@ -10,6 +11,9 @@ import com.lhkbob.imaje.data.ShortSource;
 public class NormalizedShortSource implements DoubleSource, DataView<ShortSource> {
   private ShortSource source;
   public NormalizedShortSource(ShortSource source) {
+    if (source.getDataType() != DataType.SINT16)
+      throw new IllegalArgumentException(
+          "Source type must be SINT16 to ensure no undue bit manipulation occurs");
     this.source = source;
   }
 
@@ -26,6 +30,21 @@ public class NormalizedShortSource implements DoubleSource, DataView<ShortSource
   @Override
   public ShortSource getSource() {
     return source;
+  }
+
+  @Override
+  public boolean isBigEndian() {
+    return source.isBigEndian();
+  }
+
+  @Override
+  public DataType getDataType() {
+    return DataType.SFIXED16;
+  }
+
+  @Override
+  public boolean isGPUAccessible() {
+    return source.isGPUAccessible();
   }
 
   @Override

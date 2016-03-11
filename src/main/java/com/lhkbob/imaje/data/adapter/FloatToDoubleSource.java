@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.data.adapter;
 
+import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.DoubleSource;
 import com.lhkbob.imaje.data.FloatSource;
@@ -17,6 +18,23 @@ public class FloatToDoubleSource implements DoubleSource, DataView<FloatSource> 
   @Override
   public double get(long index) {
     return source.get(index);
+  }
+
+  @Override
+  public boolean isBigEndian() {
+    return source.isBigEndian();
+  }
+
+  @Override
+  public DataType getDataType() {
+    // This view does not actually change the interpretation of the bits, it just performs
+    // the necessary Java widening and casting.
+    return source.getDataType();
+  }
+
+  @Override
+  public boolean isGPUAccessible() {
+    return source.isGPUAccessible();
   }
 
   @Override
