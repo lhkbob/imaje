@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.data.nio;
 
+import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.LongSource;
 
 import java.nio.ByteBuffer;
@@ -9,14 +10,14 @@ import java.nio.LongBuffer;
 /**
  *
  */
-public class LongBufferAdapter implements LongSource {
+public class LongBufferSource implements LongSource {
   private final LongBuffer buffer;
 
-  public LongBufferAdapter(int length) {
+  public LongBufferSource(int length) {
     this(ByteBuffer.allocateDirect(length << 3).order(ByteOrder.nativeOrder()).asLongBuffer());
   }
 
-  public LongBufferAdapter(LongBuffer buffer) {
+  public LongBufferSource(LongBuffer buffer) {
     this.buffer = buffer;
   }
 
@@ -35,7 +36,22 @@ public class LongBufferAdapter implements LongSource {
   }
 
   @Override
+  public boolean isBigEndian() {
+    return buffer.order().equals(ByteOrder.BIG_ENDIAN);
+  }
+
+  @Override
   public void set(long index, long value) {
     buffer.put(Math.toIntExact(index), value);
+  }
+
+  @Override
+  public DataType getDataType() {
+    return DataType.SINT64;
+  }
+
+  @Override
+  public boolean isGPUAccessible() {
+    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
   }
 }

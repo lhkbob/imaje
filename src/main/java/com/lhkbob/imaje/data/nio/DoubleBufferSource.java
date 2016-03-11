@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.data.nio;
 
+import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.DoubleSource;
 
 import java.nio.ByteBuffer;
@@ -9,14 +10,14 @@ import java.nio.DoubleBuffer;
 /**
  *
  */
-public class DoubleBufferAdapter implements DoubleSource {
+public class DoubleBufferSource implements DoubleSource {
   private final DoubleBuffer buffer;
 
-  public DoubleBufferAdapter(int length) {
+  public DoubleBufferSource(int length) {
     this(ByteBuffer.allocateDirect(length << 3).order(ByteOrder.nativeOrder()).asDoubleBuffer());
   }
 
-  public DoubleBufferAdapter(DoubleBuffer buffer) {
+  public DoubleBufferSource(DoubleBuffer buffer) {
     this.buffer = buffer;
   }
 
@@ -35,7 +36,22 @@ public class DoubleBufferAdapter implements DoubleSource {
   }
 
   @Override
+  public boolean isBigEndian() {
+    return buffer.order().equals(ByteOrder.BIG_ENDIAN);
+  }
+
+  @Override
   public void set(long index, double value) {
     buffer.put(Math.toIntExact(index), value);
+  }
+
+  @Override
+  public DataType getDataType() {
+    return DataType.FLOAT64;
+  }
+
+  @Override
+  public boolean isGPUAccessible() {
+    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
   }
 }

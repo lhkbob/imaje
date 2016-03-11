@@ -1,6 +1,7 @@
 package com.lhkbob.imaje.data.nio;
 
 import com.lhkbob.imaje.data.ByteSource;
+import com.lhkbob.imaje.data.DataType;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -8,14 +9,14 @@ import java.nio.ByteOrder;
 /**
  *
  */
-public class ByteBufferAdapter implements ByteSource {
+public class ByteBufferSource implements ByteSource {
   private final ByteBuffer buffer;
 
-  public ByteBufferAdapter(int length) {
+  public ByteBufferSource(int length) {
     this(ByteBuffer.allocateDirect(length).order(ByteOrder.nativeOrder()));
   }
 
-  public ByteBufferAdapter(ByteBuffer buffer) {
+  public ByteBufferSource(ByteBuffer buffer) {
     this.buffer = buffer;
   }
 
@@ -31,6 +32,21 @@ public class ByteBufferAdapter implements ByteSource {
   @Override
   public long getLength() {
     return buffer.capacity();
+  }
+
+  @Override
+  public boolean isBigEndian() {
+    return buffer.order().equals(ByteOrder.BIG_ENDIAN);
+  }
+
+  @Override
+  public DataType getDataType() {
+    return DataType.SINT8;
+  }
+
+  @Override
+  public boolean isGPUAccessible() {
+    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
   }
 
   @Override
