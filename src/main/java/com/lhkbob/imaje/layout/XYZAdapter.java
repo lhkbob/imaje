@@ -3,47 +3,25 @@ package com.lhkbob.imaje.layout;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.data.DoubleSource;
 
-import java.util.LinkedHashMap;
-
 /**
  *
  */
-public class XYZAdapter implements PixelAdapter<XYZ> {
-  private final DoubleSource x;
-  private final DoubleSource y;
-  private final DoubleSource z;
-
-  public XYZAdapter(DoubleSource x, DoubleSource y, DoubleSource z) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
+public class XYZAdapter extends AbstractSingleSource3ComponentAdapter<XYZ> {
+  public XYZAdapter(PixelLayout layout, DoubleSource data) {
+    super(XYZ.class, layout, false, data);
   }
 
   @Override
-  public void get(long pixelIndex, XYZ result) {
-    result.x(x.get(pixelIndex));
-    result.y(y.get(pixelIndex));
-    result.z(z.get(pixelIndex));
+  protected void get(double c1, double c2, double c3, XYZ result) {
+    result.x(c1);
+    result.y(c2);
+    result.z(c3);
   }
 
   @Override
-  public LinkedHashMap<String, DoubleSource> getChannels() {
-    LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
-    channels.put(XYZ.X, x);
-    channels.put(XYZ.Y, y);
-    channels.put(XYZ.Z, z);
-    return channels;
-  }
-
-  @Override
-  public Class<XYZ> getType() {
-    return XYZ.class;
-  }
-
-  @Override
-  public void set(long pixelIndex, XYZ value) {
-    x.set(pixelIndex, value.x());
-    y.set(pixelIndex, value.y());
-    z.set(pixelIndex, value.z());
+  protected void set(XYZ value, long i1, long i2, long i3, DoubleSource data) {
+    data.set(i1, value.x());
+    data.set(i2, value.y());
+    data.set(i3, value.z());
   }
 }

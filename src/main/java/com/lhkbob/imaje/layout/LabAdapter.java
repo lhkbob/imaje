@@ -3,49 +3,26 @@ package com.lhkbob.imaje.layout;
 import com.lhkbob.imaje.color.Lab;
 import com.lhkbob.imaje.data.DoubleSource;
 
-import java.util.LinkedHashMap;
-
 /**
  *
  */
-public class LabAdapter<T extends Lab> implements PixelAdapter<T> {
-  private final DoubleSource a;
-  private final DoubleSource b;
-  private final DoubleSource l;
-  private final Class<T> type;
-
-  public LabAdapter(Class<T> type, DoubleSource l, DoubleSource a, DoubleSource b) {
-    this.type = type;
-    this.l = l;
-    this.a = a;
-    this.b = b;
+public class LabAdapter<T extends Lab> extends AbstractSingleSource3ComponentAdapter<T> {
+  public LabAdapter(
+      Class<T> type, PixelLayout layout, DoubleSource data) {
+    super(type, layout, false, data);
   }
 
   @Override
-  public void get(long pixelIndex, T result) {
-    result.l(l.get(pixelIndex));
-    result.a(a.get(pixelIndex));
-    result.b(b.get(pixelIndex));
+  protected void get(double c1, double c2, double c3, T result) {
+    result.l(c1);
+    result.a(c2);
+    result.b(c3);
   }
 
   @Override
-  public LinkedHashMap<String, DoubleSource> getChannels() {
-    LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
-    channels.put(Lab.L, l);
-    channels.put(Lab.A, a);
-    channels.put(Lab.B, b);
-    return channels;
-  }
-
-  @Override
-  public Class<T> getType() {
-    return type;
-  }
-
-  @Override
-  public void set(long pixelIndex, T value) {
-    l.set(pixelIndex, value.l());
-    a.set(pixelIndex, value.a());
-    b.set(pixelIndex, value.b());
+  protected void set(T value, long i1, long i2, long i3, DoubleSource data) {
+    data.set(i1, value.l());
+    data.set(i2, value.a());
+    data.set(i3, value.b());
   }
 }

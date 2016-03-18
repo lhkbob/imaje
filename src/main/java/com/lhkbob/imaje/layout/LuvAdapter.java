@@ -3,47 +3,26 @@ package com.lhkbob.imaje.layout;
 import com.lhkbob.imaje.color.Luv;
 import com.lhkbob.imaje.data.DoubleSource;
 
-import java.util.LinkedHashMap;
-
 /**
  *
  */
-public class LuvAdapter implements PixelAdapter<Luv> {
-  private final DoubleSource l;
-  private final DoubleSource u;
-  private final DoubleSource v;
+public class LuvAdapter extends AbstractSingleSource3ComponentAdapter<Luv> {
 
-  public LuvAdapter(DoubleSource l, DoubleSource u, DoubleSource v) {
-    this.l = l;
-    this.u = u;
-    this.v = v;
+  public LuvAdapter(PixelLayout layout, DoubleSource data) {
+    super(Luv.class, layout, false, data);
   }
 
   @Override
-  public void get(long pixelIndex, Luv result) {
-    result.l(l.get(pixelIndex));
-    result.u(u.get(pixelIndex));
-    result.v(v.get(pixelIndex));
+  protected void get(double c1, double c2, double c3, Luv result) {
+    result.l(c1);
+    result.u(c2);
+    result.v(c3);
   }
 
   @Override
-  public LinkedHashMap<String, DoubleSource> getChannels() {
-    LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
-    channels.put(Luv.L, l);
-    channels.put(Luv.U, u);
-    channels.put(Luv.V, v);
-    return channels;
-  }
-
-  @Override
-  public Class<Luv> getType() {
-    return Luv.class;
-  }
-
-  @Override
-  public void set(long pixelIndex, Luv value) {
-    l.set(pixelIndex, value.l());
-    u.set(pixelIndex, value.u());
-    v.set(pixelIndex, value.v());
+  protected void set(Luv value, long i1, long i2, long i3, DoubleSource data) {
+    data.set(i1, value.l());
+    data.set(i2, value.u());
+    data.set(i3, value.v());
   }
 }

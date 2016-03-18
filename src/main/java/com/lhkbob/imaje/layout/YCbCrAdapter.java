@@ -3,49 +3,26 @@ package com.lhkbob.imaje.layout;
 import com.lhkbob.imaje.color.YCbCr;
 import com.lhkbob.imaje.data.DoubleSource;
 
-import java.util.LinkedHashMap;
-
 /**
  *
  */
-public class YCbCrAdapter<T extends YCbCr> implements PixelAdapter<T> {
-  private final DoubleSource cb;
-  private final DoubleSource cr;
-  private final Class<T> type;
-  private final DoubleSource y;
+public class YCbCrAdapter<T extends YCbCr> extends AbstractSingleSource3ComponentAdapter<T> {
 
-  public YCbCrAdapter(Class<T> type, DoubleSource y, DoubleSource cb, DoubleSource cr) {
-    this.type = type;
-    this.y = y;
-    this.cb = cb;
-    this.cr = cr;
+  public YCbCrAdapter(Class<T> type, PixelLayout layout, DoubleSource data) {
+    super(type, layout, false, data);
   }
 
   @Override
-  public void get(long pixelIndex, T result) {
-    result.y(y.get(pixelIndex));
-    result.cb(cb.get(pixelIndex));
-    result.cr(cr.get(pixelIndex));
+  protected void get(double c1, double c2, double c3, T result) {
+    result.y(c1);
+    result.cb(c2);
+    result.cr(c3);
   }
 
   @Override
-  public LinkedHashMap<String, DoubleSource> getChannels() {
-    LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
-    channels.put(YCbCr.Y, y);
-    channels.put(YCbCr.CB, cb);
-    channels.put(YCbCr.CR, cr);
-    return channels;
-  }
-
-  @Override
-  public Class<T> getType() {
-    return type;
-  }
-
-  @Override
-  public void set(long pixelIndex, T value) {
-    y.set(pixelIndex, value.y());
-    cb.set(pixelIndex, value.cb());
-    cr.set(pixelIndex, value.cr());
+  protected void set(T value, long i1, long i2, long i3, DoubleSource data) {
+    data.set(i1, value.y());
+    data.set(i2, value.cb());
+    data.set(i3, value.cr());
   }
 }

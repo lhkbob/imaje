@@ -3,47 +3,25 @@ package com.lhkbob.imaje.layout;
 import com.lhkbob.imaje.color.HLS;
 import com.lhkbob.imaje.data.DoubleSource;
 
-import java.util.LinkedHashMap;
-
 /**
  *
  */
-public class HLSAdapter implements PixelAdapter<HLS> {
-  private final DoubleSource h;
-  private final DoubleSource l;
-  private final DoubleSource s;
-
-  public HLSAdapter(DoubleSource h, DoubleSource l, DoubleSource s) {
-    this.h = h;
-    this.l = l;
-    this.s = s;
+public class HLSAdapter extends AbstractSingleSource3ComponentAdapter<HLS> {
+  public HLSAdapter(PixelLayout layout, DoubleSource data) {
+    super(HLS.class, layout, false, data);
   }
 
   @Override
-  public void get(long pixelIndex, HLS result) {
-    result.h(h.get(pixelIndex));
-    result.l(l.get(pixelIndex));
-    result.s(s.get(pixelIndex));
+  protected void get(double c1, double c2, double c3, HLS result) {
+    result.h(c1);
+    result.l(c2);
+    result.s(c3);
   }
 
   @Override
-  public LinkedHashMap<String, DoubleSource> getChannels() {
-    LinkedHashMap<String, DoubleSource> channels = new LinkedHashMap<>();
-    channels.put(HLS.HUE, h);
-    channels.put(HLS.LIGHTNESS, l);
-    channels.put(HLS.SATURATION, s);
-    return channels;
-  }
-
-  @Override
-  public Class<HLS> getType() {
-    return HLS.class;
-  }
-
-  @Override
-  public void set(long pixelIndex, HLS value) {
-    h.set(pixelIndex, value.h());
-    l.set(pixelIndex, value.l());
-    s.set(pixelIndex, value.s());
+  protected void set(HLS value, long i1, long i2, long i3, DoubleSource data) {
+    data.set(i1, value.h());
+    data.set(i2, value.l());
+    data.set(i3, value.s());
   }
 }
