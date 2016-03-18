@@ -1,6 +1,8 @@
 package com.lhkbob.imaje.layout;
 
+import java.util.Iterator;
 import java.util.PrimitiveIterator;
+import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.ObjLongConsumer;
 
@@ -8,12 +10,12 @@ import java.util.function.ObjLongConsumer;
  *
  */
 public final class ImageCoordinate {
-  public static class Iterator implements java.util.Iterator<ImageCoordinate> {
+  public static class FastIterator implements Iterator<ImageCoordinate> {
     private final PrimitiveIterator.OfLong indexIterator;
     private final ImageCoordinate output;
     private final ObjLongConsumer<ImageCoordinate> updater;
 
-    public Iterator(
+    public FastIterator(
         PrimitiveIterator.OfLong baseIterator, ObjLongConsumer<ImageCoordinate> indexToPixel) {
       indexIterator = baseIterator;
       updater = indexToPixel;
@@ -32,13 +34,13 @@ public final class ImageCoordinate {
     }
   }
 
-  public static class Spliterator implements java.util.Spliterator<ImageCoordinate> {
-    private final java.util.Spliterator.OfLong indexSpliterator;
+  public static class FastSpliterator implements Spliterator<ImageCoordinate> {
+    private final Spliterator.OfLong indexSpliterator;
     private final ImageCoordinate output;
     private final ObjLongConsumer<ImageCoordinate> updater;
 
-    public Spliterator(
-        java.util.Spliterator.OfLong baseSpliterator,
+    public FastSpliterator(
+        Spliterator.OfLong baseSpliterator,
         ObjLongConsumer<ImageCoordinate> indexToPixel) {
       indexSpliterator = baseSpliterator;
       updater = indexToPixel;
@@ -65,10 +67,10 @@ public final class ImageCoordinate {
     }
 
     @Override
-    public Spliterator trySplit() {
-      java.util.Spliterator.OfLong split = indexSpliterator.trySplit();
+    public FastSpliterator trySplit() {
+      Spliterator.OfLong split = indexSpliterator.trySplit();
       if (split != null) {
-        return new Spliterator(split, updater);
+        return new FastSpliterator(split, updater);
       } else {
         return null;
       }
