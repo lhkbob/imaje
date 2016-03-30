@@ -1,6 +1,5 @@
 package com.lhkbob.imaje.data.adapter;
 
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.DoubleSource;
 
@@ -44,11 +43,6 @@ public class NormalizedUnsignedLongSource implements DoubleSource, DataView<Unsi
   @Override
   public boolean isBigEndian() {
     return source.isBigEndian();
-  }
-
-  @Override
-  public DataType getDataType() {
-    return DataType.UFIXED64;
   }
 
   @Override

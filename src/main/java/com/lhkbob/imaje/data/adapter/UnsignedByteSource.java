@@ -1,20 +1,18 @@
 package com.lhkbob.imaje.data.adapter;
 
 import com.lhkbob.imaje.data.ByteSource;
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.IntSource;
 
 /**
  *
  */
-public class UnsignedByteSource implements IntSource, DataView<ByteSource> {
-  private final ByteSource source;
+public class UnsignedByteSource implements IntSource, DataView<ByteSource.Primitive> {
+  public static final int MAX_VALUE = Byte.MAX_VALUE - Byte.MIN_VALUE;
 
-  public UnsignedByteSource(ByteSource source) {
-    if (source.getDataType() != DataType.SINT8)
-      throw new IllegalArgumentException(
-          "Source type must be SINT8 to ensure no undue bit manipulation occurs");
+  private final ByteSource.Primitive source;
+
+  public UnsignedByteSource(ByteSource.Primitive source) {
     this.source = source;
   }
 
@@ -34,22 +32,19 @@ public class UnsignedByteSource implements IntSource, DataView<ByteSource> {
   }
 
   @Override
-  public DataType getDataType() {
-    return DataType.UINT8;
-  }
-
-  @Override
   public boolean isGPUAccessible() {
     return source.isGPUAccessible();
   }
 
   @Override
-  public ByteSource getSource() {
+  public ByteSource.Primitive getSource() {
     return source;
   }
 
   @Override
   public void set(long index, int value) {
+    // Clamp to unsigned byte boundaries
+    value = Math.max(0, Math.min(value, MAX_VALUE));
     source.set(index, (byte) value);
   }
 }

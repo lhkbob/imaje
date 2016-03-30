@@ -4,6 +4,10 @@ package com.lhkbob.imaje.data;
  *
  */
 public interface ShortSource extends DataSource<Short> {
+  interface Primitive extends ShortSource {
+
+  }
+
   short get(long index);
 
   @Override

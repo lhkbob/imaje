@@ -1,6 +1,5 @@
 package com.lhkbob.imaje.data.nio;
 
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.DoubleSource;
 
 import java.nio.ByteBuffer;
@@ -10,7 +9,7 @@ import java.nio.DoubleBuffer;
 /**
  *
  */
-public class DoubleBufferSource implements DoubleSource {
+public class DoubleBufferSource implements DoubleSource.Primitive {
   private final DoubleBuffer buffer;
 
   public DoubleBufferSource(int length) {
@@ -43,11 +42,6 @@ public class DoubleBufferSource implements DoubleSource {
   @Override
   public void set(long index, double value) {
     buffer.put(Math.toIntExact(index), value);
-  }
-
-  @Override
-  public DataType getDataType() {
-    return DataType.FLOAT64;
   }
 
   @Override

@@ -1,12 +1,11 @@
 package com.lhkbob.imaje.data.array;
 
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.LongSource;
 
 /**
  *
  */
-public class LongArray implements LongSource {
+public class LongArray implements LongSource.Primitive {
   private final long[] array;
 
   public LongArray(int length) {
@@ -34,11 +33,6 @@ public class LongArray implements LongSource {
   @Override
   public boolean isBigEndian() {
     return true;
-  }
-
-  @Override
-  public DataType getDataType() {
-    return DataType.SINT64;
   }
 
   @Override

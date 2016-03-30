@@ -1,6 +1,5 @@
 package com.lhkbob.imaje.data.nio;
 
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.FloatSource;
 
 import java.nio.ByteBuffer;
@@ -10,7 +9,7 @@ import java.nio.FloatBuffer;
 /**
  *
  */
-public class FloatBufferSource implements FloatSource {
+public class FloatBufferSource implements FloatSource.Primitive {
   private final FloatBuffer buffer;
 
   public FloatBufferSource(int length) {
@@ -43,11 +42,6 @@ public class FloatBufferSource implements FloatSource {
   @Override
   public void set(long index, float value) {
     buffer.put(Math.toIntExact(index), value);
-  }
-
-  @Override
-  public DataType getDataType() {
-    return DataType.FLOAT32;
   }
 
   @Override

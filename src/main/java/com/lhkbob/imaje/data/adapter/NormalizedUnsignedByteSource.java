@@ -1,6 +1,5 @@
 package com.lhkbob.imaje.data.adapter;
 
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.DoubleSource;
 
@@ -34,19 +33,13 @@ public class NormalizedUnsignedByteSource implements DoubleSource, DataView<Unsi
   }
 
   @Override
-  public DataType getDataType() {
-    return DataType.UFIXED8;
-  }
-
-  @Override
   public boolean isGPUAccessible() {
     return source.isGPUAccessible();
   }
 
   @Override
   public void set(long index, double value) {
-    source.set(index, (int) (TO_BYTE_SCALAR * Math.max(0.0, Math.min(value, 1.0))));
+    source.set(index, (int) (UnsignedByteSource.MAX_VALUE * Math.max(0.0, Math.min(value, 1.0))));
   }
-  private static final double TO_BYTE_SCALAR = (double) Byte.MAX_VALUE - (double) Byte.MIN_VALUE;
-  private static final double TO_DOUBLE_SCALAR = 1.0 / TO_BYTE_SCALAR;
+  private static final double TO_DOUBLE_SCALAR = 1.0 / UnsignedByteSource.MAX_VALUE;
 }

@@ -7,25 +7,21 @@ import com.lhkbob.imaje.data.ShortSource;
 /**
  *
  */
-public class NormalizedShortSource implements DoubleSource, DataView<ShortSource.Primitive> {
-  private ShortSource.Primitive source;
-  public NormalizedShortSource(ShortSource.Primitive source) {
+public class ShortToDoubleSource implements DoubleSource, DataView<ShortSource.Primitive> {
+  private final ShortSource.Primitive source;
+
+  public ShortToDoubleSource(ShortSource.Primitive source) {
     this.source = source;
   }
 
   @Override
   public double get(long index) {
-    return source.get(index) * TO_DOUBLE_SCALAR;
+    return source.get(index);
   }
 
   @Override
   public long getLength() {
     return source.getLength();
-  }
-
-  @Override
-  public ShortSource.Primitive getSource() {
-    return source;
   }
 
   @Override
@@ -40,8 +36,13 @@ public class NormalizedShortSource implements DoubleSource, DataView<ShortSource
 
   @Override
   public void set(long index, double value) {
-    source.set(index, (short) (TO_SHORT_SCALAR * Math.max(-1.0, Math.min(value, 1.0))));
+    // Clamp to short boundaries so roll-over on casting is not surprising
+    value = Math.max(Short.MIN_VALUE, Math.min(value, Short.MAX_VALUE));
+    source.set(index, (short) value);
   }
-  private static final double TO_SHORT_SCALAR = Math.abs((double) Short.MIN_VALUE);
-  private static final double TO_DOUBLE_SCALAR = 1.0 / TO_SHORT_SCALAR;
+
+  @Override
+  public ShortSource.Primitive getSource() {
+    return source;
+  }
 }

@@ -1,12 +1,11 @@
 package com.lhkbob.imaje.data.array;
 
 import com.lhkbob.imaje.data.ByteSource;
-import com.lhkbob.imaje.data.DataType;
 
 /**
  *
  */
-public class ByteArray implements ByteSource {
+public class ByteArray implements ByteSource.Primitive {
   private final byte[] array;
 
   public ByteArray(int length) {
@@ -34,11 +33,6 @@ public class ByteArray implements ByteSource {
   @Override
   public boolean isBigEndian() {
     return true;
-  }
-
-  @Override
-  public DataType getDataType() {
-    return DataType.SINT8;
   }
 
   @Override

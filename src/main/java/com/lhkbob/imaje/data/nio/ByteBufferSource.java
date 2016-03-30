@@ -1,7 +1,6 @@
 package com.lhkbob.imaje.data.nio;
 
 import com.lhkbob.imaje.data.ByteSource;
-import com.lhkbob.imaje.data.DataType;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -9,7 +8,7 @@ import java.nio.ByteOrder;
 /**
  *
  */
-public class ByteBufferSource implements ByteSource {
+public class ByteBufferSource implements ByteSource.Primitive {
   private final ByteBuffer buffer;
 
   public ByteBufferSource(int length) {
@@ -37,11 +36,6 @@ public class ByteBufferSource implements ByteSource {
   @Override
   public boolean isBigEndian() {
     return buffer.order().equals(ByteOrder.BIG_ENDIAN);
-  }
-
-  @Override
-  public DataType getDataType() {
-    return DataType.SINT8;
   }
 
   @Override

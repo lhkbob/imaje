@@ -1,24 +1,18 @@
 package com.lhkbob.imaje.data.large;
 
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.ShortSource;
 
 /**
  *
  */
-public class LargeShortSource extends AbstractLargeDataSource<Short, ShortSource> implements ShortSource {
-  public LargeShortSource(ShortSource[] sources) {
+public class LargeShortSource extends AbstractLargeDataSource<Short, ShortSource.Primitive> implements ShortSource.Primitive {
+  public LargeShortSource(ShortSource.Primitive[] sources) {
     super(sources);
   }
 
   @Override
   public short get(long index) {
     return getSource(index).get(getIndexInSource(index));
-  }
-
-  @Override
-  public DataType getDataType() {
-    return DataType.SINT16;
   }
 
   @Override

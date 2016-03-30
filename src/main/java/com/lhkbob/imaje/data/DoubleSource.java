@@ -4,6 +4,10 @@ package com.lhkbob.imaje.data;
  *
  */
 public interface DoubleSource extends DataSource<Double> {
+  interface Primitive extends DoubleSource {
+
+  }
+
   double get(long index);
 
   @Override

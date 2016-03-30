@@ -2,21 +2,17 @@ package com.lhkbob.imaje.data.adapter;
 
 import com.lhkbob.imaje.data.ByteSource;
 import com.lhkbob.imaje.data.DataSources;
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.IntSource;
 
 /**
  *
  */
-public class MultiByteToIntSource implements IntSource, DataView<ByteSource> {
-  private final ByteSource source;
+public class MultiByteToIntSource implements IntSource.Primitive, DataView<ByteSource.Primitive> {
+  private final ByteSource.Primitive source;
   private boolean bigEndian;
 
-  public MultiByteToIntSource(ByteSource source, boolean bigEndian) {
-    if (source.getDataType() != DataType.SINT8)
-      throw new IllegalArgumentException(
-          "Source type must be SINT8 to ensure no undue bit manipulation occurs");
+  public MultiByteToIntSource(ByteSource.Primitive source, boolean bigEndian) {
     this.source = source;
     this.bigEndian = bigEndian;
   }
@@ -49,18 +45,13 @@ public class MultiByteToIntSource implements IntSource, DataView<ByteSource> {
   }
 
   @Override
-  public ByteSource getSource() {
+  public ByteSource.Primitive getSource() {
     return source;
   }
 
   @Override
   public boolean isBigEndian() {
     return bigEndian;
-  }
-
-  @Override
-  public DataType getDataType() {
-    return DataType.SINT32;
   }
 
   @Override

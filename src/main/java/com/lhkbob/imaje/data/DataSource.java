@@ -14,7 +14,5 @@ public interface DataSource<T extends Number> {
 
   boolean isBigEndian();
 
-  DataType getDataType();
-
   boolean isGPUAccessible();
 }

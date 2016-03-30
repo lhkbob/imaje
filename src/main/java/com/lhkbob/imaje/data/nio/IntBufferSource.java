@@ -1,6 +1,5 @@
 package com.lhkbob.imaje.data.nio;
 
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.IntSource;
 
 import java.nio.ByteBuffer;
@@ -10,7 +9,7 @@ import java.nio.IntBuffer;
 /**
  *
  */
-public class IntBufferSource implements IntSource {
+public class IntBufferSource implements IntSource.Primitive {
   private final IntBuffer buffer;
 
   public IntBufferSource(int length) {
@@ -43,11 +42,6 @@ public class IntBufferSource implements IntSource {
   @Override
   public void set(long index, int value) {
     buffer.put(Math.toIntExact(index), value);
-  }
-
-  @Override
-  public DataType getDataType() {
-    return DataType.SINT32;
   }
 
   @Override

@@ -7,25 +7,21 @@ import com.lhkbob.imaje.data.DoubleSource;
 /**
  *
  */
-public class NormalizedByteSource implements DoubleSource, DataView<ByteSource.Primitive> {
-  private ByteSource.Primitive source;
-  public NormalizedByteSource(ByteSource.Primitive source) {
+public class ByteToDoubleSource implements DoubleSource, DataView<ByteSource.Primitive> {
+  private final ByteSource.Primitive source;
+
+  public ByteToDoubleSource(ByteSource.Primitive source) {
     this.source = source;
   }
 
   @Override
   public double get(long index) {
-    return source.get(index) * TO_DOUBLE_SCALAR;
+    return source.get(index);
   }
 
   @Override
   public long getLength() {
     return source.getLength();
-  }
-
-  @Override
-  public ByteSource.Primitive getSource() {
-    return source;
   }
 
   @Override
@@ -40,8 +36,13 @@ public class NormalizedByteSource implements DoubleSource, DataView<ByteSource.P
 
   @Override
   public void set(long index, double value) {
-    source.set(index, (byte) (TO_BYTE_SCALAR * Math.max(-1.0, Math.min(value, 1.0))));
+    // Clamp to the range of byte values so casting outside of the byte range isn't quite so surprising
+    value = Math.max(Byte.MIN_VALUE, Math.min(value, Byte.MAX_VALUE));
+    source.set(index, (byte) value);
   }
-  private static final double TO_BYTE_SCALAR = Math.abs((double) Byte.MIN_VALUE);
-  private static final double TO_DOUBLE_SCALAR = 1.0 / TO_BYTE_SCALAR;
+
+  @Override
+  public ByteSource.Primitive getSource() {
+    return source;
+  }
 }

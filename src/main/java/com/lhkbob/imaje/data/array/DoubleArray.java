@@ -1,12 +1,11 @@
 package com.lhkbob.imaje.data.array;
 
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.DoubleSource;
 
 /**
  *
  */
-public class DoubleArray implements DoubleSource {
+public class DoubleArray implements DoubleSource.Primitive {
   private final double[] array;
 
   public DoubleArray(int length) {
@@ -34,11 +33,6 @@ public class DoubleArray implements DoubleSource {
   @Override
   public boolean isBigEndian() {
     return true;
-  }
-
-  @Override
-  public DataType getDataType() {
-    return DataType.FLOAT64;
   }
 
   @Override

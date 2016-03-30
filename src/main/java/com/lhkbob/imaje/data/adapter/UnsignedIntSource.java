@@ -1,6 +1,5 @@
 package com.lhkbob.imaje.data.adapter;
 
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.IntSource;
 import com.lhkbob.imaje.data.LongSource;
@@ -8,13 +7,12 @@ import com.lhkbob.imaje.data.LongSource;
 /**
  *
  */
-public class UnsignedIntSource implements LongSource, DataView<IntSource> {
-  private final IntSource source;
+public class UnsignedIntSource implements LongSource, DataView<IntSource.Primitive> {
+  public static final long MAX_VALUE = (long) Integer.MAX_VALUE - (long) Integer.MIN_VALUE;
 
-  public UnsignedIntSource(IntSource source) {
-    if (source.getDataType() != DataType.SINT32)
-      throw new IllegalArgumentException(
-          "Source type must be SINT32 to ensure no undue bit manipulation occurs");
+  private final IntSource.Primitive source;
+
+  public UnsignedIntSource(IntSource.Primitive source) {
     this.source = source;
   }
 
@@ -29,11 +27,6 @@ public class UnsignedIntSource implements LongSource, DataView<IntSource> {
   }
 
   @Override
-  public DataType getDataType() {
-    return DataType.UINT32;
-  }
-
-  @Override
   public boolean isGPUAccessible() {
     return source.isGPUAccessible();
   }
@@ -44,12 +37,14 @@ public class UnsignedIntSource implements LongSource, DataView<IntSource> {
   }
 
   @Override
-  public IntSource getSource() {
+  public IntSource.Primitive getSource() {
     return source;
   }
 
   @Override
   public void set(long index, long value) {
+    // Clamp to unsigned byte boundaries
+    value = Math.max(0, Math.min(value, MAX_VALUE));
     source.set(index, (int) value);
   }
 }

@@ -4,6 +4,10 @@ package com.lhkbob.imaje.data;
  *
  */
 public interface FloatSource extends DataSource<Float> {
+  interface Primitive extends FloatSource {
+
+  }
+
   float get(long index);
 
   @Override

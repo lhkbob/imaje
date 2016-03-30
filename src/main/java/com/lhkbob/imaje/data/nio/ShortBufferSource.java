@@ -1,6 +1,5 @@
 package com.lhkbob.imaje.data.nio;
 
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.ShortSource;
 
 import java.nio.ByteBuffer;
@@ -10,7 +9,7 @@ import java.nio.ShortBuffer;
 /**
  *
  */
-public class ShortBufferSource implements ShortSource {
+public class ShortBufferSource implements ShortSource.Primitive {
   private final ShortBuffer buffer;
 
   public ShortBufferSource(int length) {
@@ -43,11 +42,6 @@ public class ShortBufferSource implements ShortSource {
   @Override
   public void set(long index, short value) {
     buffer.put(Math.toIntExact(index), value);
-  }
-
-  @Override
-  public DataType getDataType() {
-    return DataType.SINT16;
   }
 
   @Override

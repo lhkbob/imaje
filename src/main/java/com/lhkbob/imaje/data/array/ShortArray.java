@@ -1,12 +1,11 @@
 package com.lhkbob.imaje.data.array;
 
-import com.lhkbob.imaje.data.DataType;
 import com.lhkbob.imaje.data.ShortSource;
 
 /**
  *
  */
-public class ShortArray implements ShortSource {
+public class ShortArray implements ShortSource.Primitive {
   private final short[] array;
 
   public ShortArray(int length) {
@@ -34,11 +33,6 @@ public class ShortArray implements ShortSource {
   @Override
   public boolean isBigEndian() {
     return true;
-  }
-
-  @Override
-  public DataType getDataType() {
-    return DataType.SINT16;
   }
 
   @Override
