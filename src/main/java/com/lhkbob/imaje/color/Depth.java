@@ -3,9 +3,22 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels(Depth.Z)
-public class Depth implements Color {
-  public static final String Z = "Z";
+@Channels("Z")
+public class Depth extends SimpleColor {
+  public static class Device extends Depth {
+    public Device() {
+
+    }
+
+    public Device(double d) {
+      super(d);
+    }
+
+    @Override
+    public Device clone() {
+      return (Device) super.clone();
+    }
+  }
 
   public static class Linear extends Depth {
     public Linear() {
@@ -22,97 +35,33 @@ public class Depth implements Color {
     }
   }
 
-  public static class Normalized extends Depth {
-    public Normalized() {
-
-    }
-
-    public Normalized(double d) {
-      super(d);
-    }
-
-    @Override
-    public Normalized clone() {
-      return (Normalized) super.clone();
-    }
-  }
-  private double depth;
-
   public Depth() {
     this(0.0);
   }
 
   public Depth(double d) {
-    depth = d;
+    super(1);
+    set(d);
   }
 
   @Override
   public Depth clone() {
-    try {
-      return (Depth) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Should not happen");
-    }
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (o == null || o.getClass() != getClass()) {
-      return false;
-    }
-    return Double.compare(((Depth) o).depth, depth) == 0;
-  }
-
-  @Override
-  public void fromArray(double[] array) {
-    depth = array[0];
-  }
-
-  @Override
-  public double get(int channel) {
-    if (channel == 0) {
-      return depth;
-    } else {
-      throw new IndexOutOfBoundsException("Bad channel: " + channel);
-    }
-  }
-
-  @Override
-  public int getChannelCount() {
-    return 1;
+    return (Depth) super.clone();
   }
 
   public double getDepth() {
-    return depth;
-  }
-
-  @Override
-  public int hashCode() {
-    return Double.hashCode(depth);
+    return channels[0];
   }
 
   public void setDepth(double d) {
-    depth = d;
-  }
-
-  @Override
-  public void toArray(double[] array) {
-    array[0] = depth;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("%s(%.3f)", getClass().getSimpleName(), depth);
+    channels[0] = d;
   }
 
   public double z() {
-    return depth;
+    return getDepth();
   }
 
   public void z(double z) {
-    depth = z;
+    setDepth(z);
   }
 }

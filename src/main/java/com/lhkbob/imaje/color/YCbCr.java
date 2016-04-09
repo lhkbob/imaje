@@ -3,12 +3,8 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({ YCbCr.Y, YCbCr.CB, YCbCr.CR })
-public class YCbCr implements Color {
-  public static final String CB = "Cb";
-  public static final String CR = "Cr";
-  public static final String Y = "Y";
-
+@Channels({ "Y", "Cb", "Cr" })
+public class YCbCr extends SimpleColor {
   @OpponentAxis(aWeight = 0.0593, bWeight = 0.2627)
   public static class REC2020 extends YCbCr {
     public REC2020() {
@@ -56,133 +52,61 @@ public class YCbCr implements Color {
       return (REC709) super.clone();
     }
   }
-  private double cb;
-  private double cr;
-  private double y;
 
   public YCbCr() {
     this(0.0, 0.0, 0.0);
   }
 
   public YCbCr(double y, double cb, double cr) {
-    this.y = y;
-    this.cb = cb;
-    this.cr = cr;
+    super(3);
+    set(y, cb, cr);
   }
 
   public double cb() {
-    return cb;
+    return getCb();
   }
 
   public void cb(double cb) {
-    this.cb = cb;
-  }
-
-  @Override
-  public YCbCr clone() {
-    try {
-      return (YCbCr) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Should not happen");
-    }
+    setCb(cb);
   }
 
   public double cr() {
-    return cr;
+    return getCr();
   }
 
   public void cr(double cr) {
-    this.cr = cr;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (o == null || o.getClass() != getClass()) {
-      return false;
-    }
-    YCbCr c = (YCbCr) o;
-    return Double.compare(c.y, y) == 0 && Double.compare(c.cb, cb) == 0
-        && Double.compare(c.cr, cr) == 0;
-  }
-
-  @Override
-  public void fromArray(double[] array) {
-    y = array[0];
-    cb = array[1];
-    cr = array[2];
-  }
-
-  @Override
-  public double get(int channel) {
-    switch (channel) {
-    case 0:
-      return y;
-    case 1:
-      return cb;
-    case 2:
-      return cr;
-    default:
-      throw new IndexOutOfBoundsException("Bad channel: " + channel);
-    }
+    setCr(cr);
   }
 
   public double getCb() {
-    return cb;
-  }
-
-  @Override
-  public int getChannelCount() {
-    return 3;
+    return channels[1];
   }
 
   public double getCr() {
-    return cr;
+    return channels[2];
   }
 
   public double getY() {
-    return y;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = Double.hashCode(y);
-    result = 31 * result + Double.hashCode(cb);
-    result = 31 * result + Double.hashCode(cr);
-    return result;
+    return channels[0];
   }
 
   public void setCb(double cb) {
-    this.cb = cb;
+    channels[1] = cb;
   }
 
   public void setCr(double cr) {
-    this.cr = cr;
+    channels[2] = cr;
   }
 
   public void setY(double y) {
-    this.y = y;
-  }
-
-  @Override
-  public void toArray(double[] array) {
-    array[0] = y;
-    array[1] = cb;
-    array[2] = cr;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("%s(%.3f, %.3f, %.3f)", getClass().getSimpleName(), y, cb, cr);
+    channels[0] = y;
   }
 
   public double y() {
-    return y;
+    return getY();
   }
 
   public void y(double y) {
-    this.y = y;
+    setY(y);
   }
 }

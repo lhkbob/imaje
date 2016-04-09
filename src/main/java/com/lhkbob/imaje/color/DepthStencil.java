@@ -3,10 +3,22 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({ DepthStencil.Z, DepthStencil.STENCIL_MASK })
+@Channels({ "Z", "Stencil Mask" })
 public class DepthStencil implements Color {
-  public static final String STENCIL_MASK = "Stencil";
-  public static final String Z = "Z";
+  public static class Device extends DepthStencil {
+    public Device() {
+
+    }
+
+    public Device(double depth, int stencil) {
+      super(depth, stencil);
+    }
+
+    @Override
+    public Device clone() {
+      return (Device) super.clone();
+    }
+  }
 
   public static class Linear extends DepthStencil {
     public Linear() {
@@ -20,21 +32,6 @@ public class DepthStencil implements Color {
     @Override
     public Linear clone() {
       return (Linear) super.clone();
-    }
-  }
-
-  public static class Normalized extends DepthStencil {
-    public Normalized() {
-
-    }
-
-    public Normalized(double depth, int stencil) {
-      super(depth, stencil);
-    }
-
-    @Override
-    public Normalized clone() {
-      return (Normalized) super.clone();
     }
   }
   private double depthValue;
@@ -71,9 +68,14 @@ public class DepthStencil implements Color {
   }
 
   @Override
-  public void fromArray(double[] array) {
-    depthValue = array[0];
-    stencilMask = (int) Math.floor(array[1]);
+  public void fromArray(double[] array, int offset) {
+    if (array.length - offset < 2) {
+      throw new IllegalArgumentException(String
+          .format("Array length (%d) not big enough given offset (%d), requires 2 elements",
+              array.length, offset));
+    }
+    depthValue = array[offset];
+    stencilMask = (int) Math.floor(array[offset + 1]);
   }
 
   @Override
@@ -117,17 +119,23 @@ public class DepthStencil implements Color {
   }
 
   public int stencil() {
-    return stencilMask;
+    return getStencil();
   }
 
   public void stencil(int stencil) {
-    stencilMask = stencil;
+    setStencil(stencil);
   }
 
   @Override
-  public void toArray(double[] array) {
+  public void toArray(double[] array, int offset) {
+    if (array.length - offset < 2) {
+      throw new IllegalArgumentException(String
+          .format("Array length (%d) not big enough given offset (%d), requires 2 elements",
+              array.length, offset));
+    }
     array[0] = depthValue;
-    array[1] = stencilMask;
+    array[offset] = depthValue;
+    array[offset + 1] = stencilMask;
   }
 
   @Override
@@ -137,10 +145,10 @@ public class DepthStencil implements Color {
   }
 
   public double z() {
-    return depthValue;
+    return getDepth();
   }
 
   public void z(double z) {
-    depthValue = z;
+    setDepth(z);
   }
 }

@@ -3,12 +3,8 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({ RGB.RED, RGB.GREEN, RGB.BLUE })
-public class RGB implements Color {
-  public static final String BLUE = "Blue";
-  public static final String GREEN = "Green";
-  public static final String RED = "Red";
-
+@Channels({ "Red", "Green", "Blue" })
+public class RGB extends SimpleColor {
   @Gamma(gamma = 2.19921875)
   @Illuminant(type = Illuminant.Type.D65)
   @Primaries(red = @Chromaticity(x = 0.64, y = 0.33),
@@ -228,133 +224,66 @@ public class RGB implements Color {
       return (WideGamut) super.clone();
     }
   }
-  private double b;
-  private double g;
-  private double r;
 
   public RGB() {
     this(0, 0, 0);
   }
 
   public RGB(double r, double g, double b) {
-    this.r = r;
-    this.g = g;
-    this.b = b;
+    super(3);
+    set(r, g, b);
   }
 
   public double b() {
-    return b;
+    return getBlue();
   }
 
   public void b(double b) {
-    this.b = b;
+    setBlue(b);
   }
 
   @Override
   public RGB clone() {
-    try {
-      return (RGB) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Should not happen");
-    }
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (o == null || o.getClass() != getClass()) {
-      return false;
-    }
-    RGB c = (RGB) o;
-    return Double.compare(c.r, r) == 0 && Double.compare(c.g, g) == 0
-        && Double.compare(c.b, b) == 0;
-  }
-
-  @Override
-  public void fromArray(double[] array) {
-    r = array[0];
-    g = array[1];
-    b = array[2];
+    return (RGB) super.clone();
   }
 
   public double g() {
-    return g;
+    return getGreen();
   }
 
   public void g(double g) {
-    this.g = g;
-  }
-
-  @Override
-  public double get(int channel) {
-    switch (channel) {
-    case 0:
-      return r;
-    case 1:
-      return g;
-    case 2:
-      return b;
-    default:
-      throw new IndexOutOfBoundsException("Bad channel: " + channel);
-    }
+    setGreen(g);
   }
 
   public double getBlue() {
-    return b;
-  }
-
-  @Override
-  public int getChannelCount() {
-    return 3;
+    return channels[2];
   }
 
   public double getGreen() {
-    return g;
+    return channels[1];
   }
 
   public double getRed() {
-    return r;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = Double.hashCode(r);
-    result = 31 * result + Double.hashCode(g);
-    result = 31 * result + Double.hashCode(b);
-    return result;
+    return channels[0];
   }
 
   public double r() {
-    return r;
+    return getRed();
   }
 
   public void r(double r) {
-    this.r = r;
+    setRed(r);
   }
 
   public void setBlue(double b) {
-    this.b = b;
+    channels[2] = b;
   }
 
   public void setGreen(double g) {
-    this.g = g;
+    channels[1] = g;
   }
 
   public void setRed(double r) {
-    this.r = r;
-  }
-
-  @Override
-  public void toArray(double[] array) {
-    array[0] = r;
-    array[1] = g;
-    array[2] = b;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("%s(%.3f, %.3f, %.3f)", getClass().getSimpleName(), b, g, b);
+    channels[0] = r;
   }
 }

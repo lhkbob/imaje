@@ -3,164 +3,84 @@ package com.lhkbob.imaje.color;
 /**
  *
  */
-@Channels({ CMYK.CYAN, CMYK.MAGENTA, CMYK.YELLOW, CMYK.KEY })
-public class CMYK implements Color {
-  public static final String CYAN = "Cyan";
-  public static final String KEY = "Key";
-  public static final String MAGENTA = "Magenta";
-  public static final String YELLOW = "Yellow";
-  private double black;
-  private double cyan;
-  private double magenta;
-  private double yellow;
+@Channels({ "Cyan", "Magenta", "Yellow", "Key" })
+public class CMYK extends SimpleColor {
 
   public CMYK() {
     this(0.0, 0.0, 0.0, 1.0);
   }
 
   public CMYK(double c, double m, double y, double k) {
-    cyan = c;
-    magenta = m;
-    yellow = y;
-    black = k;
+    super(4);
+    set(c, m, y, k);
   }
 
   public double c() {
-    return cyan;
+    return channels[0];
   }
 
   public void c(double c) {
-    cyan = c;
+    channels[0] = c;
   }
 
   @Override
   public CMYK clone() {
-    try {
-      return (CMYK) super.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Should not happen");
-    }
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (o == null || o.getClass() != getClass()) {
-      return false;
-    }
-    CMYK c = (CMYK) o;
-    return Double.compare(c.cyan, cyan) == 0 && Double.compare(c.magenta, magenta) == 0 &&
-        Double.compare(c.yellow, yellow) == 0 && Double.compare(c.black, black) == 0;
-  }
-
-  @Override
-  public void fromArray(double[] array) {
-    cyan = array[0];
-    magenta = array[1];
-    yellow = array[2];
-    black = array[3];
-  }
-
-  @Override
-  public double get(int channel) {
-    switch (channel) {
-    case 0:
-      return cyan;
-    case 1:
-      return magenta;
-    case 2:
-      return yellow;
-    case 3:
-      return black;
-    default:
-      throw new IndexOutOfBoundsException("Bad channel: " + channel);
-    }
-  }
-
-  public double getBlack() {
-    return black;
-  }
-
-  @Override
-  public int getChannelCount() {
-    return 4;
+    return (CMYK) super.clone();
   }
 
   public double getCyan() {
-    return cyan;
+    return channels[0];
+  }
+
+  public double getKey() {
+    return channels[3];
   }
 
   public double getMagenta() {
-    return magenta;
+    return channels[1];
   }
 
   public double getYellow() {
-    return yellow;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = Double.hashCode(cyan);
-    result = 31 * result + Double.hashCode(magenta);
-    result = 31 * result + Double.hashCode(yellow);
-    result = 31 * result + Double.hashCode(black);
-    return result;
+    return channels[2];
   }
 
   public double k() {
-    return black;
+    return getKey();
   }
 
   public void k(double k) {
-    black = k;
+    setKey(k);
   }
 
   public double m() {
-    return magenta;
+    return getMagenta();
   }
 
   public void m(double m) {
-    magenta = m;
-  }
-
-  public void setBlack(double black) {
-    this.black = black;
+    setMagenta(m);
   }
 
   public void setCyan(double cyan) {
-    this.cyan = cyan;
+    channels[0] = cyan;
+  }
+
+  public void setKey(double key) {
+    channels[3] = key;
   }
 
   public void setMagenta(double magenta) {
-    this.magenta = magenta;
+    channels[1] = magenta;
   }
 
   public void setYellow(double yellow) {
-    this.yellow = yellow;
-  }
-
-  @Override
-  public void toArray(double[] array) {
-    array[0] = cyan;
-    array[1] = magenta;
-    array[2] = yellow;
-    array[3] = black;
-  }
-
-  @Override
-  public String toString() {
-    return String
-        .format("%s(%.3f, %.3f, %.3f, %.3f)", getClass().getSimpleName(), cyan, magenta, yellow,
-            black);
+    channels[2] = yellow;
   }
 
   public double y() {
-    return yellow;
+    return getYellow();
   }
 
   public void y(double y) {
-    yellow = y;
+    setYellow(y);
   }
 }
