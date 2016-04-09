@@ -1,11 +1,12 @@
 package com.lhkbob.imaje.data.array;
 
+import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.ShortSource;
 
 /**
  *
  */
-public class ShortArray implements ShortSource.Primitive {
+public class ShortArray implements ShortSource, DataView<short[]> {
   private final short[] array;
 
   public ShortArray(int length) {
@@ -21,7 +22,8 @@ public class ShortArray implements ShortSource.Primitive {
     return array[Math.toIntExact(index)];
   }
 
-  public short[] getArray() {
+  @Override
+  public short[] getSource() {
     return array;
   }
 

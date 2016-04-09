@@ -1,10 +1,6 @@
 package com.lhkbob.imaje.data;
 
-import com.lhkbob.imaje.data.adapter.ByteToDoubleSource;
-import com.lhkbob.imaje.data.adapter.FloatToDoubleSource;
 import com.lhkbob.imaje.data.adapter.HalfFloatSource;
-import com.lhkbob.imaje.data.adapter.IntToDoubleSource;
-import com.lhkbob.imaje.data.adapter.LongToDoubleSource;
 import com.lhkbob.imaje.data.adapter.MultiByteToDoubleSource;
 import com.lhkbob.imaje.data.adapter.MultiByteToFloatSource;
 import com.lhkbob.imaje.data.adapter.MultiByteToIntSource;
@@ -18,15 +14,10 @@ import com.lhkbob.imaje.data.adapter.NormalizedUnsignedByteSource;
 import com.lhkbob.imaje.data.adapter.NormalizedUnsignedIntSource;
 import com.lhkbob.imaje.data.adapter.NormalizedUnsignedLongSource;
 import com.lhkbob.imaje.data.adapter.NormalizedUnsignedShortSource;
-import com.lhkbob.imaje.data.adapter.ShortToDoubleSource;
 import com.lhkbob.imaje.data.adapter.UnsignedByteSource;
-import com.lhkbob.imaje.data.adapter.UnsignedByteToDoubleSource;
 import com.lhkbob.imaje.data.adapter.UnsignedIntSource;
-import com.lhkbob.imaje.data.adapter.UnsignedIntToDoubleSource;
 import com.lhkbob.imaje.data.adapter.UnsignedLongSource;
-import com.lhkbob.imaje.data.adapter.UnsignedLongToDoubleSource;
 import com.lhkbob.imaje.data.adapter.UnsignedShortSource;
-import com.lhkbob.imaje.data.adapter.UnsignedShortToDoubleSource;
 import com.lhkbob.imaje.data.array.ByteArray;
 import com.lhkbob.imaje.data.array.DoubleArray;
 import com.lhkbob.imaje.data.array.FloatArray;
@@ -64,7 +55,7 @@ import java.util.function.Function;
 /**
  *
  */
-public final class DataSources {
+public final class Data {
   public interface Builder<S, A, B extends Buffer> {
     S ofArray(long length);
 
@@ -79,9 +70,9 @@ public final class DataSources {
     S wrapFile(FileChannel channel, long offset, long length) throws IOException;
   }
 
-  private DataSources() {}
+  private Data() {}
 
-  public static DataSource<?> getRootDataSource(DataSource<?> data) {
+  public static Object getViewedData(Object data) {
     while (data instanceof DataView) {
       data = ((DataView<?>) data).getSource();
     }
@@ -92,14 +83,14 @@ public final class DataSources {
     return ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
   }
 
-  public static boolean isNativeEndian(DataSource<?> source) {
+  public static boolean isNativeEndian(DataSource source) {
     return isNativeBigEndian() == source.isBigEndian();
   }
 
-  public static Builder<ByteSource.Primitive, byte[], ByteBuffer> newByteSource() {
-    return new Builder<ByteSource.Primitive, byte[], ByteBuffer>() {
+  public static Builder<ByteSource, byte[], ByteBuffer> newByteSource() {
+    return new Builder<ByteSource, byte[], ByteBuffer>() {
       @Override
-      public ByteSource.Primitive ofArray(long length) {
+      public ByteSource ofArray(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           ByteArray[] backingData = new ByteArray[sizes.length];
@@ -114,7 +105,7 @@ public final class DataSources {
       }
 
       @Override
-      public ByteSource.Primitive ofBuffer(long length) {
+      public ByteSource ofBuffer(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           ByteBufferSource[] backingData = new ByteBufferSource[sizes.length];
@@ -129,17 +120,17 @@ public final class DataSources {
       }
 
       @Override
-      public ByteSource.Primitive wrapArray(byte[] array) {
+      public ByteSource wrapArray(byte[] array) {
         return new ByteArray(array);
       }
 
       @Override
-      public ByteSource.Primitive wrapBuffer(ByteBuffer buffer) {
+      public ByteSource wrapBuffer(ByteBuffer buffer) {
         return new ByteBufferSource(buffer);
       }
 
       @Override
-      public ByteSource.Primitive wrapFile(Path path) throws IOException {
+      public ByteSource wrapFile(Path path) throws IOException {
         try (
             FileChannel channel = FileChannel
                 .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
@@ -148,8 +139,7 @@ public final class DataSources {
       }
 
       @Override
-      public ByteSource.Primitive wrapFile(FileChannel channel, long offset, long length) throws
-          IOException {
+      public ByteSource wrapFile(FileChannel channel, long offset, long length) throws IOException {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           ByteBufferSource[] backingData = new ByteBufferSource[sizes.length];
@@ -168,10 +158,10 @@ public final class DataSources {
     };
   }
 
-  public static Builder<DoubleSource.Primitive, double[], DoubleBuffer> newDoubleSource() {
-    return new Builder<DoubleSource.Primitive, double[], DoubleBuffer>() {
+  public static Builder<DoubleSource, double[], DoubleBuffer> newDoubleSource() {
+    return new Builder<DoubleSource, double[], DoubleBuffer>() {
       @Override
-      public DoubleSource.Primitive ofArray(long length) {
+      public DoubleSource ofArray(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           DoubleArray[] backingData = new DoubleArray[sizes.length];
@@ -186,7 +176,7 @@ public final class DataSources {
       }
 
       @Override
-      public DoubleSource.Primitive ofBuffer(long length) {
+      public DoubleSource ofBuffer(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           DoubleBufferSource[] backingData = new DoubleBufferSource[sizes.length];
@@ -201,17 +191,17 @@ public final class DataSources {
       }
 
       @Override
-      public DoubleSource.Primitive wrapArray(double[] array) {
+      public DoubleSource wrapArray(double[] array) {
         return new DoubleArray(array);
       }
 
       @Override
-      public DoubleSource.Primitive wrapBuffer(DoubleBuffer buffer) {
+      public DoubleSource wrapBuffer(DoubleBuffer buffer) {
         return new DoubleBufferSource(buffer);
       }
 
       @Override
-      public DoubleSource.Primitive wrapFile(Path path) throws IOException {
+      public DoubleSource wrapFile(Path path) throws IOException {
         try (
             FileChannel channel = FileChannel
                 .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
@@ -220,7 +210,7 @@ public final class DataSources {
       }
 
       @Override
-      public DoubleSource.Primitive wrapFile(FileChannel channel, long offset, long length) throws
+      public DoubleSource wrapFile(FileChannel channel, long offset, long length) throws
           IOException {
         boolean bigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
 
@@ -242,10 +232,10 @@ public final class DataSources {
     };
   }
 
-  public static Builder<FloatSource.Primitive, float[], FloatBuffer> newFloatSource() {
-    return new Builder<FloatSource.Primitive, float[], FloatBuffer>() {
+  public static Builder<FloatSource, float[], FloatBuffer> newFloatSource() {
+    return new Builder<FloatSource, float[], FloatBuffer>() {
       @Override
-      public FloatSource.Primitive ofArray(long length) {
+      public FloatSource ofArray(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           FloatArray[] backingData = new FloatArray[sizes.length];
@@ -260,7 +250,7 @@ public final class DataSources {
       }
 
       @Override
-      public FloatSource.Primitive ofBuffer(long length) {
+      public FloatSource ofBuffer(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           FloatBufferSource[] backingData = new FloatBufferSource[sizes.length];
@@ -275,17 +265,17 @@ public final class DataSources {
       }
 
       @Override
-      public FloatSource.Primitive wrapArray(float[] array) {
+      public FloatSource wrapArray(float[] array) {
         return new FloatArray(array);
       }
 
       @Override
-      public FloatSource.Primitive wrapBuffer(FloatBuffer buffer) {
+      public FloatSource wrapBuffer(FloatBuffer buffer) {
         return new FloatBufferSource(buffer);
       }
 
       @Override
-      public FloatSource.Primitive wrapFile(Path path) throws IOException {
+      public FloatSource wrapFile(Path path) throws IOException {
         try (
             FileChannel channel = FileChannel
                 .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
@@ -294,7 +284,7 @@ public final class DataSources {
       }
 
       @Override
-      public FloatSource.Primitive wrapFile(FileChannel channel, long offset, long length) throws
+      public FloatSource wrapFile(FileChannel channel, long offset, long length) throws
           IOException {
         boolean bigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
 
@@ -316,10 +306,10 @@ public final class DataSources {
     };
   }
 
-  public static Builder<IntSource.Primitive, int[], IntBuffer> newIntSource() {
-    return new Builder<IntSource.Primitive, int[], IntBuffer>() {
+  public static Builder<IntSource, int[], IntBuffer> newIntSource() {
+    return new Builder<IntSource, int[], IntBuffer>() {
       @Override
-      public IntSource.Primitive ofArray(long length) {
+      public IntSource ofArray(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           IntArray[] backingData = new IntArray[sizes.length];
@@ -334,7 +324,7 @@ public final class DataSources {
       }
 
       @Override
-      public IntSource.Primitive ofBuffer(long length) {
+      public IntSource ofBuffer(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           IntBufferSource[] backingData = new IntBufferSource[sizes.length];
@@ -349,17 +339,17 @@ public final class DataSources {
       }
 
       @Override
-      public IntSource.Primitive wrapArray(int[] array) {
+      public IntSource wrapArray(int[] array) {
         return new IntArray(array);
       }
 
       @Override
-      public IntSource.Primitive wrapBuffer(IntBuffer buffer) {
+      public IntSource wrapBuffer(IntBuffer buffer) {
         return new IntBufferSource(buffer);
       }
 
       @Override
-      public IntSource.Primitive wrapFile(Path path) throws IOException {
+      public IntSource wrapFile(Path path) throws IOException {
         try (
             FileChannel channel = FileChannel
                 .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
@@ -368,8 +358,7 @@ public final class DataSources {
       }
 
       @Override
-      public IntSource.Primitive wrapFile(FileChannel channel, long offset, long length) throws
-          IOException {
+      public IntSource wrapFile(FileChannel channel, long offset, long length) throws IOException {
         boolean bigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
 
         if (length > MAX_ARRAY_SIZE) {
@@ -390,10 +379,10 @@ public final class DataSources {
     };
   }
 
-  public static Builder<LongSource.Primitive, long[], LongBuffer> newLongSource() {
-    return new Builder<LongSource.Primitive, long[], LongBuffer>() {
+  public static Builder<LongSource, long[], LongBuffer> newLongSource() {
+    return new Builder<LongSource, long[], LongBuffer>() {
       @Override
-      public LongSource.Primitive ofArray(long length) {
+      public LongSource ofArray(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           LongArray[] backingData = new LongArray[sizes.length];
@@ -408,7 +397,7 @@ public final class DataSources {
       }
 
       @Override
-      public LongSource.Primitive ofBuffer(long length) {
+      public LongSource ofBuffer(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           LongBufferSource[] backingData = new LongBufferSource[sizes.length];
@@ -423,17 +412,17 @@ public final class DataSources {
       }
 
       @Override
-      public LongSource.Primitive wrapArray(long[] array) {
+      public LongSource wrapArray(long[] array) {
         return new LongArray(array);
       }
 
       @Override
-      public LongSource.Primitive wrapBuffer(LongBuffer buffer) {
+      public LongSource wrapBuffer(LongBuffer buffer) {
         return new LongBufferSource(buffer);
       }
 
       @Override
-      public LongSource.Primitive wrapFile(Path path) throws IOException {
+      public LongSource wrapFile(Path path) throws IOException {
         try (
             FileChannel channel = FileChannel
                 .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
@@ -442,8 +431,7 @@ public final class DataSources {
       }
 
       @Override
-      public LongSource.Primitive wrapFile(FileChannel channel, long offset, long length) throws
-          IOException {
+      public LongSource wrapFile(FileChannel channel, long offset, long length) throws IOException {
         boolean bigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
 
         if (length > MAX_ARRAY_SIZE) {
@@ -464,10 +452,10 @@ public final class DataSources {
     };
   }
 
-  public static Builder<ShortSource.Primitive, short[], ShortBuffer> newShortSource() {
-    return new Builder<ShortSource.Primitive, short[], ShortBuffer>() {
+  public static Builder<ShortSource, short[], ShortBuffer> newShortSource() {
+    return new Builder<ShortSource, short[], ShortBuffer>() {
       @Override
-      public ShortSource.Primitive ofArray(long length) {
+      public ShortSource ofArray(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           ShortArray[] backingData = new ShortArray[sizes.length];
@@ -482,7 +470,7 @@ public final class DataSources {
       }
 
       @Override
-      public ShortSource.Primitive ofBuffer(long length) {
+      public ShortSource ofBuffer(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
           ShortBufferSource[] backingData = new ShortBufferSource[sizes.length];
@@ -497,17 +485,17 @@ public final class DataSources {
       }
 
       @Override
-      public ShortSource.Primitive wrapArray(short[] array) {
+      public ShortSource wrapArray(short[] array) {
         return new ShortArray(array);
       }
 
       @Override
-      public ShortSource.Primitive wrapBuffer(ShortBuffer buffer) {
+      public ShortSource wrapBuffer(ShortBuffer buffer) {
         return new ShortBufferSource(buffer);
       }
 
       @Override
-      public ShortSource.Primitive wrapFile(Path path) throws IOException {
+      public ShortSource wrapFile(Path path) throws IOException {
         try (
             FileChannel channel = FileChannel
                 .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
@@ -516,7 +504,7 @@ public final class DataSources {
       }
 
       @Override
-      public ShortSource.Primitive wrapFile(FileChannel channel, long offset, long length) throws
+      public ShortSource wrapFile(FileChannel channel, long offset, long length) throws
           IOException {
         boolean bigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
 
@@ -538,112 +526,113 @@ public final class DataSources {
     };
   }
 
-  public static Builder<HalfFloatSource, short[], ShortBuffer> sfloat16() {
-    return new WrappingBuilder<>(sint16(), HalfFloatSource::new);
+  public static Builder<? extends NumericDataSource, short[], ShortBuffer> sfloat16() {
+    return new WrappingBuilder<>(newShortSource(), HalfFloatSource::new);
   }
 
-  public static Builder<FloatToDoubleSource, float[], FloatBuffer> sfloat32() {
-    return new WrappingBuilder<>(newFloatSource(), FloatToDoubleSource::new);
+  public static Builder<? extends NumericDataSource, float[], FloatBuffer> sfloat32() {
+    return newFloatSource();
   }
 
-  public static Builder<DoubleSource.Primitive, double[], DoubleBuffer> sfloat64() {
+
+  public static Builder<? extends NumericDataSource, double[], DoubleBuffer> sfloat64() {
     return newDoubleSource();
   }
 
-  public static Builder<ShortSource.Primitive, short[], ShortBuffer> sint16() {
+  public static Builder<? extends BitDataSource, short[], ShortBuffer> sint16() {
     return newShortSource();
   }
 
-  public static Builder<IntSource.Primitive, int[], IntBuffer> sint32() {
+  public static Builder<? extends BitDataSource, int[], IntBuffer> sint32() {
     return newIntSource();
   }
 
-  public static Builder<LongSource.Primitive, long[], LongBuffer> sint64() {
+  public static Builder<? extends BitDataSource, long[], LongBuffer> sint64() {
     return newLongSource();
   }
 
-  public static Builder<ByteSource.Primitive, byte[], ByteBuffer> sint8() {
+  public static Builder<? extends BitDataSource, byte[], ByteBuffer> sint8() {
     return newByteSource();
   }
 
-  public static Builder<NormalizedShortSource, short[], ShortBuffer> snorm16() {
-    return new WrappingBuilder<>(sint16(), NormalizedShortSource::new);
+  public static Builder<? extends NumericDataSource, short[], ShortBuffer> snorm16() {
+    return new WrappingBuilder<>(newShortSource(), NormalizedShortSource::new);
   }
 
-  public static Builder<NormalizedIntSource, int[], IntBuffer> snorm32() {
-    return new WrappingBuilder<>(sint32(), NormalizedIntSource::new);
+  public static Builder<? extends NumericDataSource, int[], IntBuffer> snorm32() {
+    return new WrappingBuilder<>(newIntSource(), NormalizedIntSource::new);
   }
 
-  public static Builder<NormalizedLongSource, long[], LongBuffer> snorm64() {
-    return new WrappingBuilder<>(sint64(), NormalizedLongSource::new);
+  public static Builder<? extends NumericDataSource, long[], LongBuffer> snorm64() {
+    return new WrappingBuilder<>(newLongSource(), NormalizedLongSource::new);
   }
 
-  public static Builder<NormalizedByteSource, byte[], ByteBuffer> snorm8() {
-    return new WrappingBuilder<>(sint8(), NormalizedByteSource::new);
+  public static Builder<? extends NumericDataSource, byte[], ByteBuffer> snorm8() {
+    return new WrappingBuilder<>(newByteSource(), NormalizedByteSource::new);
   }
 
-  public static Builder<ShortToDoubleSource, short[], ShortBuffer> sscaled16() {
-    return new WrappingBuilder<>(sint16(), ShortToDoubleSource::new);
+  public static Builder<? extends NumericDataSource, short[], ShortBuffer> sscaled16() {
+    return newShortSource();
   }
 
-  public static Builder<IntToDoubleSource, int[], IntBuffer> sscaled32() {
-    return new WrappingBuilder<>(sint32(), IntToDoubleSource::new);
+  public static Builder<? extends NumericDataSource, int[], IntBuffer> sscaled32() {
+    return newIntSource();
   }
 
-  public static Builder<LongToDoubleSource, long[], LongBuffer> sscaled64() {
-    return new WrappingBuilder<>(sint64(), LongToDoubleSource::new);
+  public static Builder<? extends NumericDataSource, long[], LongBuffer> sscaled64() {
+    return newLongSource();
   }
 
-  public static Builder<ByteToDoubleSource, byte[], ByteBuffer> sscaled8() {
-    return new WrappingBuilder<>(sint8(), ByteToDoubleSource::new);
+  public static Builder<? extends NumericDataSource, byte[], ByteBuffer> sscaled8() {
+    return newByteSource();
   }
 
   public static Builder<UnsignedShortSource, short[], ShortBuffer> uint16() {
-    return new WrappingBuilder<>(sint16(), UnsignedShortSource::new);
+    return new WrappingBuilder<>(newShortSource(), UnsignedShortSource::new);
   }
 
   public static Builder<UnsignedIntSource, int[], IntBuffer> uint32() {
-    return new WrappingBuilder<>(sint32(), UnsignedIntSource::new);
+    return new WrappingBuilder<>(newIntSource(), UnsignedIntSource::new);
   }
 
   public static Builder<UnsignedLongSource, long[], LongBuffer> uint64() {
-    return new WrappingBuilder<>(sint64(), UnsignedLongSource::new);
+    return new WrappingBuilder<>(newLongSource(), UnsignedLongSource::new);
   }
 
   public static Builder<UnsignedByteSource, byte[], ByteBuffer> uint8() {
-    return new WrappingBuilder<>(sint8(), UnsignedByteSource::new);
+    return new WrappingBuilder<>(newByteSource(), UnsignedByteSource::new);
   }
 
-  public static Builder<NormalizedUnsignedShortSource, short[], ShortBuffer> unorm16() {
+  public static Builder<? extends NumericDataSource, short[], ShortBuffer> unorm16() {
     return new WrappingBuilder<>(uint16(), NormalizedUnsignedShortSource::new);
   }
 
-  public static Builder<NormalizedUnsignedIntSource, int[], IntBuffer> unorm32() {
+  public static Builder<? extends NumericDataSource, int[], IntBuffer> unorm32() {
     return new WrappingBuilder<>(uint32(), NormalizedUnsignedIntSource::new);
   }
 
-  public static Builder<NormalizedUnsignedLongSource, long[], LongBuffer> unorm64() {
+  public static Builder<? extends NumericDataSource, long[], LongBuffer> unorm64() {
     return new WrappingBuilder<>(uint64(), NormalizedUnsignedLongSource::new);
   }
 
-  public static Builder<NormalizedUnsignedByteSource, byte[], ByteBuffer> unorm8() {
+  public static Builder<? extends NumericDataSource, byte[], ByteBuffer> unorm8() {
     return new WrappingBuilder<>(uint8(), NormalizedUnsignedByteSource::new);
   }
 
-  public static Builder<UnsignedShortToDoubleSource, short[], ShortBuffer> uscaled16() {
-    return new WrappingBuilder<>(uint16(), UnsignedShortToDoubleSource::new);
+  public static Builder<? extends NumericDataSource, short[], ShortBuffer> uscaled16() {
+    return uint16();
   }
 
-  public static Builder<UnsignedIntToDoubleSource, int[], IntBuffer> uscaled32() {
-    return new WrappingBuilder<>(uint32(), UnsignedIntToDoubleSource::new);
+  public static Builder<UnsignedIntSource, int[], IntBuffer> uscaled32() {
+    return uint32();
   }
 
-  public static Builder<UnsignedLongToDoubleSource, long[], LongBuffer> uscaled64() {
-    return new WrappingBuilder<>(uint64(), UnsignedLongToDoubleSource::new);
+  public static Builder<UnsignedLongSource, long[], LongBuffer> uscaled64() {
+    return uint64();
   }
 
-  public static Builder<UnsignedByteToDoubleSource, byte[], ByteBuffer> uscaled8() {
-    return new WrappingBuilder<>(uint8(), UnsignedByteToDoubleSource::new);
+  public static Builder<UnsignedByteSource, byte[], ByteBuffer> uscaled8() {
+    return uint8();
   }
 
   private static int[] getLargeSourceSizes(long length) {

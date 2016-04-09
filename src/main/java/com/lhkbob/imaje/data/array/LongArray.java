@@ -1,11 +1,12 @@
 package com.lhkbob.imaje.data.array;
 
+import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.LongSource;
 
 /**
  *
  */
-public class LongArray implements LongSource.Primitive {
+public class LongArray implements LongSource, DataView<long[]> {
   private final long[] array;
 
   public LongArray(int length) {
@@ -21,7 +22,8 @@ public class LongArray implements LongSource.Primitive {
     return array[Math.toIntExact(index)];
   }
 
-  public long[] getArray() {
+  @Override
+  public long[] getSource() {
     return array;
   }
 

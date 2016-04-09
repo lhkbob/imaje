@@ -1,11 +1,12 @@
 package com.lhkbob.imaje.data.array;
 
+import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.FloatSource;
 
 /**
  *
  */
-public class FloatArray implements FloatSource.Primitive {
+public class FloatArray implements FloatSource, DataView<float[]> {
   private final float[] array;
 
   public FloatArray(int length) {
@@ -21,7 +22,8 @@ public class FloatArray implements FloatSource.Primitive {
     return array[Math.toIntExact(index)];
   }
 
-  public float[] getArray() {
+  @Override
+  public float[] getSource() {
     return array;
   }
 

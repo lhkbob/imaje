@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.data.nio;
 
+import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.IntSource;
 
 import java.nio.ByteBuffer;
@@ -9,7 +10,7 @@ import java.nio.IntBuffer;
 /**
  *
  */
-public class IntBufferSource implements IntSource.Primitive {
+public class IntBufferSource implements IntSource, DataView<IntBuffer> {
   private final IntBuffer buffer;
 
   public IntBufferSource(int length) {
@@ -25,7 +26,8 @@ public class IntBufferSource implements IntSource.Primitive {
     return buffer.get(Math.toIntExact(index));
   }
 
-  public IntBuffer getBuffer() {
+  @Override
+  public IntBuffer getSource() {
     return buffer;
   }
 

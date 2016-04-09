@@ -1,20 +1,21 @@
 package com.lhkbob.imaje.data.adapter;
 
 import com.lhkbob.imaje.data.DataView;
-import com.lhkbob.imaje.data.DoubleSource;
 import com.lhkbob.imaje.data.IntSource;
+import com.lhkbob.imaje.data.NumericDataSource;
+import com.lhkbob.imaje.util.Functions;
 
 /**
  *
  */
-public class NormalizedIntSource implements DoubleSource, DataView<IntSource.Primitive> {
-  private IntSource.Primitive source;
-  public NormalizedIntSource(IntSource.Primitive source) {
+public class NormalizedIntSource implements NumericDataSource, DataView<IntSource> {
+  private IntSource source;
+  public NormalizedIntSource(IntSource source) {
     this.source = source;
   }
 
   @Override
-  public double get(long index) {
+  public double getValue(long index) {
     return source.get(index) * TO_DOUBLE_SCALAR;
   }
 
@@ -24,7 +25,7 @@ public class NormalizedIntSource implements DoubleSource, DataView<IntSource.Pri
   }
 
   @Override
-  public IntSource.Primitive getSource() {
+  public IntSource getSource() {
     return source;
   }
 
@@ -39,9 +40,15 @@ public class NormalizedIntSource implements DoubleSource, DataView<IntSource.Pri
   }
 
   @Override
-  public void set(long index, double value) {
-    source.set(index, (int) (TO_INT_SCALAR * Math.max(-1.0, Math.min(value, 1.0))));
+  public int getBitSize() {
+    return source.getBitSize();
   }
-  private static final double TO_INT_SCALAR = Math.abs((double) Integer.MIN_VALUE);
+
+  @Override
+  public void setValue(long index, double value) {
+    source.set(index, (int) Math.round(TO_INT_SCALAR * Functions
+        .clamp(value, -1.0, 1.0)));
+  }
+  private static final double TO_INT_SCALAR = Integer.MAX_VALUE;
   private static final double TO_DOUBLE_SCALAR = 1.0 / TO_INT_SCALAR;
 }

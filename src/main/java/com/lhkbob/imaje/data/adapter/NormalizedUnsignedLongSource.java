@@ -1,12 +1,12 @@
 package com.lhkbob.imaje.data.adapter;
 
 import com.lhkbob.imaje.data.DataView;
-import com.lhkbob.imaje.data.DoubleSource;
+import com.lhkbob.imaje.data.NumericDataSource;
 
 /**
  *
  */
-public class NormalizedUnsignedLongSource implements DoubleSource, DataView<UnsignedLongSource> {
+public class NormalizedUnsignedLongSource implements NumericDataSource, DataView<UnsignedLongSource> {
   private static final double TO_LONG_SCALAR = Math.pow(2, 64);
   private static final double TO_DOUBLE_SCALAR = 1.0 / TO_LONG_SCALAR;
   private static final long NEG_MASK = 1L << 63;
@@ -19,7 +19,7 @@ public class NormalizedUnsignedLongSource implements DoubleSource, DataView<Unsi
   }
 
   @Override
-  public double get(long index) {
+  public double getValue(long index) {
     // The UnsignedLongSource cannot actually represent a 1s complement 64bit number so it returns
     // the 2s complement signed version
     long svalue = source.get(index);
@@ -51,7 +51,12 @@ public class NormalizedUnsignedLongSource implements DoubleSource, DataView<Unsi
   }
 
   @Override
-  public void set(long index, double value) {
+  public int getBitSize() {
+    return source.getBitSize();
+  }
+
+  @Override
+  public void setValue(long index, double value) {
     // First clamp to the valid normalization range
     value = Math.max(0.0, Math.min(value, 1.0));
 
@@ -59,10 +64,10 @@ public class NormalizedUnsignedLongSource implements DoubleSource, DataView<Unsi
     if (value > 0.5) {
       // The value will actually appear to be a negative 2s-complement long
       // NOTE: must also shift left by 0.5 so that the first 63 bits make sense
-      uvalue = NEG_MASK | (long) ((value - 0.5) * TO_LONG_SCALAR);
+      uvalue = NEG_MASK | Math.round((value - 0.5) * TO_LONG_SCALAR);
     } else {
-      // Simply rescale and cast
-      uvalue = (long) (value * TO_LONG_SCALAR);
+      // Simply rescale and round
+      uvalue = Math.round(value * TO_LONG_SCALAR);
     }
     source.set(index, uvalue);
   }

@@ -5,8 +5,8 @@ import com.lhkbob.imaje.data.FloatSource;
 /**
  *
  */
-public class LargeFloatSource extends AbstractLargeDataSource<Float, FloatSource.Primitive> implements FloatSource.Primitive {
-  public LargeFloatSource(FloatSource.Primitive[] sources) {
+public class LargeFloatSource extends AbstractLargeDataSource<Float, FloatSource> implements FloatSource {
+  public LargeFloatSource(FloatSource[] sources) {
     super(sources);
   }
 

@@ -1,11 +1,12 @@
 package com.lhkbob.imaje.data.array;
 
+import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.DoubleSource;
 
 /**
  *
  */
-public class DoubleArray implements DoubleSource.Primitive {
+public class DoubleArray implements DoubleSource, DataView<double[]> {
   private final double[] array;
 
   public DoubleArray(int length) {
@@ -21,7 +22,8 @@ public class DoubleArray implements DoubleSource.Primitive {
     return array[Math.toIntExact(index)];
   }
 
-  public double[] getArray() {
+  @Override
+  public double[] getSource() {
     return array;
   }
 

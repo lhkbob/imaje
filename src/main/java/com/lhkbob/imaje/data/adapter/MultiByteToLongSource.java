@@ -1,18 +1,18 @@
 package com.lhkbob.imaje.data.adapter;
 
 import com.lhkbob.imaje.data.ByteSource;
-import com.lhkbob.imaje.data.DataSources;
+import com.lhkbob.imaje.data.Data;
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.LongSource;
 
 /**
  *
  */
-public class MultiByteToLongSource implements LongSource.Primitive, DataView<ByteSource.Primitive> {
-  private final ByteSource.Primitive source;
+public class MultiByteToLongSource implements LongSource, DataView<ByteSource> {
+  private final ByteSource source;
   private boolean bigEndian;
 
-  public MultiByteToLongSource(ByteSource.Primitive source, boolean bigEndian) {
+  public MultiByteToLongSource(ByteSource source, boolean bigEndian) {
     this.source = source;
     this.bigEndian = bigEndian;
   }
@@ -54,7 +54,7 @@ public class MultiByteToLongSource implements LongSource.Primitive, DataView<Byt
   }
 
   @Override
-  public ByteSource.Primitive getSource() {
+  public ByteSource getSource() {
     return source;
   }
 
@@ -65,7 +65,7 @@ public class MultiByteToLongSource implements LongSource.Primitive, DataView<Byt
 
   @Override
   public boolean isGPUAccessible() {
-    return source.isGPUAccessible() && DataSources.isNativeEndian(this);
+    return source.isGPUAccessible() && Data.isNativeEndian(this);
   }
 
   @Override

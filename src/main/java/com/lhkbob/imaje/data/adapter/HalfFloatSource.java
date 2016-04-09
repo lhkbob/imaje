@@ -1,21 +1,21 @@
 package com.lhkbob.imaje.data.adapter;
 
 import com.lhkbob.imaje.data.DataView;
-import com.lhkbob.imaje.data.DoubleSource;
+import com.lhkbob.imaje.data.NumericDataSource;
 import com.lhkbob.imaje.data.ShortSource;
 
 /**
  *
  */
-public class HalfFloatSource implements DoubleSource, DataView<ShortSource.Primitive> {
-  private final ShortSource.Primitive source;
+public class HalfFloatSource implements NumericDataSource, DataView<ShortSource> {
+  private final ShortSource source;
 
-  public HalfFloatSource(ShortSource.Primitive source) {
+  public HalfFloatSource(ShortSource source) {
     this.source = source;
   }
 
   @Override
-  public double get(long index) {
+  public double getValue(long index) {
     return HalfFloat.halfToFloat(source.get(index));
   }
 
@@ -25,12 +25,12 @@ public class HalfFloatSource implements DoubleSource, DataView<ShortSource.Primi
   }
 
   @Override
-  public ShortSource.Primitive getSource() {
+  public ShortSource getSource() {
     return source;
   }
 
   @Override
-  public void set(long index, double value) {
+  public void setValue(long index, double value) {
     source.set(index, HalfFloat.floatToHalf((float) value));
   }
 
@@ -42,5 +42,10 @@ public class HalfFloatSource implements DoubleSource, DataView<ShortSource.Primi
   @Override
   public boolean isGPUAccessible() {
     return source.isGPUAccessible();
+  }
+
+  @Override
+  public int getBitSize() {
+    return source.getBitSize();
   }
 }

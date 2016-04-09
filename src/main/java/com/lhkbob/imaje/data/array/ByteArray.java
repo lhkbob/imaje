@@ -1,11 +1,12 @@
 package com.lhkbob.imaje.data.array;
 
 import com.lhkbob.imaje.data.ByteSource;
+import com.lhkbob.imaje.data.DataView;
 
 /**
  *
  */
-public class ByteArray implements ByteSource.Primitive {
+public class ByteArray implements ByteSource, DataView<byte[]> {
   private final byte[] array;
 
   public ByteArray(int length) {
@@ -21,7 +22,8 @@ public class ByteArray implements ByteSource.Primitive {
     return array[Math.toIntExact(index)];
   }
 
-  public byte[] getArray() {
+  @Override
+  public byte[] getSource() {
     return array;
   }
 

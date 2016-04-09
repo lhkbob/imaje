@@ -1,8 +1,7 @@
 package com.lhkbob.imaje.data;
 
 /**
- *
  */
-public interface DataView<T extends DataSource<?>> {
+public interface DataView<T> {
   T getSource();
 }

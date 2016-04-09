@@ -2,23 +2,35 @@ package com.lhkbob.imaje.data.adapter;
 
 import com.lhkbob.imaje.data.ByteSource;
 import com.lhkbob.imaje.data.DataView;
-import com.lhkbob.imaje.data.IntSource;
+import com.lhkbob.imaje.data.NumericDataSource;
+import com.lhkbob.imaje.util.Functions;
 
 /**
  *
  */
-public class UnsignedByteSource implements IntSource, DataView<ByteSource.Primitive> {
+public class UnsignedByteSource implements NumericDataSource, DataView<ByteSource> {
   public static final int MAX_VALUE = Byte.MAX_VALUE - Byte.MIN_VALUE;
 
-  private final ByteSource.Primitive source;
+  private final ByteSource source;
 
-  public UnsignedByteSource(ByteSource.Primitive source) {
+  public UnsignedByteSource(ByteSource source) {
     this.source = source;
   }
 
-  @Override
   public int get(long index) {
-    return (short) Byte.toUnsignedInt(source.get(index));
+    return Byte.toUnsignedInt(source.get(index));
+  }
+
+  @Override
+  public double getValue(long index) {
+    return get(index);
+  }
+
+  @Override
+  public void setValue(long index, double value) {
+    // Clamp to unsigned byte boundaries
+    value = Functions.clamp(value, 0.0, MAX_VALUE);
+    source.set(index, (byte) Math.round(value));
   }
 
   @Override
@@ -37,14 +49,18 @@ public class UnsignedByteSource implements IntSource, DataView<ByteSource.Primit
   }
 
   @Override
-  public ByteSource.Primitive getSource() {
-    return source;
+  public int getBitSize() {
+    return source.getBitSize();
   }
 
   @Override
+  public ByteSource getSource() {
+    return source;
+  }
+
   public void set(long index, int value) {
     // Clamp to unsigned byte boundaries
-    value = Math.max(0, Math.min(value, MAX_VALUE));
+    value = Functions.clamp(value, 0, MAX_VALUE);
     source.set(index, (byte) value);
   }
 }

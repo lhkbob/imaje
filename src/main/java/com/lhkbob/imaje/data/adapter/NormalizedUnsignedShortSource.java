@@ -1,19 +1,21 @@
 package com.lhkbob.imaje.data.adapter;
 
 import com.lhkbob.imaje.data.DataView;
-import com.lhkbob.imaje.data.DoubleSource;
+import com.lhkbob.imaje.data.NumericDataSource;
+import com.lhkbob.imaje.util.Functions;
 
 /**
  *
  */
-public class NormalizedUnsignedShortSource implements DoubleSource, DataView<UnsignedShortSource> {
+public class NormalizedUnsignedShortSource implements NumericDataSource, DataView<UnsignedShortSource> {
   private UnsignedShortSource source;
+
   public NormalizedUnsignedShortSource(UnsignedShortSource source) {
     this.source = source;
   }
 
   @Override
-  public double get(long index) {
+  public double getValue(long index) {
     return source.get(index) * TO_DOUBLE_SCALAR;
   }
 
@@ -38,8 +40,15 @@ public class NormalizedUnsignedShortSource implements DoubleSource, DataView<Uns
   }
 
   @Override
-  public void set(long index, double value) {
-    source.set(index, (int) (UnsignedShortSource.MAX_VALUE * Math.max(0.0, Math.min(value, 1.0))));
+  public int getBitSize() {
+    return source.getBitSize();
   }
+
+  @Override
+  public void setValue(long index, double value) {
+    source.set(index,
+        (int) Math.round(UnsignedShortSource.MAX_VALUE * Functions.clamp(value, 0.0, 1.0)));
+  }
+
   private static final double TO_DOUBLE_SCALAR = 1.0 / UnsignedShortSource.MAX_VALUE;
 }
