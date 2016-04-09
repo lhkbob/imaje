@@ -2,6 +2,7 @@ package com.lhkbob.imaje.data.adapter;
 
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.NumericDataSource;
+import com.lhkbob.imaje.util.Functions;
 
 /**
  *
@@ -58,7 +59,7 @@ public class NormalizedUnsignedLongSource implements NumericDataSource, DataView
   @Override
   public void setValue(long index, double value) {
     // First clamp to the valid normalization range
-    value = Math.max(0.0, Math.min(value, 1.0));
+    value = Functions.clamp(value, 0.0, 1.0);
 
     long uvalue;
     if (value > 0.5) {
