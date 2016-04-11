@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.util;
 
+import java.util.Comparator;
 import java.util.Spliterator;
 import java.util.function.LongConsumer;
 
@@ -56,5 +57,12 @@ public class IndexSpliterator implements Spliterator.OfLong {
     OfLong prefix = new IndexSpliterator(nextIndex, split, minimumSplit);
     nextIndex = split;
     return prefix;
+  }
+
+  @Override
+  public Comparator<Long> getComparator() {
+    // Elements are returned in the natural order of longs, so a null comparator should be returned.
+    // The default implementation throws illegal state exception.
+    return null;
   }
 }

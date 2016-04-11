@@ -49,7 +49,10 @@ public final class ImageCoordinate {
 
     @Override
     public int characteristics() {
-      return indexSpliterator.characteristics();
+      int base = indexSpliterator.characteristics();
+      // Remove SORTED since although the underlying spliterator may be sorted in 1D, there is no
+      // defined natural comparison or other comparison defined for ImageCoordinate.
+      return base & ~Spliterator.SORTED;
     }
 
     @Override
