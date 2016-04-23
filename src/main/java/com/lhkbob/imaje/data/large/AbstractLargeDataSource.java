@@ -7,7 +7,7 @@ import java.util.Arrays;
 /**
  *
  */
-public abstract class AbstractLargeDataSource<T extends Number, S extends DataSource<T>> implements DataSource<T> {
+public abstract class AbstractLargeDataSource<S extends DataSource> implements DataSource {
   private final S[] sources;
   private final long totalLength;
   private final long repeatedLength;

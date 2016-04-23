@@ -5,7 +5,7 @@ import com.lhkbob.imaje.data.DoubleSource;
 /**
  *
  */
-public class LargeDoubleSource extends AbstractLargeDataSource<Double, DoubleSource> implements DoubleSource {
+public class LargeDoubleSource extends AbstractLargeDataSource<DoubleSource> implements DoubleSource {
   public LargeDoubleSource(DoubleSource[] sources) {
     super(sources);
   }

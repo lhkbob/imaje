@@ -5,7 +5,7 @@ import com.lhkbob.imaje.data.ShortSource;
 /**
  *
  */
-public class LargeShortSource extends AbstractLargeDataSource<Short, ShortSource> implements ShortSource {
+public class LargeShortSource extends AbstractLargeDataSource<ShortSource> implements ShortSource {
   public LargeShortSource(ShortSource[] sources) {
     super(sources);
   }

@@ -5,7 +5,7 @@ import com.lhkbob.imaje.data.ByteSource;
 /**
  *
  */
-public class LargeByteSource extends AbstractLargeDataSource<Byte, ByteSource> implements ByteSource {
+public class LargeByteSource extends AbstractLargeDataSource<ByteSource> implements ByteSource {
   public LargeByteSource(ByteSource[] sources) {
     super(sources);
   }
