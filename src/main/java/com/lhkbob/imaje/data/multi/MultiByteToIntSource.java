@@ -1,4 +1,4 @@
-package com.lhkbob.imaje.data.adapter;
+package com.lhkbob.imaje.data.multi;
 
 import com.lhkbob.imaje.data.ByteSource;
 import com.lhkbob.imaje.data.Data;
