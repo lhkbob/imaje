@@ -1,23 +1,5 @@
 package com.lhkbob.imaje.data;
 
-import com.lhkbob.imaje.data.adapter.HalfFloatSource;
-import com.lhkbob.imaje.data.adapter.MultiByteToDoubleSource;
-import com.lhkbob.imaje.data.adapter.MultiByteToFloatSource;
-import com.lhkbob.imaje.data.adapter.MultiByteToIntSource;
-import com.lhkbob.imaje.data.adapter.MultiByteToLongSource;
-import com.lhkbob.imaje.data.adapter.MultiByteToShortSource;
-import com.lhkbob.imaje.data.adapter.NormalizedByteSource;
-import com.lhkbob.imaje.data.adapter.NormalizedIntSource;
-import com.lhkbob.imaje.data.adapter.NormalizedLongSource;
-import com.lhkbob.imaje.data.adapter.NormalizedShortSource;
-import com.lhkbob.imaje.data.adapter.NormalizedUnsignedByteSource;
-import com.lhkbob.imaje.data.adapter.NormalizedUnsignedIntSource;
-import com.lhkbob.imaje.data.adapter.NormalizedUnsignedLongSource;
-import com.lhkbob.imaje.data.adapter.NormalizedUnsignedShortSource;
-import com.lhkbob.imaje.data.adapter.UnsignedByteSource;
-import com.lhkbob.imaje.data.adapter.UnsignedIntSource;
-import com.lhkbob.imaje.data.adapter.UnsignedLongSource;
-import com.lhkbob.imaje.data.adapter.UnsignedShortSource;
 import com.lhkbob.imaje.data.array.ByteArray;
 import com.lhkbob.imaje.data.array.DoubleArray;
 import com.lhkbob.imaje.data.array.FloatArray;
@@ -30,12 +12,25 @@ import com.lhkbob.imaje.data.large.LargeFloatSource;
 import com.lhkbob.imaje.data.large.LargeIntSource;
 import com.lhkbob.imaje.data.large.LargeLongSource;
 import com.lhkbob.imaje.data.large.LargeShortSource;
+import com.lhkbob.imaje.data.multi.MultiByteToDoubleSource;
+import com.lhkbob.imaje.data.multi.MultiByteToFloatSource;
+import com.lhkbob.imaje.data.multi.MultiByteToIntSource;
+import com.lhkbob.imaje.data.multi.MultiByteToLongSource;
+import com.lhkbob.imaje.data.multi.MultiByteToShortSource;
 import com.lhkbob.imaje.data.nio.ByteBufferSource;
 import com.lhkbob.imaje.data.nio.DoubleBufferSource;
 import com.lhkbob.imaje.data.nio.FloatBufferSource;
 import com.lhkbob.imaje.data.nio.IntBufferSource;
 import com.lhkbob.imaje.data.nio.LongBufferSource;
 import com.lhkbob.imaje.data.nio.ShortBufferSource;
+import com.lhkbob.imaje.data.types.BinaryNumericSource;
+import com.lhkbob.imaje.data.types.BinaryRepresentation;
+import com.lhkbob.imaje.data.types.Signed64FloatingPointNumber;
+import com.lhkbob.imaje.data.types.SignedFloatingPointNumber;
+import com.lhkbob.imaje.data.types.SignedInteger;
+import com.lhkbob.imaje.data.types.SignedNormalizedInteger;
+import com.lhkbob.imaje.data.types.UnsignedInteger;
+import com.lhkbob.imaje.data.types.UnsignedNormalizedInteger;
 
 import java.io.IOException;
 import java.nio.Buffer;
@@ -50,12 +45,36 @@ import java.nio.ShortBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.function.Function;
 
 /**
  *
  */
 public final class Data {
+  public static final BinaryRepresentation UINT8 = new UnsignedInteger(8);
+  public static final BinaryRepresentation UINT16 = new UnsignedInteger(16);
+  public static final BinaryRepresentation UINT32 = new UnsignedInteger(32);
+  public static final BinaryRepresentation UINT64 = new UnsignedInteger(64);
+
+  public static final BinaryRepresentation UNORM8 = new UnsignedNormalizedInteger(8);
+  public static final BinaryRepresentation UNORM16 = new UnsignedNormalizedInteger(16);
+  public static final BinaryRepresentation UNORM32 = new UnsignedNormalizedInteger(32);
+  public static final BinaryRepresentation UNORM64 = new UnsignedNormalizedInteger(64);
+
+  @Deprecated public static final BinaryRepresentation SINT8 = new SignedInteger(8);
+  @Deprecated public static final BinaryRepresentation SINT16 = new SignedInteger(16);
+  @Deprecated public static final BinaryRepresentation SINT32 = new SignedInteger(32);
+  @Deprecated public static final BinaryRepresentation SINT64 = new SignedInteger(64);
+
+  public static final BinaryRepresentation SNORM8 = new SignedNormalizedInteger(8);
+  public static final BinaryRepresentation SNORM16 = new SignedNormalizedInteger(16);
+  public static final BinaryRepresentation SNORM32 = new SignedNormalizedInteger(32);
+  public static final BinaryRepresentation SNORM64 = new SignedNormalizedInteger(64);
+
+  public static final BinaryRepresentation SFLOAT16 = new SignedFloatingPointNumber(5, 10);
+  @Deprecated public static final BinaryRepresentation SFLOAT32 = new SignedFloatingPointNumber(
+      8, 23);
+  @Deprecated public static final BinaryRepresentation SFLOAT64 = new Signed64FloatingPointNumber();
+
   public interface Builder<S, A, B extends Buffer> {
     S ofArray(long length);
 
@@ -527,7 +546,7 @@ public final class Data {
   }
 
   public static Builder<? extends NumericDataSource, short[], ShortBuffer> sfloat16() {
-    return new WrappingBuilder<>(newShortSource(), HalfFloatSource::new);
+    return new BinaryBuilder<>(newShortSource(), SFLOAT16);
   }
 
   public static Builder<? extends NumericDataSource, float[], FloatBuffer> sfloat32() {
@@ -539,100 +558,68 @@ public final class Data {
     return newDoubleSource();
   }
 
-  public static Builder<? extends BitDataSource, short[], ShortBuffer> sint16() {
+  public static Builder<? extends NumericDataSource, short[], ShortBuffer> sint16() {
     return newShortSource();
   }
 
-  public static Builder<? extends BitDataSource, int[], IntBuffer> sint32() {
+  public static Builder<? extends NumericDataSource, int[], IntBuffer> sint32() {
     return newIntSource();
   }
 
-  public static Builder<? extends BitDataSource, long[], LongBuffer> sint64() {
+  public static Builder<? extends NumericDataSource, long[], LongBuffer> sint64() {
     return newLongSource();
   }
 
-  public static Builder<? extends BitDataSource, byte[], ByteBuffer> sint8() {
+  public static Builder<? extends NumericDataSource, byte[], ByteBuffer> sint8() {
     return newByteSource();
   }
 
   public static Builder<? extends NumericDataSource, short[], ShortBuffer> snorm16() {
-    return new WrappingBuilder<>(newShortSource(), NormalizedShortSource::new);
+    return new BinaryBuilder<>(newShortSource(), SNORM16);
   }
 
   public static Builder<? extends NumericDataSource, int[], IntBuffer> snorm32() {
-    return new WrappingBuilder<>(newIntSource(), NormalizedIntSource::new);
+    return new BinaryBuilder<>(newIntSource(), SNORM32);
   }
 
   public static Builder<? extends NumericDataSource, long[], LongBuffer> snorm64() {
-    return new WrappingBuilder<>(newLongSource(), NormalizedLongSource::new);
+    return new BinaryBuilder<>(newLongSource(), SNORM64);
   }
 
   public static Builder<? extends NumericDataSource, byte[], ByteBuffer> snorm8() {
-    return new WrappingBuilder<>(newByteSource(), NormalizedByteSource::new);
+    return new BinaryBuilder<>(newByteSource(), SNORM8);
   }
 
-  public static Builder<? extends NumericDataSource, short[], ShortBuffer> sscaled16() {
-    return newShortSource();
+  public static Builder<? extends NumericDataSource, short[], ShortBuffer> uint16() {
+    return new BinaryBuilder<>(newShortSource(), UINT16);
   }
 
-  public static Builder<? extends NumericDataSource, int[], IntBuffer> sscaled32() {
-    return newIntSource();
+  public static Builder<? extends NumericDataSource, int[], IntBuffer> uint32() {
+    return new BinaryBuilder<>(newIntSource(), UINT32);
   }
 
-  public static Builder<? extends NumericDataSource, long[], LongBuffer> sscaled64() {
-    return newLongSource();
+  public static Builder<? extends NumericDataSource, long[], LongBuffer> uint64() {
+    return new BinaryBuilder<>(newLongSource(), UINT64);
   }
 
-  public static Builder<? extends NumericDataSource, byte[], ByteBuffer> sscaled8() {
-    return newByteSource();
-  }
-
-  public static Builder<UnsignedShortSource, short[], ShortBuffer> uint16() {
-    return new WrappingBuilder<>(newShortSource(), UnsignedShortSource::new);
-  }
-
-  public static Builder<UnsignedIntSource, int[], IntBuffer> uint32() {
-    return new WrappingBuilder<>(newIntSource(), UnsignedIntSource::new);
-  }
-
-  public static Builder<UnsignedLongSource, long[], LongBuffer> uint64() {
-    return new WrappingBuilder<>(newLongSource(), UnsignedLongSource::new);
-  }
-
-  public static Builder<UnsignedByteSource, byte[], ByteBuffer> uint8() {
-    return new WrappingBuilder<>(newByteSource(), UnsignedByteSource::new);
+  public static Builder<? extends NumericDataSource, byte[], ByteBuffer> uint8() {
+    return new BinaryBuilder<>(newByteSource(), UINT8);
   }
 
   public static Builder<? extends NumericDataSource, short[], ShortBuffer> unorm16() {
-    return new WrappingBuilder<>(uint16(), NormalizedUnsignedShortSource::new);
+    return new BinaryBuilder<>(newShortSource(), UNORM16);
   }
 
   public static Builder<? extends NumericDataSource, int[], IntBuffer> unorm32() {
-    return new WrappingBuilder<>(uint32(), NormalizedUnsignedIntSource::new);
+    return new BinaryBuilder<>(newIntSource(), UNORM32);
   }
 
   public static Builder<? extends NumericDataSource, long[], LongBuffer> unorm64() {
-    return new WrappingBuilder<>(uint64(), NormalizedUnsignedLongSource::new);
+    return new BinaryBuilder<>(newLongSource(), UNORM64);
   }
 
   public static Builder<? extends NumericDataSource, byte[], ByteBuffer> unorm8() {
-    return new WrappingBuilder<>(uint8(), NormalizedUnsignedByteSource::new);
-  }
-
-  public static Builder<? extends NumericDataSource, short[], ShortBuffer> uscaled16() {
-    return uint16();
-  }
-
-  public static Builder<UnsignedIntSource, int[], IntBuffer> uscaled32() {
-    return uint32();
-  }
-
-  public static Builder<UnsignedLongSource, long[], LongBuffer> uscaled64() {
-    return uint64();
-  }
-
-  public static Builder<UnsignedByteSource, byte[], ByteBuffer> uscaled8() {
-    return uint8();
+    return new BinaryBuilder<>(newByteSource(), UNORM8);
   }
 
   private static int[] getLargeSourceSizes(long length) {
@@ -658,43 +645,44 @@ public final class Data {
 
   private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE >> 1;
 
-  private static class WrappingBuilder<I, O, A, B extends Buffer> implements Builder<O, A, B> {
-    private final Builder<I, A, B> wrapped;
-    private final Function<I, O> wrapper;
+  private static class BinaryBuilder<I extends BitDataSource, A, B extends Buffer> implements Builder<BinaryNumericSource, A, B> {
+    private final Builder<I, A, B> source;
+    private final BinaryRepresentation bitRep;
 
-    public WrappingBuilder(Builder<I, A, B> wrapped, Function<I, O> wrapper) {
-      this.wrapped = wrapped;
-      this.wrapper = wrapper;
+    public BinaryBuilder(Builder<I, A, B> source, BinaryRepresentation bitRep) {
+      this.source = source;
+      this.bitRep = bitRep;
     }
 
     @Override
-    public O ofArray(long length) {
-      return wrapper.apply(wrapped.ofArray(length));
+    public BinaryNumericSource ofArray(long length) {
+      return new BinaryNumericSource(bitRep, source.ofArray(length));
     }
 
     @Override
-    public O ofBuffer(long length) {
-      return wrapper.apply(wrapped.ofBuffer(length));
+    public BinaryNumericSource ofBuffer(long length) {
+      return new BinaryNumericSource(bitRep, source.ofBuffer(length));
     }
 
     @Override
-    public O wrapArray(A array) {
-      return wrapper.apply(wrapped.wrapArray(array));
+    public BinaryNumericSource wrapArray(A array) {
+      return new BinaryNumericSource(bitRep, source.wrapArray(array));
     }
 
     @Override
-    public O wrapBuffer(B buffer) {
-      return wrapper.apply(wrapped.wrapBuffer(buffer));
+    public BinaryNumericSource wrapBuffer(B buffer) {
+      return new BinaryNumericSource(bitRep, source.wrapBuffer(buffer));
     }
 
     @Override
-    public O wrapFile(Path path) throws IOException {
-      return wrapper.apply(wrapped.wrapFile(path));
+    public BinaryNumericSource wrapFile(Path path) throws IOException {
+      return new BinaryNumericSource(bitRep, source.wrapFile(path));
     }
 
     @Override
-    public O wrapFile(FileChannel channel, long offset, long length) throws IOException {
-      return wrapper.apply(wrapped.wrapFile(channel, offset, length));
+    public BinaryNumericSource wrapFile(FileChannel channel, long offset, long length) throws
+        IOException {
+      return new BinaryNumericSource(bitRep, source.wrapFile(channel, offset, length));
     }
   }
 }
