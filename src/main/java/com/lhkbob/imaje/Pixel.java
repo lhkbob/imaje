@@ -6,7 +6,7 @@ import com.lhkbob.imaje.color.Color;
  *
  */
 public interface Pixel<T extends Color> {
-  void get(T result);
+  double get(T result);
 
   double getAlpha();
 
@@ -19,6 +19,8 @@ public interface Pixel<T extends Color> {
   int getY();
 
   void set(T value);
+
+  void set(T value, double a);
 
   void setAlpha(double a);
 }
