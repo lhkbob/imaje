@@ -32,4 +32,12 @@ public final class Functions {
     else
       return value;
   }
+
+  public static int maskInt(int bits) {
+    return (~0) >>> (32 - bits);
+  }
+
+  public static long maskLong(int bits) {
+    return (~0L) >>> (64 - bits);
+  }
 }
