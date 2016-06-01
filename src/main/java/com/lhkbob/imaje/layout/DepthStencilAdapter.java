@@ -1,40 +1,24 @@
 package com.lhkbob.imaje.layout;
 
-import com.lhkbob.imaje.color.Depth;
 import com.lhkbob.imaje.color.DepthStencil;
-import com.lhkbob.imaje.color.SRGB;
-import com.lhkbob.imaje.color.SimpleColor;
-import com.lhkbob.imaje.color.Stencil;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Spliterator;
-import java.util.function.Predicate;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-/**
- *
- */
-public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T> {
+public class DepthStencilAdapter<T extends DepthStencil> implements ColorAdapter<T> {
   private final PixelArray image;
   private final Class<T> type;
 
+  private final AtomicReference<double[]> tempChannels;
   private transient volatile GPUFormat format;
 
-  public SimpleColorAdapter(Class<T> type, PixelArray image) {
-    // SimpleColor mandates that all subclasses have a fixed number of logical channels, so all instances
-    // of T will report the same number for getChannelCount(), and Color mandates that a public
-    // default constructor is available
-    try {
-      if (type.newInstance().getChannelCount() != image.getFormat().getColorChannelCount())
-        throw new IllegalArgumentException("Logical channel count mismatch between data map and provided color type");
-    } catch (InstantiationException | IllegalAccessException e) {
-      throw new RuntimeException("Color type does not provide public default constructor", e);
-    }
-
+  public DepthStencilAdapter(Class<T> type, PixelArray image) {
     this.type = type;
     this.image = image;
-    format = null;
+    tempChannels = new AtomicReference<>(new double[2]);
   }
 
   @Override
@@ -48,23 +32,29 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
   }
 
   @Override
-  public Iterator<ImageCoordinate> iterator() {
-    return image.getLayout().iterator();
-  }
-
-  @Override
-  public Spliterator<ImageCoordinate> spliterator() {
-    return image.getLayout().spliterator();
-  }
-
-  @Override
   public double get(int x, int y, T result) {
-    return image.get(x, y, result.getChannelData(), 0);
+    double[] temp = getTempChannelData();
+    try {
+      double alpha = image.get(x, y, temp, 0);
+      result.setDepth(temp[0]);
+      result.setStencil((int) temp[1]);
+      return alpha;
+    } finally {
+      returnTempChannelData(temp);
+    }
   }
 
   @Override
   public double get(int x, int y, T result, long[] channels) {
-    return image.get(x, y, result.getChannelData(), 0, channels);
+    double[] temp = getTempChannelData();
+    try {
+      double alpha = image.get(x, y, temp, 0, channels);
+      result.setDepth(temp[0]);
+      result.setStencil((int) temp[1]);
+      return alpha;
+    } finally {
+      returnTempChannelData(temp);
+    }
   }
 
   @Override
@@ -78,17 +68,61 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
   }
 
   @Override
+  public Iterator<ImageCoordinate> iterator() {
+    return image.getLayout().iterator();
+  }
+
+  @Override
+  public Spliterator<ImageCoordinate> spliterator() {
+    return image.getLayout().spliterator();
+  }
+
+  @Override
   public void set(int x, int y, T value, double a) {
-    image.set(x, y, value.getChannelData(), 0, a);
+    double[] temp = getTempChannelData();
+    try {
+      temp[0] = value.getDepth();
+      temp[1] = value.getStencil();
+      image.set(x, y, temp, 0, a);
+    } finally {
+      returnTempChannelData(temp);
+    }
   }
 
   @Override
   public void set(int x, int y, T value, double a, long[] channels) {
-    image.set(x, y, value.getChannelData(), 0, a, channels);
+    double[] temp = getTempChannelData();
+    try {
+      temp[0] = value.getDepth();
+      temp[1] = value.getStencil();
+      image.set(x, y, temp, 0, a, channels);
+    } finally {
+      returnTempChannelData(temp);
+    }
   }
 
-  public void setAlpha(int x, int y, double alpha) {
-    image.setAlpha(x, y, alpha);
+  private double[] getTempChannelData() {
+    double[] temp = tempChannels.getAndSet(null);
+    if (temp == null) {
+      // Another thread already grabbed the cached array so just allocate a new one; this is unlikely
+      // to happen and the atomic reference offers better performance characteristics than
+      // maintaining an entire ThreadLocal map for such a cache.
+      temp = new double[2];
+    }
+    return temp;
+  }
+
+  private void returnTempChannelData(double[] data) {
+    // If it is null, store the provided 2-element array, which may have been the original or
+    // one allocated but released sooner than the original. It doesn't really matter since the
+    // only contract is that one array be made available. When the reference is already null, the
+    // provided data is quietly discarded since it is no longer needed and can be reclaimed.
+    tempChannels.compareAndSet(null, data);
+  }
+
+  @Override
+  public void setAlpha(int x, int y, double a) {
+    image.setAlpha(x, y, a);
   }
 
   @Override
@@ -107,27 +141,9 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
       GPUFormat.Channel semantic;
 
       if (i == 0) {
-        // First color channel semantics are either R (for majority of colors), or D for depth and
-        // depth-stencil types, and stencil for stencil only types.
-        if (Depth.class.isAssignableFrom(type) || DepthStencil.class.isAssignableFrom(type)) {
-          semantic = GPUFormat.Channel.D;
-        } else if (Stencil.class.isAssignableFrom(type)) {
-          semantic = GPUFormat.Channel.S;
-        } else {
-          semantic = GPUFormat.Channel.R;
-        }
+        semantic = GPUFormat.Channel.D;
       } else if (i == 1) {
-        if (DepthStencil.class.isAssignableFrom(type)) {
-          semantic = GPUFormat.Channel.S;
-        } else {
-          semantic = GPUFormat.Channel.G;
-        }
-      } else if (i == 2) {
-        semantic = GPUFormat.Channel.B;
-      } else if (i == 3) {
-        // 4th color channel maps to A so that CMYK and other 4 channel colors can still
-        // be sent to the GPU even if it doesn't actually represent alpha values
-        semantic = GPUFormat.Channel.A;
+        semantic = GPUFormat.Channel.S;
       } else {
         semantic = GPUFormat.Channel.X;
       }
@@ -140,7 +156,8 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
       channels[pf.getAlphaChannelDataIndex()] = GPUFormat.Channel.A;
     }
 
-    // Fill in any skipped data channels with X
+    // Fill in any skipped data channels with X (which for most depth stencil formats will be at
+    // least one field of padding)
     for (int i = 0; i < channels.length; i++) {
       if (channels[i] == null)
         channels[i] = GPUFormat.Channel.X;
@@ -151,14 +168,6 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
     formats = formats.filter(image.getGPUFormatFilter());
     // Next filter based on channel semantics
     formats = formats.filter(GPUFormat.channelLayout(channels));
-    // Next filter based on sRGB encoding of channel values
-    Predicate<GPUFormat> isSRGB = GPUFormat::isSRGB;
-    if (SRGB.class.equals(type) && formats.anyMatch(isSRGB)) {
-      formats = formats.filter(isSRGB);
-    } else {
-      // Exclude the sRGB variants of UNORM formats
-      formats = formats.filter(isSRGB.negate());
-    }
 
     if (formats.count() > 1) {
       // This should not happen given the current set of GPU formats and data source
@@ -173,7 +182,7 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
 
   @Override
   public boolean isGPUCompatible() {
-    return image.getData().isGPUAccessible() && image.getLayout().isGPUCompatible() && getFormat() != GPUFormat.UNDEFINED;
+    return image.getLayout().isGPUCompatible() && image.getData().isGPUAccessible() && getFormat() != GPUFormat.UNDEFINED;
   }
 
   @Override

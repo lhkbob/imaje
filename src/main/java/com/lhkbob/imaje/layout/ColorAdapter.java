@@ -5,7 +5,7 @@ import com.lhkbob.imaje.color.Color;
 /**
  *
  */
-public interface PixelAdapter<T extends Color> extends Iterable<ImageCoordinate> {
+public interface ColorAdapter<T extends Color> extends Iterable<ImageCoordinate> {
   int getWidth();
 
   int getHeight();
