@@ -9,16 +9,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Spliterator;
 
 /**
- *
+ * Ideal: Mipmap<Raster2D<RGB>> is Image<RGB>
+ * Possible: Mipmap<Raster2D<RGB>, RGB> is Image<RGB>
+ * Mipmap<RGB, Raster2D> is Image<RGB>
  */
-public class MipmapImage<T extends Color> implements Image<T> {
-  private final List<RasterImage<T>> mipmaps;
+public class Mipmap<T extends Color> implements Image<T> {
+  private final List<Raster<T>> mipmaps;
 
-  public MipmapImage(List<RasterImage<T>> mipmaps) {
+  public Mipmap(List<Raster<T>> mipmaps) {
     if (mipmaps.isEmpty()) {
       throw new IllegalArgumentException("Must provide at least one image");
     }
@@ -35,50 +36,17 @@ public class MipmapImage<T extends Color> implements Image<T> {
     return mipmaps.get(0).getColorType();
   }
 
-  @Override
-  public int getHeight() {
-    return mipmaps.get(0).getHeight();
-  }
 
-  @Override
-  public int getLayerCount() {
-    return 1;
-  }
-
-  public RasterImage<T> getLevel(int level) {
+  public Raster<T> getLevel(int level) {
     return mipmaps.get(level);
   }
 
-  public List<RasterImage<T>> getLevelImages() {
+  public List<Raster<T>> getLevelImages() {
     return mipmaps;
   }
 
-  @Override
-  public Map<String, String> getMetadata() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public int getMipmapCount() {
     return mipmaps.size();
-  }
-
-  public Pixel<T> getPixel(int x, int y, int level) {
-    return mipmaps.get(level).getExplicitPixel(x, y, level, 0);
-  }
-
-  @Override
-  public Pixel<T> getPixel(int x, int y, int level, int layer) {
-    if (layer == 0) {
-      return getPixel(x, y, level);
-    } else {
-      throw new IndexOutOfBoundsException("Array layer is illegal: " + layer);
-    }
-  }
-
-  @Override
-  public int getWidth() {
-    return mipmaps.get(0).getWidth();
   }
 
   @Override
@@ -87,10 +55,24 @@ public class MipmapImage<T extends Color> implements Image<T> {
   }
 
   @Override
+  public int getWidth() {
+    return mipmaps.get(0).getWidth();
+  }
+
+  @Override
+  public int getHeight() {
+    return mipmaps.get(0).getHeight();
+  }
+
+  public Pixel<T> getPixel(int x, int y, int level) {
+    return mipmaps.get(level).getPixelForMipmapArray(x, y, level, 0);
+  }
+
+  @Override
   public Iterator<Pixel<T>> iterator() {
     List<Iterator<Pixel<T>>> wrappedLayers = new ArrayList<>(mipmaps.size());
     for (int i = 0; i < mipmaps.size(); i++) {
-      wrappedLayers.add(mipmaps.get(i).iterator(i, 0));
+      wrappedLayers.add(mipmaps.get(i).iteratorForMipmapArray(i, 0));
     }
     return new IteratorChain<>(wrappedLayers);
   }
@@ -99,7 +81,7 @@ public class MipmapImage<T extends Color> implements Image<T> {
   public Spliterator<Pixel<T>> spliterator() {
     List<Spliterator<Pixel<T>>> wrappedLayers = new ArrayList<>(mipmaps.size());
     for (int i = 0; i < mipmaps.size(); i++) {
-      wrappedLayers.add(mipmaps.get(i).spliterator(i, 0));
+      wrappedLayers.add(mipmaps.get(i).spliteratorForMipmapArray(i, 0));
     }
     return new SpliteratorChain<>(wrappedLayers);
   }

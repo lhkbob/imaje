@@ -25,7 +25,6 @@ public class GeneralPixelLayout implements PixelLayout {
   private final int hangingTileHeight; // remainder if tileHeight does not evenly divide imageHeight
   private final int tileRowCount; // total number of full tile rows (excluding any hanging tile)
 
-  private final long baseOffset;
   private final int channelCount;
   private final InterleavingUnit interleave;
 
@@ -41,12 +40,6 @@ public class GeneralPixelLayout implements PixelLayout {
   public GeneralPixelLayout(
       int imageWidth, int imageHeight, int tileWidth, int tileHeight, int channelCount,
       InterleavingUnit interleave) {
-    this(imageWidth, imageHeight, tileWidth, tileHeight, channelCount, interleave, 0L);
-  }
-
-  public GeneralPixelLayout(
-      int imageWidth, int imageHeight, int tileWidth, int tileHeight, int channelCount,
-      InterleavingUnit interleave, long baseOffset) {
     if (imageWidth <= 0 || imageHeight <= 0) {
       throw new IllegalArgumentException(
           "Image dimensions must be at least 1: " + imageWidth + " x " + imageHeight);
@@ -58,11 +51,7 @@ public class GeneralPixelLayout implements PixelLayout {
     if (channelCount <= 0) {
       throw new IllegalArgumentException("Channel count must be at least 1: " + channelCount);
     }
-    if (baseOffset < 0) {
-      throw new IndexOutOfBoundsException("Base offset cannot be negative: " + baseOffset);
-    }
 
-    this.baseOffset = baseOffset;
     this.channelCount = channelCount;
     this.interleave = interleave;
 
@@ -75,6 +64,18 @@ public class GeneralPixelLayout implements PixelLayout {
     tileRowCount = imageHeight / tileHeight;
     hangingTileWidth = imageWidth - tileWidth * tileColumnCount;
     hangingTileHeight = imageHeight - tileHeight * tileRowCount;
+  }
+
+  public int getTileWidth() {
+    return tileWidth;
+  }
+
+  public int getTileHeight() {
+    return tileHeight;
+  }
+
+  public InterleavingUnit getInterleavingUnit() {
+    return interleave;
   }
 
   @Override
@@ -130,7 +131,7 @@ public class GeneralPixelLayout implements PixelLayout {
       break;
     }
 
-    long base = baseOffset + tileStride * (tileY * tileHeight * imageWidth
+    long base = tileStride * (tileY * tileHeight * imageWidth
         + tileX * tileWidth * actualTileHeight) + withinTileStride * withinTileY * actualTileWidth
         + pixelStride * withinTileX;
     for (int i = 0; i < channelIndices.length; i++) {
@@ -180,7 +181,7 @@ public class GeneralPixelLayout implements PixelLayout {
       break;
     }
 
-    return baseOffset + tileStride * (tileY * tileHeight * imageWidth
+    return tileStride * (tileY * tileHeight * imageWidth
         + tileX * tileWidth * actualTileHeight) + withinTileStride * withinTileY * actualTileWidth
         + pixelStride * withinTileX + channel * offset;
   }
@@ -188,11 +189,6 @@ public class GeneralPixelLayout implements PixelLayout {
   @Override
   public int getChannelCount() {
     return channelCount;
-  }
-
-  @Override
-  public long getRequiredDataElements() {
-    return baseOffset + channelCount * imageWidth * imageHeight;
   }
 
   @Override

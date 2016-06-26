@@ -1,21 +1,22 @@
 package com.lhkbob.imaje;
 
 import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.layout.ImageCoordinate;
 import com.lhkbob.imaje.layout.ColorAdapter;
+import com.lhkbob.imaje.layout.ImageCoordinate;
+import com.lhkbob.imaje.layout.PixelArray;
+import com.lhkbob.imaje.layout.PixelArrayBackedAdapter;
 
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
 /**
  *
  */
-public class RasterImage<T extends Color> implements Image<T> {
+public class Raster<T extends Color> implements Image<T> {
   private final ColorAdapter<T> data;
 
-  public RasterImage(ColorAdapter<T> data) {
+  public Raster(ColorAdapter<T> data) {
     this.data = data;
   }
 
@@ -28,8 +29,8 @@ public class RasterImage<T extends Color> implements Image<T> {
   }
 
   @Override
-  public Class<T> getColorType() {
-    return data.getType();
+  public int getWidth() {
+    return data.getWidth();
   }
 
   @Override
@@ -38,38 +39,12 @@ public class RasterImage<T extends Color> implements Image<T> {
   }
 
   @Override
-  public int getLayerCount() {
-    return 1;
-  }
-
-  @Override
-  public Map<String, String> getMetadata() {
-    throw new UnsupportedOperationException("NOT IMPLEMENTED");
-  }
-
-  @Override
-  public int getMipmapCount() {
-    return 1;
+  public Class<T> getColorType() {
+    return data.getType();
   }
 
   public Pixel<T> getPixel(int x, int y) {
-    return getExplicitPixel(x, y, 0, 0);
-  }
-
-  @Override
-  public Pixel<T> getPixel(int x, int y, int level, int layer) {
-    // Accept level and layer as 0s (e.g. a single raster image)
-    if (level == 0 && layer == 0) {
-      return getPixel(x, y);
-    } else {
-      throw new IndexOutOfBoundsException(
-          "Mipmap level and array layer do not exist: " + level + ", " + layer);
-    }
-  }
-
-  @Override
-  public int getWidth() {
-    return data.getWidth();
+    return getPixelForMipmapArray(x, y, 0, 0);
   }
 
   @Override
@@ -79,7 +54,7 @@ public class RasterImage<T extends Color> implements Image<T> {
 
   @Override
   public Iterator<Pixel<T>> iterator() {
-    return iterator(0, 0);
+    return iteratorForMipmapArray(0, 0);
   }
 
   public void set(int x, int y, T value) {
@@ -96,7 +71,7 @@ public class RasterImage<T extends Color> implements Image<T> {
 
   @Override
   public Spliterator<Pixel<T>> spliterator() {
-    return spliterator(0, 0);
+    return spliteratorForMipmapArray(0, 0);
   }
 
   private void checkImageCoordinates(int x, int y) {
@@ -106,7 +81,19 @@ public class RasterImage<T extends Color> implements Image<T> {
     }
   }
 
-  Pixel<T> getExplicitPixel(int x, int y, int level, int layer) {
+  ColorAdapter<T> getColorAdapter() {
+    return data;
+  }
+
+  PixelArray getPixelArray() {
+    if (data instanceof PixelArrayBackedAdapter) {
+      return ((PixelArrayBackedAdapter) data).getPixelArray();
+    } else {
+      return null;
+    }
+  }
+
+  Pixel<T> getPixelForMipmapArray(int x, int y, int level, int layer) {
     checkImageCoordinates(x, y);
     DefaultPixel<T> p = new DefaultPixel<>(data);
     p.setPixel(x, y);
@@ -115,11 +102,11 @@ public class RasterImage<T extends Color> implements Image<T> {
     return p;
   }
 
-  Iterator<Pixel<T>> iterator(int level, int layer) {
+  Iterator<Pixel<T>> iteratorForMipmapArray(int level, int layer) {
     return new RasterIterator(level, layer);
   }
 
-  Spliterator<Pixel<T>> spliterator(int level, int layer) {
+  Spliterator<Pixel<T>> spliteratorForMipmapArray(int level, int layer) {
     return new RasterSpliterator(level, layer);
   }
 

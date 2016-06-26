@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.layout;
 
+import com.lhkbob.imaje.util.PixelLayoutBuilder;
+
 /**
  *
  */
@@ -12,9 +14,15 @@ public interface PixelLayout extends Iterable<ImageCoordinate> {
 
   int getChannelCount();
 
-  long getRequiredDataElements();
+  default long getRequiredDataElements() {
+    return getWidth() * getHeight() * getChannelCount();
+  }
 
   boolean isGPUCompatible();
 
   int getWidth();
+
+  static PixelLayoutBuilder newBuilder() {
+    return new PixelLayoutBuilder();
+  }
 }

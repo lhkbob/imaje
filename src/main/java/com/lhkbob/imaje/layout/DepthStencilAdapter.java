@@ -2,13 +2,11 @@ package com.lhkbob.imaje.layout;
 
 import com.lhkbob.imaje.color.DepthStencil;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
-public class DepthStencilAdapter<T extends DepthStencil> implements ColorAdapter<T> {
+public class DepthStencilAdapter<T extends DepthStencil> implements ColorAdapter<T>, PixelArrayBackedAdapter {
   private final PixelArray image;
   private final Class<T> type;
 
@@ -19,6 +17,11 @@ public class DepthStencilAdapter<T extends DepthStencil> implements ColorAdapter
     this.type = type;
     this.image = image;
     tempChannels = new AtomicReference<>(new double[2]);
+  }
+
+  @Override
+  public PixelArray getPixelArray() {
+    return image;
   }
 
   @Override
@@ -35,7 +38,7 @@ public class DepthStencilAdapter<T extends DepthStencil> implements ColorAdapter
   public double get(int x, int y, T result) {
     double[] temp = getTempChannelData();
     try {
-      double alpha = image.get(x, y, temp, 0);
+      double alpha = image.get(x, y, temp);
       result.setDepth(temp[0]);
       result.setStencil((int) temp[1]);
       return alpha;
@@ -48,7 +51,7 @@ public class DepthStencilAdapter<T extends DepthStencil> implements ColorAdapter
   public double get(int x, int y, T result, long[] channels) {
     double[] temp = getTempChannelData();
     try {
-      double alpha = image.get(x, y, temp, 0, channels);
+      double alpha = image.get(x, y, temp, channels);
       result.setDepth(temp[0]);
       result.setStencil((int) temp[1]);
       return alpha;
@@ -83,7 +86,7 @@ public class DepthStencilAdapter<T extends DepthStencil> implements ColorAdapter
     try {
       temp[0] = value.getDepth();
       temp[1] = value.getStencil();
-      image.set(x, y, temp, 0, a);
+      image.set(x, y, temp, a);
     } finally {
       returnTempChannelData(temp);
     }
@@ -95,7 +98,7 @@ public class DepthStencilAdapter<T extends DepthStencil> implements ColorAdapter
     try {
       temp[0] = value.getDepth();
       temp[1] = value.getStencil();
-      image.set(x, y, temp, 0, a, channels);
+      image.set(x, y, temp, a, channels);
     } finally {
       returnTempChannelData(temp);
     }
@@ -159,30 +162,19 @@ public class DepthStencilAdapter<T extends DepthStencil> implements ColorAdapter
     // Fill in any skipped data channels with X (which for most depth stencil formats will be at
     // least one field of padding)
     for (int i = 0; i < channels.length; i++) {
-      if (channels[i] == null)
+      if (channels[i] == null) {
         channels[i] = GPUFormat.Channel.X;
+      }
     }
 
-    Stream<GPUFormat> formats = GPUFormat.streamAll();
-    // First filter based on the pixel format and array
-    formats = formats.filter(image.getGPUFormatFilter());
-    // Next filter based on channel semantics
-    formats = formats.filter(GPUFormat.channelLayout(channels));
-
-    if (formats.count() > 1) {
-      // This should not happen given the current set of GPU formats and data source
-      // implementations and their mappings onto data types, so is considered an error
-      throw new RuntimeException("Ambiguous gpu format: " + Arrays.toString(formats.toArray()));
-    } else {
-      // Cache the calculated format since it cannot change as image format and layout are final
-      format = formats.findAny().orElse(GPUFormat.UNDEFINED);
-      return format;
-    }
+    return GPUFormat.streamAll().filter(image.getGPUFormatFilter())
+        .filter(GPUFormat.channelLayout(channels)).findFirst().orElse(GPUFormat.UNDEFINED);
   }
 
   @Override
   public boolean isGPUCompatible() {
-    return image.getLayout().isGPUCompatible() && image.getData().isGPUAccessible() && getFormat() != GPUFormat.UNDEFINED;
+    return image.getLayout().isGPUCompatible() && image.getData().isGPUAccessible()
+        && getFormat() != GPUFormat.UNDEFINED;
   }
 
   @Override

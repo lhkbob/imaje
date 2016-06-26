@@ -19,17 +19,21 @@ public class PackedPixelArray implements PixelArray {
   private final PixelLayout layout;
   private final PixelFormat format;
   private final BitDataSource data;
+  private final long offset;
 
   private final BinaryRepresentation[] fields;
   private final long[] fieldMasks;
   private final long[] fieldShifts;
 
-  public PackedPixelArray(PixelFormat format, PixelLayout layout, BitDataSource data) {
+  public PackedPixelArray(PixelFormat format, PixelLayout layout, BitDataSource data, long offset) {
+    if (offset < 0)
+      throw new IllegalArgumentException("Data offset must be at least 0: " + offset);
+
     if (layout.getChannelCount() != 1) {
       throw new IllegalArgumentException(
           "All color channel values must be packed into a single data channel");
     }
-    if (data.getLength() < layout.getRequiredDataElements()) {
+    if (data.getLength() < offset + layout.getRequiredDataElements()) {
       throw new IllegalArgumentException(
           "Data source does not have sufficient elements for image layout");
     }
@@ -52,6 +56,7 @@ public class PackedPixelArray implements PixelArray {
     this.layout = layout;
     this.format = format;
     this.data = data;
+    this.offset = offset;
   }
 
   private static BinaryRepresentation getRepresentation(PixelFormat.Type type, int size) {
@@ -75,10 +80,16 @@ public class PackedPixelArray implements PixelArray {
       else
         throw new UnsupportedOperationException("Unexpected bit size for SFLOAT, unsure of mantissa and exponent bit allocations for size: " + size);
     case UFLOAT:
+      // FIXME eventually add support for the 10 and 11 bit UFLOATs
       throw new UnsupportedOperationException("UFLOAT channels are currently unsupported");
     default:
       throw new UnsupportedOperationException("Unknown type: " + type);
     }
+  }
+
+  @Override
+  public long getDataOffset() {
+    return offset;
   }
 
   @Override
@@ -97,21 +108,21 @@ public class PackedPixelArray implements PixelArray {
   }
 
   @Override
-  public double get(int x, int y, double[] channelValues, int offset) {
-    long index = layout.getChannelIndex(x, y, 0);
-    return unpack(data.getBits(index), channelValues, offset);
+  public double get(int x, int y, double[] channelValues) {
+    long index = offset + layout.getChannelIndex(x, y, 0);
+    return unpack(data.getBits(index), channelValues);
   }
 
   @Override
-  public double get(int x, int y, double[] channelValues, int offset, long[] channels) {
+  public double get(int x, int y, double[] channelValues, long[] channels) {
     layout.getChannelIndices(x, y, channels);
-    return unpack(data.getBits(channels[0]), channelValues, offset);
+    return unpack(data.getBits(offset + channels[0]), channelValues);
   }
 
   @Override
   public double getAlpha(int x, int y) {
     if (format.hasAlphaChannel()) {
-      long index = layout.getChannelIndex(x, y, 0);
+      long index = offset + layout.getChannelIndex(x, y, 0);
       return bitFieldToDouble(data.getBits(index), format.getAlphaChannelDataIndex());
     } else {
       return 1.0;
@@ -119,21 +130,21 @@ public class PackedPixelArray implements PixelArray {
   }
 
   @Override
-  public void set(int x, int y, double[] channelValues, int offset, double a) {
-    long index = layout.getChannelIndex(x, y, 0);
-    data.setBits(index, pack(channelValues, offset, a));
+  public void set(int x, int y, double[] channelValues, double a) {
+    long index = offset + layout.getChannelIndex(x, y, 0);
+    data.setBits(index, pack(channelValues, a));
   }
 
   @Override
-  public void set(int x, int y, double[] channelValues, int offset, double a, long[] channels) {
+  public void set(int x, int y, double[] channelValues, double a, long[] channels) {
     layout.getChannelIndices(x, y, channels);
-    data.setBits(channels[0], pack(channelValues, offset, a));
+    data.setBits(offset + channels[0], pack(channelValues, a));
   }
 
   @Override
   public void setAlpha(int x, int y, double alpha) {
     if (format.hasAlphaChannel()) {
-      long index = layout.getChannelIndex(x, y, 0);
+      long index = offset + layout.getChannelIndex(x, y, 0);
       long bits = data.getBits(index);
 
       // Zero out original bit field
@@ -146,11 +157,11 @@ public class PackedPixelArray implements PixelArray {
     } // else ignore set request
   }
 
-  private long pack(double[] values, int offset, double a) {
+  private long pack(double[] values, double a) {
     long bits = 0;
     for (int i = 0; i < format.getColorChannelCount(); i++) {
       int dataChannel = format.getColorChannelDataIndex(i);
-      bits |= doubleToBitField(values[offset + i], dataChannel);
+      bits |= doubleToBitField(values[i], dataChannel);
     }
     if (format.hasAlphaChannel()) {
       bits |= doubleToBitField(a, format.getAlphaChannelDataIndex());
@@ -159,10 +170,10 @@ public class PackedPixelArray implements PixelArray {
     return bits;
   }
 
-  private double unpack(long bits, double[] values, int offset) {
+  private double unpack(long bits, double[] values) {
     for (int i = 0; i < format.getColorChannelCount(); i++) {
       int dataChannel = format.getColorChannelDataIndex(i);
-      values[offset + i] = bitFieldToDouble(bits, dataChannel);
+      values[i] = bitFieldToDouble(bits, dataChannel);
     }
 
     if (format.hasAlphaChannel()) {

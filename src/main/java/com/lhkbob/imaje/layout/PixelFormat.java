@@ -167,6 +167,20 @@ public class PixelFormat {
     return channelType[dataIndex];
   }
 
+  public int getDataChannelColorIndex(int dataIndex) {
+    if (dataIndex == alphaDataChannel) {
+      return ALPHA_CHANNEL;
+    } else {
+      for (int i = 0; i < colorToDataChannel.length; i++) {
+        if (colorToDataChannel[i] == dataIndex) {
+          return i;
+        }
+      }
+
+      return SKIP_CHANNEL;
+    }
+  }
+
   @Override
   public int hashCode() {
     int result = 17;

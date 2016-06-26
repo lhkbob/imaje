@@ -3,46 +3,28 @@ package com.lhkbob.imaje;
 import com.lhkbob.imaje.color.Color;
 
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Spliterator;
 
 /**
- * FIXME Keep Image as a useful interface, but then make RasterImage and the other variants
- * concrete classes. There is little point in making them an interface when they are simply a
- * abstraction over the more general but harder to use PixelAdapter class
+ *
  */
-public interface  Image<T extends Color> extends Iterable<Pixel<T>> {
-  static int getMipmapCount(int maxDimension) {
-    return (int) Math.floor(Math.log(maxDimension) / Math.log(2.0)) + 1;
+public interface Image<T extends Color> extends Iterable<Pixel<T>> {
+
+  static <T extends Color> ImageBuilder<T> builder(Class<T> colorType) {
+    return new ImageBuilder<>(colorType);
   }
 
-  static int getMipmapCount(int width, int height) {
-    return getMipmapCount(Math.max(width, height));
+  static <T extends Color> ImageBuilder<T> builder(T defaultColor) {
+    return new ImageBuilder<>(defaultColor);
   }
-
-  static int getMipmapDimension(int topLevelDimension, int level) {
-    return Math.max(topLevelDimension >> level, 1);
-  }
-
-//  static <T extends Color> ImageBuilder<T> of(Class<T> colorType) {
-//    return new ImageBuilder<>(colorType);
-//  }
 
   Class<T> getColorType();
 
-  int getHeight();
-
-  int getLayerCount();
-
-  Map<String, String> getMetadata();
-
-  int getMipmapCount();
-
-  Pixel<T> getPixel(int x, int y, int level, int layer);
+  boolean hasAlphaChannel();
 
   int getWidth();
 
-  boolean hasAlphaChannel();
+  int getHeight();
 
   @Override
   Iterator<Pixel<T>> iterator();

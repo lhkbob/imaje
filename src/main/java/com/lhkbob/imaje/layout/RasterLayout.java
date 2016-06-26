@@ -13,15 +13,9 @@ public class RasterLayout implements PixelLayout {
   private final int imageWidth; // width in pixels of the image
   private final int imageHeight; // height in pixels of the image
 
-  private final long baseOffset;
   private final int channelCount;
 
   public RasterLayout(int imageWidth, int imageHeight, int channelCount) {
-    this(imageWidth, imageHeight, channelCount, 0L);
-  }
-
-  public RasterLayout(
-      int imageWidth, int imageHeight, int channelCount, long baseOffset) {
     if (imageWidth <= 0 || imageHeight <= 0) {
       throw new IllegalArgumentException(
           "Image dimensions must be at least 1: " + imageWidth + " x " + imageHeight);
@@ -29,11 +23,7 @@ public class RasterLayout implements PixelLayout {
     if (channelCount <= 0) {
       throw new IllegalArgumentException("Channel count must be at least 1: " + channelCount);
     }
-    if (baseOffset < 0) {
-      throw new IndexOutOfBoundsException("Base offset cannot be negative: " + baseOffset);
-    }
 
-    this.baseOffset = baseOffset;
     this.channelCount = channelCount;
 
     this.imageWidth = imageWidth;
@@ -58,7 +48,7 @@ public class RasterLayout implements PixelLayout {
     }
     checkImageBounds(x, y);
 
-    long base = baseOffset + channelCount * (y * imageWidth + x);
+    long base = channelCount * (y * imageWidth + x);
     for (int i = 0; i < channelIndices.length; i++) {
       channelIndices[i] = base + i;
     }
@@ -71,17 +61,12 @@ public class RasterLayout implements PixelLayout {
     }
     checkImageBounds(x, y);
 
-    return baseOffset + channelCount * (y * imageWidth + x) + channel;
+    return channelCount * (y * imageWidth + x) + channel;
   }
 
   @Override
   public int getChannelCount() {
     return channelCount;
-  }
-
-  @Override
-  public long getRequiredDataElements() {
-    return baseOffset + channelCount * imageWidth * imageHeight;
   }
 
   @Override

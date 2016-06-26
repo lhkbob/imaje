@@ -75,7 +75,13 @@ public final class Data {
       8, 23);
   @Deprecated public static final BinaryRepresentation SFLOAT64 = new Signed64FloatingPointNumber();
 
-  public interface Builder<S, A, B extends Buffer> {
+  public interface Builder<S extends DataSource, A, B extends Buffer> {
+    Class<S> getDataSourceClass();
+
+    Class<A> getArrayClass();
+
+    Class<B> getBufferClass();
+
     S ofArray(long length);
 
     S ofBuffer(long length);
@@ -108,6 +114,21 @@ public final class Data {
 
   public static Builder<ByteSource, byte[], ByteBuffer> newByteSource() {
     return new Builder<ByteSource, byte[], ByteBuffer>() {
+      @Override
+      public Class<ByteSource> getDataSourceClass() {
+        return ByteSource.class;
+      }
+
+      @Override
+      public Class<byte[]> getArrayClass() {
+        return byte[].class;
+      }
+
+      @Override
+      public Class<ByteBuffer> getBufferClass() {
+        return ByteBuffer.class;
+      }
+
       @Override
       public ByteSource ofArray(long length) {
         if (length > MAX_ARRAY_SIZE) {
@@ -179,6 +200,21 @@ public final class Data {
 
   public static Builder<DoubleSource, double[], DoubleBuffer> newDoubleSource() {
     return new Builder<DoubleSource, double[], DoubleBuffer>() {
+      @Override
+      public Class<DoubleSource> getDataSourceClass() {
+        return DoubleSource.class;
+      }
+
+      @Override
+      public Class<double[]> getArrayClass() {
+        return double[].class;
+      }
+
+      @Override
+      public Class<DoubleBuffer> getBufferClass() {
+        return DoubleBuffer.class;
+      }
+
       @Override
       public DoubleSource ofArray(long length) {
         if (length > MAX_ARRAY_SIZE) {
@@ -254,6 +290,21 @@ public final class Data {
   public static Builder<FloatSource, float[], FloatBuffer> newFloatSource() {
     return new Builder<FloatSource, float[], FloatBuffer>() {
       @Override
+      public Class<FloatSource> getDataSourceClass() {
+        return FloatSource.class;
+      }
+
+      @Override
+      public Class<float[]> getArrayClass() {
+        return float[].class;
+      }
+
+      @Override
+      public Class<FloatBuffer> getBufferClass() {
+        return FloatBuffer.class;
+      }
+
+      @Override
       public FloatSource ofArray(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
@@ -328,6 +379,21 @@ public final class Data {
   public static Builder<IntSource, int[], IntBuffer> newIntSource() {
     return new Builder<IntSource, int[], IntBuffer>() {
       @Override
+      public Class<IntSource> getDataSourceClass() {
+        return IntSource.class;
+      }
+
+      @Override
+      public Class<int[]> getArrayClass() {
+        return int[].class;
+      }
+
+      @Override
+      public Class<IntBuffer> getBufferClass() {
+        return IntBuffer.class;
+      }
+
+      @Override
       public IntSource ofArray(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
@@ -401,6 +467,21 @@ public final class Data {
   public static Builder<LongSource, long[], LongBuffer> newLongSource() {
     return new Builder<LongSource, long[], LongBuffer>() {
       @Override
+      public Class<LongSource> getDataSourceClass() {
+        return LongSource.class;
+      }
+
+      @Override
+      public Class<long[]> getArrayClass() {
+        return long[].class;
+      }
+
+      @Override
+      public Class<LongBuffer> getBufferClass() {
+        return LongBuffer.class;
+      }
+
+      @Override
       public LongSource ofArray(long length) {
         if (length > MAX_ARRAY_SIZE) {
           int[] sizes = getLargeSourceSizes(length);
@@ -473,6 +554,21 @@ public final class Data {
 
   public static Builder<ShortSource, short[], ShortBuffer> newShortSource() {
     return new Builder<ShortSource, short[], ShortBuffer>() {
+      @Override
+      public Class<ShortSource> getDataSourceClass() {
+        return ShortSource.class;
+      }
+
+      @Override
+      public Class<short[]> getArrayClass() {
+        return short[].class;
+      }
+
+      @Override
+      public Class<ShortBuffer> getBufferClass() {
+        return ShortBuffer.class;
+      }
+
       @Override
       public ShortSource ofArray(long length) {
         if (length > MAX_ARRAY_SIZE) {
@@ -652,6 +748,21 @@ public final class Data {
     public BinaryBuilder(Builder<I, A, B> source, BinaryRepresentation bitRep) {
       this.source = source;
       this.bitRep = bitRep;
+    }
+
+    @Override
+    public Class<BinaryNumericSource> getDataSourceClass() {
+      return BinaryNumericSource.class;
+    }
+
+    @Override
+    public Class<A> getArrayClass() {
+      return source.getArrayClass();
+    }
+
+    @Override
+    public Class<B> getBufferClass() {
+      return source.getBufferClass();
     }
 
     @Override

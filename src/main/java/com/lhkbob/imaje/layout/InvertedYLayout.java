@@ -14,6 +14,10 @@ public class InvertedYLayout implements PixelLayout {
     original = toInvert;
   }
 
+  public PixelLayout getOriginalLayout() {
+    return original;
+  }
+
   @Override
   public int getHeight() {
     return original.getHeight();

@@ -6,7 +6,6 @@ import com.lhkbob.imaje.color.SRGB;
 import com.lhkbob.imaje.color.SimpleColor;
 import com.lhkbob.imaje.color.Stencil;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.function.Predicate;
@@ -15,7 +14,7 @@ import java.util.stream.Stream;
 /**
  *
  */
-public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T> {
+public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T>, PixelArrayBackedAdapter {
   private final PixelArray image;
   private final Class<T> type;
 
@@ -26,8 +25,10 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
     // of T will report the same number for getChannelCount(), and Color mandates that a public
     // default constructor is available
     try {
-      if (type.newInstance().getChannelCount() != image.getFormat().getColorChannelCount())
-        throw new IllegalArgumentException("Logical channel count mismatch between data map and provided color type");
+      if (type.newInstance().getChannelCount() != image.getFormat().getColorChannelCount()) {
+        throw new IllegalArgumentException(
+            "Logical channel count mismatch between data map and provided color type");
+      }
     } catch (InstantiationException | IllegalAccessException e) {
       throw new RuntimeException("Color type does not provide public default constructor", e);
     }
@@ -35,6 +36,11 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
     this.type = type;
     this.image = image;
     format = null;
+  }
+
+  @Override
+  public PixelArray getPixelArray() {
+    return image;
   }
 
   @Override
@@ -59,12 +65,12 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
 
   @Override
   public double get(int x, int y, T result) {
-    return image.get(x, y, result.getChannelData(), 0);
+    return image.get(x, y, result.getChannelData());
   }
 
   @Override
   public double get(int x, int y, T result, long[] channels) {
-    return image.get(x, y, result.getChannelData(), 0, channels);
+    return image.get(x, y, result.getChannelData(), channels);
   }
 
   @Override
@@ -79,12 +85,12 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
 
   @Override
   public void set(int x, int y, T value, double a) {
-    image.set(x, y, value.getChannelData(), 0, a);
+    image.set(x, y, value.getChannelData(), a);
   }
 
   @Override
   public void set(int x, int y, T value, double a, long[] channels) {
-    image.set(x, y, value.getChannelData(), 0, a, channels);
+    image.set(x, y, value.getChannelData(), a, channels);
   }
 
   public void setAlpha(int x, int y, double alpha) {
@@ -142,38 +148,39 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
 
     // Fill in any skipped data channels with X
     for (int i = 0; i < channels.length; i++) {
-      if (channels[i] == null)
+      if (channels[i] == null) {
         channels[i] = GPUFormat.Channel.X;
+      }
     }
 
-    Stream<GPUFormat> formats = GPUFormat.streamAll();
-    // First filter based on the pixel format and array
-    formats = formats.filter(image.getGPUFormatFilter());
-    // Next filter based on channel semantics
-    formats = formats.filter(GPUFormat.channelLayout(channels));
-    // Next filter based on sRGB encoding of channel values
+    Stream<GPUFormat> formats = GPUFormat.streamAll().filter(image.getGPUFormatFilter())
+        .filter(GPUFormat.channelLayout(channels));
+    // Reduce the set of formats depending on if the color type is sRGB or not
     Predicate<GPUFormat> isSRGB = GPUFormat::isSRGB;
-    if (SRGB.class.equals(type) && formats.anyMatch(isSRGB)) {
-      formats = formats.filter(isSRGB);
+    if (SRGB.class.isAssignableFrom(type)) {
+      // Reduce to an SRGB format if possible, but take a plain format if no SRGB is available
+      return formats.reduce(GPUFormat.UNDEFINED, (a, b) -> {
+        if (b.isSRGB() && !a.isSRGB()) {
+          // Upgrade the non-SRGB format to b
+          return b;
+        } else if (a == GPUFormat.UNDEFINED && b != GPUFormat.UNDEFINED) {
+          // Upgrade to a real format
+          return b;
+        } else {
+          // Stick with a
+          return a;
+        }
+      });
     } else {
-      // Exclude the sRGB variants of UNORM formats
-      formats = formats.filter(isSRGB.negate());
-    }
-
-    if (formats.count() > 1) {
-      // This should not happen given the current set of GPU formats and data source
-      // implementations and their mappings onto data types, so is considered an error
-      throw new RuntimeException("Ambiguous gpu format: " + Arrays.toString(formats.toArray()));
-    } else {
-      // Cache the calculated format since it cannot change as image format and layout are final
-      format = formats.findAny().orElse(GPUFormat.UNDEFINED);
-      return format;
+      // Filter out sRGB typed formats and then report first
+      return formats.filter(isSRGB.negate()).findFirst().orElse(GPUFormat.UNDEFINED);
     }
   }
 
   @Override
   public boolean isGPUCompatible() {
-    return image.getData().isGPUAccessible() && image.getLayout().isGPUCompatible() && getFormat() != GPUFormat.UNDEFINED;
+    return image.getData().isGPUAccessible() && image.getLayout().isGPUCompatible()
+        && getFormat() != GPUFormat.UNDEFINED;
   }
 
   @Override
