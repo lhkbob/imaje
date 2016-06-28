@@ -1,4 +1,4 @@
-package com.lhkbob.imaje.color;
+package com.lhkbob.imaje.color.annot;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -7,13 +7,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface OpponentAxis {
-  double aWeight();
+public @interface Chromaticity {
+  double x();
 
-  double bWeight();
+  double y();
 }

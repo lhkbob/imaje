@@ -5,19 +5,19 @@ import com.lhkbob.imaje.color.annot.Channels;
 /**
  *
  */
-@Channels({ "X", "Y", "Z" })
-public class XYZ extends Color {
-  public XYZ() {
+@Channels({"X", "Y", "Z"})
+public class Normal extends Color {
+  public Normal() {
     this(0, 0, 0);
   }
 
-  public XYZ(double x, double y, double z) {
+  public Normal(double x, double y, double z) {
     set(x, y, z);
   }
 
   @Override
-  public XYZ clone() {
-    return (XYZ) super.clone();
+  public Normal clone() {
+    return (Normal) super.clone();
   }
 
   public double getX() {

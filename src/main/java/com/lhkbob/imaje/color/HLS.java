@@ -1,17 +1,18 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Channels;
+
 /**
  *
  */
-@Channels({ "Hue", "Lightness", "Saturation" })
-public class HLS extends SimpleColor {
+@Channels(value = { "Hue", "Lightness", "Saturation" }, shortNames = { "H", "L", "S"})
+public class HLS extends Color {
 
   public HLS() {
     this(0.0, 0.0, 0.0);
   }
 
   public HLS(double h, double l, double s) {
-    super(3);
     set(h, l, s);
   }
 
@@ -21,15 +22,15 @@ public class HLS extends SimpleColor {
   }
 
   public double getHue() {
-    return channels[0];
+    return get(0);
   }
 
   public double getLightness() {
-    return channels[1];
+    return get(1);
   }
 
   public double getSaturation() {
-    return channels[2];
+    return get(2);
   }
 
   public double h() {
@@ -57,14 +58,14 @@ public class HLS extends SimpleColor {
   }
 
   public void setHue(double hue) {
-    channels[0] = hue;
+    set(0, hue);
   }
 
   public void setLightness(double lightness) {
-    channels[1] = lightness;
+    set(1, lightness);
   }
 
   public void setSaturation(double saturation) {
-    channels[2] = saturation;
+    set(2, saturation);
   }
 }

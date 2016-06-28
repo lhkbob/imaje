@@ -1,10 +1,16 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.color.annot.Chromaticity;
+import com.lhkbob.imaje.color.annot.Gamma;
+import com.lhkbob.imaje.color.annot.Illuminant;
+import com.lhkbob.imaje.color.annot.Primaries;
+
 /**
  *
  */
-@Channels({ "Red", "Green", "Blue" })
-public class RGB extends SimpleColor {
+@Channels(value = { "Red", "Green", "Blue" }, shortNames = {"R", "G", "B"})
+public abstract class RGB extends Color {
   @Gamma(gamma = 2.19921875)
   @Illuminant(type = Illuminant.Type.D65)
   @Primaries(red = @Chromaticity(x = 0.64, y = 0.33),
@@ -16,7 +22,7 @@ public class RGB extends SimpleColor {
     }
 
     public Adobe(double r, double g, double b) {
-      super(r, g, b);
+      set(r, g, b);
     }
 
     @Override
@@ -36,7 +42,7 @@ public class RGB extends SimpleColor {
     }
 
     public Apple(double r, double g, double b) {
-      super(r, g, b);
+      set(r, g, b);
     }
 
     @Override
@@ -56,7 +62,7 @@ public class RGB extends SimpleColor {
     }
 
     public CIE(double r, double g, double b) {
-      super(r, g, b);
+      set(r, g, b);
     }
 
     @Override
@@ -77,7 +83,7 @@ public class RGB extends SimpleColor {
     }
 
     public HDTV(double r, double g, double b) {
-      super(r, g, b);
+      set(r, g, b);
     }
 
     @Override
@@ -92,7 +98,7 @@ public class RGB extends SimpleColor {
     }
 
     public Linear(double r, double g, double b) {
-      super(r, g, b);
+      set(r, g, b);
     }
 
     @Override
@@ -113,7 +119,7 @@ public class RGB extends SimpleColor {
     }
 
     public NTSC(double r, double g, double b) {
-      super(r, g, b);
+      set(r, g, b);
     }
 
     @Override
@@ -134,7 +140,7 @@ public class RGB extends SimpleColor {
     }
 
     public PAL(double r, double g, double b) {
-      super(r, g, b);
+      set(r, g, b);
     }
 
     @Override
@@ -154,7 +160,7 @@ public class RGB extends SimpleColor {
     }
 
     public ProPhoto(double r, double g, double b) {
-      super(r, g, b);
+      set(r, g, b);
     }
 
     @Override
@@ -175,7 +181,7 @@ public class RGB extends SimpleColor {
     }
 
     public SMPTEC(double r, double g, double b) {
-      super(r, g, b);
+      set(r, g, b);
     }
 
     @Override
@@ -195,7 +201,7 @@ public class RGB extends SimpleColor {
     }
 
     public UHDTV(double r, double g, double b) {
-      super(r, g, b);
+      set(r, g, b);
     }
 
     @Override
@@ -216,22 +222,13 @@ public class RGB extends SimpleColor {
     }
 
     public WideGamut(double r, double g, double b) {
-      super(r, g, b);
+      set(r, g, b);
     }
 
     @Override
     public WideGamut clone() {
       return (WideGamut) super.clone();
     }
-  }
-
-  public RGB() {
-    this(0, 0, 0);
-  }
-
-  public RGB(double r, double g, double b) {
-    super(3);
-    set(r, g, b);
   }
 
   public double b() {
@@ -256,15 +253,15 @@ public class RGB extends SimpleColor {
   }
 
   public double getBlue() {
-    return channels[2];
+    return get(2);
   }
 
   public double getGreen() {
-    return channels[1];
+    return get(1);
   }
 
   public double getRed() {
-    return channels[0];
+    return get(0);
   }
 
   public double r() {
@@ -276,14 +273,14 @@ public class RGB extends SimpleColor {
   }
 
   public void setBlue(double b) {
-    channels[2] = b;
+    set(2, b);
   }
 
   public void setGreen(double g) {
-    channels[1] = g;
+    set(1, g);
   }
 
   public void setRed(double r) {
-    channels[0] = r;
+    set(0, r);
   }
 }

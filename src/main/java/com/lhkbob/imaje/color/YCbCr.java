@@ -1,10 +1,13 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.color.annot.OpponentAxis;
+
 /**
  *
  */
 @Channels({ "Y", "Cb", "Cr" })
-public class YCbCr extends SimpleColor {
+public abstract class YCbCr extends Color {
   @OpponentAxis(aWeight = 0.0593, bWeight = 0.2627)
   public static class REC2020 extends YCbCr {
     public REC2020() {
@@ -12,7 +15,7 @@ public class YCbCr extends SimpleColor {
     }
 
     public REC2020(double y, double cb, double cr) {
-      super(y, cb, cr);
+      set(y, cb, cr);
     }
 
     @Override
@@ -28,7 +31,7 @@ public class YCbCr extends SimpleColor {
     }
 
     public REC601(double y, double cb, double cr) {
-      super(y, cb, cr);
+      set(y, cb, cr);
     }
 
     @Override
@@ -44,7 +47,7 @@ public class YCbCr extends SimpleColor {
     }
 
     public REC709(double y, double cb, double cr) {
-      super(y, cb, cr);
+      set(y, cb, cr);
     }
 
     @Override
@@ -53,13 +56,9 @@ public class YCbCr extends SimpleColor {
     }
   }
 
-  public YCbCr() {
-    this(0.0, 0.0, 0.0);
-  }
-
-  public YCbCr(double y, double cb, double cr) {
-    super(3);
-    set(y, cb, cr);
+  @Override
+  public YCbCr clone() {
+    return (YCbCr) super.clone();
   }
 
   public double cb() {
@@ -79,27 +78,27 @@ public class YCbCr extends SimpleColor {
   }
 
   public double getCb() {
-    return channels[1];
+    return get(1);
   }
 
   public double getCr() {
-    return channels[2];
+    return get(2);
   }
 
   public double getY() {
-    return channels[0];
+    return get(0);
   }
 
   public void setCb(double cb) {
-    channels[1] = cb;
+    set(1, cb);
   }
 
   public void setCr(double cr) {
-    channels[2] = cr;
+    set(2, cr);
   }
 
   public void setY(double y) {
-    channels[0] = y;
+    set(0, y);
   }
 
   public double y() {

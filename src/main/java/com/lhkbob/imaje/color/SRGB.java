@@ -1,5 +1,10 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Chromaticity;
+import com.lhkbob.imaje.color.annot.Gamma;
+import com.lhkbob.imaje.color.annot.Illuminant;
+import com.lhkbob.imaje.color.annot.Primaries;
+
 /**
  *
  */
@@ -15,7 +20,7 @@ public class SRGB extends RGB {
   }
 
   public SRGB(double r, double g, double b) {
-    super(r, g, b);
+    set(r, g, b);
   }
 
   @Override

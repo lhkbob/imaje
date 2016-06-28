@@ -1,17 +1,18 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Channels;
+
 /**
  *
  */
-@Channels({ "Y" })
-public class Luminance extends SimpleColor {
+@Channels(value = "Luminance", shortNames = "Y")
+public class Luminance extends Color {
   public Luminance() {
     this(0.0);
   }
 
   public Luminance(double l) {
-    super(1);
-    set(l);
+    setLuminance(l);
   }
 
   @Override
@@ -20,7 +21,7 @@ public class Luminance extends SimpleColor {
   }
 
   public double getLuminance() {
-    return channels[0];
+    return get(0);
   }
 
   public double l() {
@@ -32,6 +33,6 @@ public class Luminance extends SimpleColor {
   }
 
   public void setLuminance(double l) {
-    channels[0] = l;
+    set(0, l);
   }
 }

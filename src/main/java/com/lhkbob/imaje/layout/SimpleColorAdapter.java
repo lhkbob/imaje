@@ -1,9 +1,9 @@
 package com.lhkbob.imaje.layout;
 
+import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.Depth;
 import com.lhkbob.imaje.color.DepthStencil;
 import com.lhkbob.imaje.color.SRGB;
-import com.lhkbob.imaje.color.SimpleColor;
 import com.lhkbob.imaje.color.Stencil;
 
 import java.util.Iterator;
@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 /**
  *
  */
-public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T>, PixelArrayBackedAdapter {
+public class SimpleColorAdapter<T extends Color> implements ColorAdapter<T>, PixelArrayBackedAdapter {
   private final PixelArray image;
   private final Class<T> type;
 
@@ -65,12 +65,12 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
 
   @Override
   public double get(int x, int y, T result) {
-    return image.get(x, y, result.getChannelData());
+    return image.get(x, y, result.getChannels());
   }
 
   @Override
   public double get(int x, int y, T result, long[] channels) {
-    return image.get(x, y, result.getChannelData(), channels);
+    return image.get(x, y, result.getChannels(), channels);
   }
 
   @Override
@@ -85,12 +85,12 @@ public class SimpleColorAdapter<T extends SimpleColor> implements ColorAdapter<T
 
   @Override
   public void set(int x, int y, T value, double a) {
-    image.set(x, y, value.getChannelData(), a);
+    image.set(x, y, value.getChannels(), a);
   }
 
   @Override
   public void set(int x, int y, T value, double a, long[] channels) {
-    image.set(x, y, value.getChannelData(), a, channels);
+    image.set(x, y, value.getChannels(), a, channels);
   }
 
   public void setAlpha(int x, int y, double alpha) {

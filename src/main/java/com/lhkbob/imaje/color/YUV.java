@@ -1,10 +1,13 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.color.annot.OpponentAxis;
+
 /**
  *
  */
 @Channels({ "Y", "U", "V" })
-public class YUV extends SimpleColor {
+public abstract class YUV extends Color {
   @OpponentAxis(aWeight = 0.0593, bWeight = 0.2627)
   public static class REC2020 extends YUV {
     public REC2020() {
@@ -12,7 +15,7 @@ public class YUV extends SimpleColor {
     }
 
     public REC2020(double y, double u, double v) {
-      super(y, u, v);
+      set(y, u, v);
     }
 
     @Override
@@ -28,7 +31,7 @@ public class YUV extends SimpleColor {
     }
 
     public REC601(double y, double u, double v) {
-      super(y, u, v);
+      set(y, u, v);
     }
 
     @Override
@@ -44,7 +47,7 @@ public class YUV extends SimpleColor {
     }
 
     public REC709(double y, double u, double v) {
-      super(y, u, v);
+      set(y, u, v);
     }
 
     @Override
@@ -53,42 +56,33 @@ public class YUV extends SimpleColor {
     }
   }
 
-  public YUV() {
-    this(0.0, 0.0, 0.0);
-  }
-
-  public YUV(double y, double u, double v) {
-    super(3);
-    set(y, u, v);
-  }
-
   @Override
   public YUV clone() {
     return (YUV) super.clone();
   }
 
   public double getU() {
-    return channels[1];
+    return get(1);
   }
 
   public double getV() {
-    return channels[2];
+    return get(2);
   }
 
   public double getY() {
-    return channels[0];
+    return get(0);
   }
 
   public void setU(double u) {
-    channels[1] = u;
+    set(1, u);
   }
 
   public void setV(double v) {
-    channels[2] = v;
+    set(2, v);
   }
 
   public void setY(double y) {
-    channels[0] = y;
+    set(0, y);
   }
 
   public double u() {

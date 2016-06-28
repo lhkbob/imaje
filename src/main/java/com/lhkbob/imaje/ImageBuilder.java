@@ -1,13 +1,10 @@
 package com.lhkbob.imaje;
 
 import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.color.DepthStencil;
-import com.lhkbob.imaje.color.SimpleColor;
 import com.lhkbob.imaje.data.BitDataSource;
 import com.lhkbob.imaje.data.DataSource;
 import com.lhkbob.imaje.data.NumericDataSource;
 import com.lhkbob.imaje.layout.ColorAdapter;
-import com.lhkbob.imaje.layout.DepthStencilAdapter;
 import com.lhkbob.imaje.layout.GeneralPixelLayout;
 import com.lhkbob.imaje.layout.PackedPixelArray;
 import com.lhkbob.imaje.layout.PixelArray;
@@ -648,17 +645,8 @@ public class ImageBuilder<T extends Color> {
     PixelArray image =
         packed ? new PackedPixelArray(format, layout, (BitDataSource) data, baseOffset)
             : new UnpackedPixelArray(format, layout, (NumericDataSource) data, baseOffset);
-    ColorAdapter<T> adapter;
-    if (defaultColor instanceof SimpleColor) {
-      // FIXME how do we distinguish and handle the RGBE formats that need the exponent adapter?
-      adapter = new SimpleColorAdapter(defaultColor.getClass(), image);
-    } else if (defaultColor instanceof DepthStencil) {
-      adapter = new DepthStencilAdapter(defaultColor.getClass(), image);
-    } else {
-      // FIXME this will need to be updated as more adapters are implemented
-      throw new UnsupportedOperationException(
-          "Unknown color type, cannot determine appropriate adapter: " + defaultColor);
-    }
+    // FIXME how do we distinguish and handle the RGBE formats that need the exponent adapter?
+    ColorAdapter<T> adapter = new SimpleColorAdapter(defaultColor.getClass(), image);
 
     return new Raster<>(adapter);
   }

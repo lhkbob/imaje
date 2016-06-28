@@ -1,26 +1,27 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Channels;
+
 /**
  *
  */
-@Channels({ "Cyan", "Magenta", "Yellow", "Key" })
-public class CMYK extends SimpleColor {
+@Channels(value = { "Cyan", "Magenta", "Yellow", "Key" }, shortNames = { "C", "M", "Y", "K"})
+public class CMYK extends Color {
 
   public CMYK() {
     this(0.0, 0.0, 0.0, 1.0);
   }
 
   public CMYK(double c, double m, double y, double k) {
-    super(4);
     set(c, m, y, k);
   }
 
   public double c() {
-    return channels[0];
+    return getCyan();
   }
 
   public void c(double c) {
-    channels[0] = c;
+    setCyan(c);
   }
 
   @Override
@@ -29,19 +30,19 @@ public class CMYK extends SimpleColor {
   }
 
   public double getCyan() {
-    return channels[0];
+    return get(0);
   }
 
   public double getKey() {
-    return channels[3];
+    return get(3);
   }
 
   public double getMagenta() {
-    return channels[1];
+    return get(1);
   }
 
   public double getYellow() {
-    return channels[2];
+    return get(2);
   }
 
   public double k() {
@@ -61,19 +62,19 @@ public class CMYK extends SimpleColor {
   }
 
   public void setCyan(double cyan) {
-    channels[0] = cyan;
+    set(0, cyan);
   }
 
   public void setKey(double key) {
-    channels[3] = key;
+    set(3, key);
   }
 
   public void setMagenta(double magenta) {
-    channels[1] = magenta;
+    set(1, magenta);
   }
 
   public void setYellow(double yellow) {
-    channels[2] = yellow;
+    set(2, yellow);
   }
 
   public double y() {

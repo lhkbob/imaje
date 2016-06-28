@@ -1,17 +1,18 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Channels;
+
 /**
  *
  */
 @Channels({ "L", "u", "v" })
-public class Luv extends SimpleColor {
+public class Luv extends Color {
 
   public Luv() {
     this(0, 0, 0);
   }
 
   public Luv(double l, double u, double v) {
-    super(3);
     set(l, u, v);
   }
 
@@ -21,15 +22,15 @@ public class Luv extends SimpleColor {
   }
 
   public double getL() {
-    return channels[0];
+    return get(0);
   }
 
   public double getU() {
-    return channels[1];
+    return get(1);
   }
 
   public double getV() {
-    return channels[2];
+    return get(2);
   }
 
   public double l() {
@@ -41,15 +42,15 @@ public class Luv extends SimpleColor {
   }
 
   public void setL(double l) {
-    channels[0] = l;
+    set(0, l);
   }
 
   public void setU(double u) {
-    channels[1] = u;
+    set(1, u);
   }
 
   public void setV(double v) {
-    channels[2] = v;
+    set(2, v);
   }
 
   public double u() {

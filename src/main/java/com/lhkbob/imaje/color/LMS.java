@@ -1,16 +1,17 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Channels;
+
 /**
  *
  */
-@Channels({ "Long", "Medium", "Short" })
-public class LMS extends SimpleColor {
+@Channels(value = { "Long", "Medium", "Short" }, shortNames = {"L", "M", "S"})
+public class LMS extends Color {
   public LMS() {
     this(0.0, 0.0, 0.0);
   }
 
   public LMS(double l, double m, double s) {
-    super(3);
     set(l, m, s);
   }
 
@@ -20,15 +21,15 @@ public class LMS extends SimpleColor {
   }
 
   public double getLong() {
-    return channels[0];
+    return get(0);
   }
 
   public double getMedium() {
-    return channels[1];
+    return get(1);
   }
 
   public double getShort() {
-    return channels[2];
+    return get(2);
   }
 
   public double l() {
@@ -56,14 +57,14 @@ public class LMS extends SimpleColor {
   }
 
   public void setLong(double l) {
-    channels[0] = l;
+    set(0, l);
   }
 
   public void setMedium(double m) {
-    channels[1] = m;
+    set(1, m);
   }
 
   public void setShort(double s) {
-    channels[2] = s;
+    set(2, s);
   }
 }

@@ -1,17 +1,19 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Channels;
+
 /**
  *
  */
 @Channels({ "L", "a", "b" })
-public class Lab extends SimpleColor {
+public abstract class Lab extends Color {
   public static class CIE extends Lab {
     public CIE() {
 
     }
 
     public CIE(double l, double a, double b) {
-      super(l, a, b);
+      set(l, a, b);
     }
 
     @Override
@@ -26,22 +28,13 @@ public class Lab extends SimpleColor {
     }
 
     public Hunter(double l, double a, double b) {
-      super(l, a, b);
+      set(l, a, b);
     }
 
     @Override
     public Hunter clone() {
       return (Hunter) super.clone();
     }
-  }
-
-  public Lab() {
-    this(0, 0, 0);
-  }
-
-  public Lab(double l, double a, double b) {
-    super(3);
-    set(l, a, b);
   }
 
   public double a() {
@@ -66,15 +59,15 @@ public class Lab extends SimpleColor {
   }
 
   public double getA() {
-    return channels[1];
+    return get(1);
   }
 
   public double getB() {
-    return channels[2];
+    return get(2);
   }
 
   public double getL() {
-    return channels[0];
+    return get(0);
   }
 
   public double l() {
@@ -86,14 +79,14 @@ public class Lab extends SimpleColor {
   }
 
   public void setA(double a) {
-    channels[1] = a;
+    set(1, a);
   }
 
   public void setB(double b) {
-    channels[2] = b;
+    set(2, b);
   }
 
   public void setL(double l) {
-    channels[0] = l;
+    set(0, l);
   }
 }

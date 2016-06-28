@@ -105,8 +105,31 @@
                         <source>1.8</source>
                         <target>1.8</target>
                         <showWarnings>true</showWarnings>
-                        <useIncrementalCompilation>false</useIncrementalCompilation>
                     </configuration>
+
+                    <executions>
+                        <!-- Disable annotation processing for the main compilation phase -->
+                        <execution>
+                            <id>default-compile</id>
+                            <configuration>
+                                <proc>none</proc>
+                                <useIncrementalCompilation>false</useIncrementalCompilation>
+                            </configuration>
+                        </execution>
+
+                        <!-- Perform only annotation processing over the main classes to validate
+                        Color subclasses declared in the library. -->
+                        <execution>
+                            <id>color-validation</id>
+                            <phase>process-classes</phase>
+                            <configuration>
+                                <proc>only</proc>
+                            </configuration>
+                            <goals>
+                                <goal>compile</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <plugin>

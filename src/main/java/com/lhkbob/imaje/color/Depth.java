@@ -1,17 +1,19 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Channels;
+
 /**
  *
  */
-@Channels("Z")
-public class Depth extends SimpleColor {
+@Channels(value = "Depth", shortNames = "D")
+public abstract class Depth extends Color {
   public static class Device extends Depth {
     public Device() {
 
     }
 
     public Device(double d) {
-      super(d);
+      setDepth(d);
     }
 
     @Override
@@ -26,7 +28,7 @@ public class Depth extends SimpleColor {
     }
 
     public Linear(double d) {
-      super(d);
+      setDepth(d);
     }
 
     @Override
@@ -35,26 +37,17 @@ public class Depth extends SimpleColor {
     }
   }
 
-  public Depth() {
-    this(0.0);
-  }
-
-  public Depth(double d) {
-    super(1);
-    set(d);
-  }
-
   @Override
   public Depth clone() {
     return (Depth) super.clone();
   }
 
   public double getDepth() {
-    return channels[0];
+    return get(0);
   }
 
   public void setDepth(double d) {
-    channels[0] = d;
+    set(0, d);
   }
 
   public double z() {

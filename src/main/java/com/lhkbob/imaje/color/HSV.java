@@ -1,17 +1,19 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Channels;
+
 /**
  *
  */
-@Channels({ "Hue", "Saturation", "Value" })
-public class HSV extends SimpleColor {
+@Channels(value = { "Hue", "Saturation", "Value" }, shortNames = { "H", "S", "V" })
+public class HSV extends Color {
 
   public HSV() {
     this(0.0, 0.0, 0.0);
   }
 
   public HSV(double h, double s, double v) {
-    super(3);
+    set(h, s, v);
   }
 
   @Override
@@ -20,15 +22,15 @@ public class HSV extends SimpleColor {
   }
 
   public double getHue() {
-    return channels[0];
+    return get(0);
   }
 
   public double getSaturation() {
-    return channels[1];
+    return get(1);
   }
 
   public double getValue() {
-    return channels[2];
+    return get(2);
   }
 
   public double h() {
@@ -48,15 +50,15 @@ public class HSV extends SimpleColor {
   }
 
   public void setHue(double hue) {
-    channels[0] = hue;
+    set(0, hue);
   }
 
   public void setSaturation(double saturation) {
-    channels[1] = saturation;
+    set(1, saturation);
   }
 
   public void setValue(double v) {
-    channels[2] = v;
+    set(2, v);
   }
 
   public double v() {

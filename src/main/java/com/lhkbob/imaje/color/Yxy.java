@@ -1,11 +1,13 @@
 package com.lhkbob.imaje.color;
 
+import com.lhkbob.imaje.color.annot.Channels;
+
 /**
  *
  */
 
 @Channels({ "Y", "x", "y" })
-public class Yxy extends SimpleColor {
+public class Yxy extends Color {
   public Yxy() {
     this(0.33333, 0.33333);
   }
@@ -15,7 +17,6 @@ public class Yxy extends SimpleColor {
   }
 
   public Yxy(double luminance, double x, double y) {
-    super(3);
     set(luminance, x, y);
   }
 
@@ -25,15 +26,15 @@ public class Yxy extends SimpleColor {
   }
 
   public double getLuminance() {
-    return channels[0];
+    return get(0);
   }
 
   public double getX() {
-    return channels[1];
+    return get(1);
   }
 
   public double getY() {
-    return channels[2];
+    return get(2);
   }
 
   public double getZ() {
@@ -49,15 +50,15 @@ public class Yxy extends SimpleColor {
   }
 
   public void setLuminance(double luminance) {
-    channels[0] = luminance;
+    set(0, luminance);
   }
 
   public void setX(double x) {
-    channels[1] = x;
+    set(1, x);
   }
 
   public void setY(double y) {
-    channels[2] = y;
+    set(2, y);
   }
 
   public double x() {
