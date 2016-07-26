@@ -1,13 +1,13 @@
 package com.lhkbob.imaje.data.large;
 
-import com.lhkbob.imaje.data.DataSource;
+import com.lhkbob.imaje.data.DataBuffer;
 
 import java.util.Arrays;
 
 /**
  *
  */
-public abstract class AbstractLargeDataSource<S extends DataSource> implements DataSource {
+public abstract class AbstractLargeDataSource<S extends DataBuffer> implements DataBuffer {
   private final S[] sources;
   private final long totalLength;
   private final long repeatedLength;
@@ -68,5 +68,27 @@ public abstract class AbstractLargeDataSource<S extends DataSource> implements D
 
   protected S getSource(long index) {
     return sources[(int) (index / repeatedLength)];
+  }
+
+  protected <T> void bulkOperation(
+      BulkOperation<S, T> op, long dataIndex, T values, int offset, int length) {
+    long dataLength = dataIndex + length;
+    while (dataIndex < dataLength) {
+      // Get subsource and location within subsource for the copy
+      S source = getSource(dataIndex);
+      long inSourceIndex = getIndexInSource(dataIndex);
+
+      // Get the number of elements from values that this subsource can receive
+      long remainingSource = source.getLength() - inSourceIndex;
+      int consumed = Math.toIntExact(Math.min(length, remainingSource));
+
+      // Copy this new range into the subsource
+      op.run(source, inSourceIndex, values, offset, consumed);
+
+      // Update current index and range for the remainder of the values array
+      dataIndex += consumed;
+      offset += consumed;
+      length -= consumed;
+    }
   }
 }
