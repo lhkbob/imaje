@@ -1,5 +1,6 @@
-package com.lhkbob.imaje.layout;
+package com.lhkbob.imaje.util;
 
+import com.lhkbob.imaje.layout.PixelFormat;
 import com.lhkbob.imaje.layout.PixelFormat.Type;
 
 import java.util.Arrays;
