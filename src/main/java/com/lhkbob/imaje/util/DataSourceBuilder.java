@@ -1,7 +1,12 @@
 package com.lhkbob.imaje.util;
 
+import com.lhkbob.imaje.data.ByteData;
 import com.lhkbob.imaje.data.Data;
-import com.lhkbob.imaje.data.DataSource;
+import com.lhkbob.imaje.data.DataBuffer;
+import com.lhkbob.imaje.data.IntData;
+import com.lhkbob.imaje.data.LongData;
+import com.lhkbob.imaje.data.NumericData;
+import com.lhkbob.imaje.data.ShortData;
 import com.lhkbob.imaje.layout.PixelFormat;
 
 import java.io.IOException;
@@ -38,7 +43,7 @@ public class DataSourceBuilder implements Cloneable {
     }
   }
 
-  private <A, B extends Buffer> DataSource buildDataSource(Data.Builder<?, A, B> builder) {
+  private <A, B extends Buffer> NumericData<?> buildDataSource(Data.Builder<? extends NumericData<?>, A, B> builder) {
     if (builder.getArrayClass().isInstance(existingData)) {
       return builder.wrapArray(builder.getArrayClass().cast(existingData));
     } else if (builder.getBufferClass().isInstance(existingData)) {
@@ -49,9 +54,17 @@ public class DataSourceBuilder implements Cloneable {
       } catch(IOException e) {
         throw new UnsupportedOperationException("Unable to wrap Path instance in DataSource", e);
       }
-    } else if (builder.getDataSourceClass().isInstance(existingData)) {
-      return builder.getDataSourceClass().cast(existingData);
-    } else if (existingData == null) {
+    } else if (builder.getDataBufferClass().isInstance(existingData)) {
+      return builder.getDataBufferClass().cast(existingData);
+    } else if (existingData instanceof IntData && IntData.Numeric.class.equals(builder.getDataBufferClass())) {
+      return new IntData.Numeric((IntData) existingData);
+    } else if (existingData instanceof ShortData && ShortData.Numeric.class.equals(builder.getDataBufferClass())) {
+      return new ShortData.Numeric((ShortData) existingData);
+    } else if (existingData instanceof LongData && LongData.Numeric.class.equals(builder.getDataBufferClass())) {
+      return new LongData.Numeric((LongData) existingData);
+    } else if (existingData instanceof ByteData && ByteData.Numeric.class.equals(builder.getDataBufferClass())) {
+      return new ByteData.Numeric((ByteData) existingData);
+    }else if (existingData == null) {
       // Allocate new data
       if (useNIOBuffersForNewData) {
         return builder.ofBuffer(length);
@@ -63,12 +76,12 @@ public class DataSourceBuilder implements Cloneable {
     }
   }
 
-  public DataSource build() {
+  public NumericData<?> build() {
     if (length < 0) {
       throw new UnsupportedOperationException("DataSource length must be at least 0: " + length);
     }
 
-    DataSource source = null;
+    NumericData<?> source = null;
     switch(type) {
     case UINT:
     case USCALED:
@@ -181,7 +194,7 @@ public class DataSourceBuilder implements Cloneable {
   }
 
   public DataSourceBuilder useBuffersForNewData(boolean useNIO) {
-    useNIOBuffersForNewData = true;
+    useNIOBuffersForNewData = useNIO;
     return this;
   }
 
@@ -190,7 +203,7 @@ public class DataSourceBuilder implements Cloneable {
     return this;
   }
 
-  public DataSourceBuilder wrapDataSource(DataSource existing) {
+  public DataSourceBuilder wrapDataSource(DataBuffer existing) {
     existingData = existing;
     return this;
   }

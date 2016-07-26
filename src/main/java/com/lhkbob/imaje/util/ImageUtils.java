@@ -1,9 +1,6 @@
 package com.lhkbob.imaje.util;
 
 import com.lhkbob.imaje.Image;
-import com.lhkbob.imaje.Mipmap;
-import com.lhkbob.imaje.MipmapArray;
-import com.lhkbob.imaje.RasterArray;
 import com.lhkbob.imaje.color.Color;
 
 import java.util.Collection;
@@ -64,8 +61,8 @@ public final class ImageUtils {
         width = img.getWidth();
         height = img.getHeight();
         hasAlpha = img.hasAlphaChannel();
-        layers = getLayerCount(img);
-        levels = getMipmapCount(img);
+        layers = img.getLayerCount();
+        levels = img.getMipmapCount();
       } else {
         if (!colorType.equals(img.getColorType())) {
           throw new IllegalArgumentException("Images differ in color type, expected " + colorType + " but was " + img.getColorType());
@@ -76,33 +73,13 @@ public final class ImageUtils {
         if (hasAlpha != img.hasAlphaChannel()) {
           throw new IllegalArgumentException("Images have alpha channel mismatch, expected " + hasAlpha + " but was " + img.hasAlphaChannel());
         }
-        if (layers != getLayerCount(img)) {
-          throw new IllegalArgumentException("Images have different layer counts, expected " + layers + " but was " + getLayerCount(img));
+        if (layers != img.getLayerCount()) {
+          throw new IllegalArgumentException("Images have different layer counts, expected " + layers + " but was " + img.getLayerCount());
         }
-        if (levels != getMipmapCount(img)) {
-          throw new IllegalArgumentException("Images have different mipmap counts, expected " + levels + " but was " + getMipmapCount(img));
+        if (levels != img.getMipmapCount()) {
+          throw new IllegalArgumentException("Images have different mipmap counts, expected " + levels + " but was " + img.getMipmapCount());
         }
       }
-    }
-  }
-
-  private static int getLayerCount(Image<?> image) {
-    if (image instanceof RasterArray) {
-      return ((RasterArray<?>) image).getLayerCount();
-    } else if (image instanceof MipmapArray) {
-      return ((MipmapArray<?>) image).getLayerCount();
-    } else {
-      return 1;
-    }
-  }
-
-  private static int getMipmapCount(Image<?> image) {
-    if (image instanceof Mipmap) {
-      return ((Mipmap<?>) image).getMipmapCount();
-    } else if (image instanceof MipmapArray) {
-      return ((MipmapArray<?>) image).getMipmapCount();
-    } else {
-      return 1;
     }
   }
 
