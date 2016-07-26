@@ -1,8 +1,8 @@
 package com.lhkbob.imaje.layout;
 
-import com.lhkbob.imaje.data.BitDataSource;
+import com.lhkbob.imaje.data.BitData;
 import com.lhkbob.imaje.data.Data;
-import com.lhkbob.imaje.data.DataSource;
+import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.data.types.BinaryRepresentation;
 import com.lhkbob.imaje.data.types.SignedInteger;
 import com.lhkbob.imaje.data.types.SignedNormalizedInteger;
@@ -10,22 +10,20 @@ import com.lhkbob.imaje.data.types.UnsignedInteger;
 import com.lhkbob.imaje.data.types.UnsignedNormalizedInteger;
 import com.lhkbob.imaje.util.Functions;
 
-import java.util.function.Predicate;
-
 /**
  *
  */
 public class PackedPixelArray implements PixelArray {
   private final PixelLayout layout;
   private final PixelFormat format;
-  private final BitDataSource data;
+  private final BitData data;
   private final long offset;
 
   private final BinaryRepresentation[] fields;
   private final long[] fieldMasks;
   private final long[] fieldShifts;
 
-  public PackedPixelArray(PixelFormat format, PixelLayout layout, BitDataSource data, long offset) {
+  public PackedPixelArray(PixelFormat format, PixelLayout layout, BitData data, long offset) {
     if (offset < 0)
       throw new IllegalArgumentException("Data offset must be at least 0: " + offset);
 
@@ -98,7 +96,7 @@ public class PackedPixelArray implements PixelArray {
   }
 
   @Override
-  public DataSource getData() {
+  public DataBuffer getData() {
     return data;
   }
 
@@ -197,10 +195,5 @@ public class PackedPixelArray implements PixelArray {
     // Shift to the left so the bit field is aligned with the rest of the packed pixel
     // (Masking is not necessary assuming the binary representation contract is correct)
     return bits << fieldShifts[field];
-  }
-
-  @Override
-  public Predicate<GPUFormat> getGPUFormatFilter() {
-    return GPUFormat.bitSize(data.getBitSize()).and(GPUFormat.format(format)).and(GPUFormat::isPacked);
   }
 }

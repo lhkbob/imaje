@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Spliterator;
 
 /**
- * Ideal: Mipmap<Raster2D<RGB>> is Image<RGB>
- * Possible: Mipmap<Raster2D<RGB>, RGB> is Image<RGB>
- * Mipmap<RGB, Raster2D> is Image<RGB>
  */
 public class Mipmap<T extends Color> implements Image<T> {
   private final List<Raster<T>> mipmaps;
@@ -37,14 +34,20 @@ public class Mipmap<T extends Color> implements Image<T> {
   }
 
 
-  public Raster<T> getLevel(int level) {
+  public Raster<T> getMipmap(int level) {
     return mipmaps.get(level);
   }
 
-  public List<Raster<T>> getLevelImages() {
+  public List<Raster<T>> getMipmaps() {
     return mipmaps;
   }
 
+  @Override
+  public int getLayerCount() {
+    return 1;
+  }
+
+  @Override
   public int getMipmapCount() {
     return mipmaps.size();
   }
@@ -62,6 +65,15 @@ public class Mipmap<T extends Color> implements Image<T> {
   @Override
   public int getHeight() {
     return mipmaps.get(0).getHeight();
+  }
+
+  @Override
+  public Pixel<T> getPixel(int x, int y, int level, int layer) {
+    if (layer != 0) {
+      throw new IllegalArgumentException(
+          "Image is not multilayered, layer must be 0, not: " + layer);
+    }
+    return getPixel(x, y, level);
   }
 
   public Pixel<T> getPixel(int x, int y, int level) {

@@ -47,6 +47,8 @@ public class InvertedYLayout implements PixelLayout {
   public boolean isGPUCompatible() {
     // If the Y is inverted, that means the image is flipped with respect to what the OpenGL coordinate
     // system expects so this can never be GPU ready
+    // FIXME unless the original was already inverted, ad naseum. Perhaps we should explicitly
+    // disallow nested invertedYLayouts?
     return false;
   }
 

@@ -1,10 +1,8 @@
 package com.lhkbob.imaje;
 
 import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.layout.ColorAdapter;
 import com.lhkbob.imaje.layout.ImageCoordinate;
 import com.lhkbob.imaje.layout.PixelArray;
-import com.lhkbob.imaje.layout.PixelArrayBackedAdapter;
 
 import java.util.Iterator;
 import java.util.Spliterator;
@@ -14,14 +12,20 @@ import java.util.function.Consumer;
  *
  */
 public class Raster<T extends Color> implements Image<T> {
-  private final ColorAdapter<T> data;
+  private final PixelArray data;
+  private final Class<T> colorType;
 
-  public Raster(ColorAdapter<T> data) {
+  public Raster(Class<T> colorType, PixelArray data) {
+    if (Color.getChannelCount(colorType) != data.getFormat().getColorChannelCount()) {
+      throw new IllegalArgumentException(String.format(
+          "PixelArray color channel count(%d) does not equal channel count of color(%d, %s)",
+          data.getFormat().getColorChannelCount(), Color.getChannelCount(colorType), colorType));
+    } this.colorType = colorType;
     this.data = data;
   }
 
   public double get(int x, int y, T result) {
-    return data.get(x, y, result);
+    return data.get(x, y, result.getChannels());
   }
 
   public double getAlpha(int x, int y) {
@@ -30,17 +34,40 @@ public class Raster<T extends Color> implements Image<T> {
 
   @Override
   public int getWidth() {
-    return data.getWidth();
+    return data.getLayout().getWidth();
   }
 
   @Override
   public int getHeight() {
-    return data.getHeight();
+    return data.getLayout().getHeight();
+  }
+
+  @Override
+  public int getLayerCount() {
+    return 1;
+  }
+
+  @Override
+  public int getMipmapCount() {
+    return 1;
+  }
+
+  @Override
+  public Pixel<T> getPixel(int x, int y, int mipmapLevel, int layer) {
+    if (mipmapLevel != 0) {
+      throw new IllegalArgumentException(
+          "Image is not mipmapped, expected mipmap level of 0, not: " + mipmapLevel);
+    }
+    if (layer != 0) {
+      throw new IllegalArgumentException(
+          "Image is not multilayered, layer must be 0, not: " + layer);
+    }
+    return getPixel(x, y);
   }
 
   @Override
   public Class<T> getColorType() {
-    return data.getType();
+    return colorType;
   }
 
   public Pixel<T> getPixel(int x, int y) {
@@ -49,7 +76,7 @@ public class Raster<T extends Color> implements Image<T> {
 
   @Override
   public boolean hasAlphaChannel() {
-    return data.hasAlphaChannel();
+    return data.getFormat().hasAlphaChannel();
   }
 
   @Override
@@ -58,11 +85,11 @@ public class Raster<T extends Color> implements Image<T> {
   }
 
   public void set(int x, int y, T value) {
-    data.set(x, y, value, data.getAlpha(x, y));
+    data.set(x, y, value.getChannels(), data.getAlpha(x, y));
   }
 
   public void set(int x, int y, T value, double alpha) {
-    data.set(x, y, value, alpha);
+    data.set(x, y, value.getChannels(), alpha);
   }
 
   public void setAlpha(int x, int y, double alpha) {
@@ -81,21 +108,13 @@ public class Raster<T extends Color> implements Image<T> {
     }
   }
 
-  ColorAdapter<T> getColorAdapter() {
+  public PixelArray getPixelArray() {
     return data;
-  }
-
-  PixelArray getPixelArray() {
-    if (data instanceof PixelArrayBackedAdapter) {
-      return ((PixelArrayBackedAdapter) data).getPixelArray();
-    } else {
-      return null;
-    }
   }
 
   Pixel<T> getPixelForMipmapArray(int x, int y, int level, int layer) {
     checkImageCoordinates(x, y);
-    DefaultPixel<T> p = new DefaultPixel<>(data);
+    DefaultPixel<T> p = new DefaultPixel<>(colorType, data);
     p.setPixel(x, y);
     p.setLevel(level);
     p.setLayer(layer);
@@ -115,8 +134,8 @@ public class Raster<T extends Color> implements Image<T> {
     private final DefaultPixel<T> pixel;
 
     public RasterIterator(int level, int layer) {
-      coords = data.iterator();
-      pixel = new DefaultPixel<>(data);
+      coords = data.getLayout().iterator();
+      pixel = new DefaultPixel<>(colorType, data);
       pixel.setLevel(level);
       pixel.setLayer(layer);
     }
@@ -139,12 +158,12 @@ public class Raster<T extends Color> implements Image<T> {
     private final DefaultPixel<T> pixel;
 
     public RasterSpliterator(int level, int layer) {
-      this(data.spliterator(), level, layer);
+      this(data.getLayout().spliterator(), level, layer);
     }
 
     public RasterSpliterator(Spliterator<ImageCoordinate> coords, int level, int layer) {
       this.coords = coords;
-      pixel = new DefaultPixel<>(data);
+      pixel = new DefaultPixel<>(colorType, data);
       pixel.setLevel(level);
       pixel.setLayer(layer);
     }

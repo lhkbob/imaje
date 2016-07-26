@@ -34,7 +34,7 @@ public class MipmapArray<T extends Color> implements Image<T> {
     for (int i = 0; i < levelCount; i++) {
       List<Raster<T>> levelImages = new ArrayList<>(layers.size());
       for (Mipmap<T> layer : layers) {
-        levelImages.add(layer.getLevel(i));
+        levelImages.add(layer.getMipmap(i));
       }
       levels.add(new RasterArray<>(levelImages));
     }
@@ -50,22 +50,24 @@ public class MipmapArray<T extends Color> implements Image<T> {
     return layers.get(index);
   }
 
+  @Override
   public int getLayerCount() {
     return layers.size();
   }
 
-  public List<Mipmap<T>> getLayerImages() {
+  public List<Mipmap<T>> getLayers() {
     return layers;
   }
 
-  public RasterArray<T> getLevel(int level) {
+  public RasterArray<T> getMipmap(int level) {
     return levels.get(level);
   }
 
-  public List<RasterArray<T>> getLevelImages() {
+  public List<RasterArray<T>> getMipmaps() {
     return levels;
   }
 
+  @Override
   public int getMipmapCount() {
     return levels.size();
   }
@@ -89,8 +91,9 @@ public class MipmapArray<T extends Color> implements Image<T> {
     return layers.get(0).getHeight();
   }
 
+  @Override
   public Pixel<T> getPixel(int x, int y, int level, int layer) {
-    return layers.get(layer).getLevel(level).getPixelForMipmapArray(x, y, level, layer);
+    return layers.get(layer).getMipmap(level).getPixelForMipmapArray(x, y, level, layer);
   }
 
   @Override
@@ -98,7 +101,7 @@ public class MipmapArray<T extends Color> implements Image<T> {
     List<Iterator<Pixel<T>>> wrappedLayers = new ArrayList<>(layers.size() * levels.size());
     for (int i = 0; i < layers.size(); i++) {
       for (int j = 0; j < levels.size(); j++) {
-        wrappedLayers.add(layers.get(i).getLevel(j).iteratorForMipmapArray(j, i));
+        wrappedLayers.add(layers.get(i).getMipmap(j).iteratorForMipmapArray(j, i));
       }
     }
     return new IteratorChain<>(wrappedLayers);
@@ -109,7 +112,7 @@ public class MipmapArray<T extends Color> implements Image<T> {
     List<Spliterator<Pixel<T>>> wrappedLayers = new ArrayList<>(layers.size() * levels.size());
     for (int i = 0; i < layers.size(); i++) {
       for (int j = 0; j < levels.size(); j++) {
-        wrappedLayers.add(layers.get(i).getLevel(j).spliteratorForMipmapArray(j, i));
+        wrappedLayers.add(layers.get(i).getMipmap(j).spliteratorForMipmapArray(j, i));
       }
     }
     return new SpliteratorChain<>(wrappedLayers);

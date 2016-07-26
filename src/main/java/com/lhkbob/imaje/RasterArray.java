@@ -36,11 +36,24 @@ public class RasterArray<T extends Color> implements Image<T> {
     return layers.get(index);
   }
 
+  @Override
   public int getLayerCount() {
     return layers.size();
   }
 
-  public List<Raster<T>> getLayerImages() {
+  @Override
+  public int getMipmapCount() {
+    return 1;
+  }
+
+  @Override
+  public Pixel<T> getPixel(int x, int y, int mipmapLevel, int layer) {
+    if (mipmapLevel != 0)
+      throw new IllegalArgumentException("Image is not mipmapped, expected mipmap level of 0, not: " + mipmapLevel);
+    return getPixel(x, y, layer);
+  }
+
+  public List<Raster<T>> getLayers() {
     return layers;
   }
 

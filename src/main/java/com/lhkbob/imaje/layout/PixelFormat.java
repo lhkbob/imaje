@@ -103,8 +103,33 @@ public class PixelFormat {
 
     this.bitSize = Arrays.copyOf(bitSize, bitSize.length);
     this.channelType = Arrays.copyOf(dataType, dataType.length);
+    // Nullify channel type for skipped channels
+    for (int i = 0; i < dataType.length; i++) {
+      if (dataChannelMap[i] < ALPHA_CHANNEL) {
+        this.channelType[i] = null;
+      }
+    }
+
     colorToDataChannel = logicalToData;
     alphaDataChannel = alphaIndex;
+  }
+
+  public int getElementCount() {
+    return colorToDataChannel.length + (alphaDataChannel >= 0 ? 1 : 0);
+  }
+
+  public int getElementBitSize() {
+    int total = 0;
+    for (int i = 0; i < bitSize.length; i++) {
+      if (channelType[i] != null) {
+        total += bitSize[i];
+      }
+    }
+    return total;
+  }
+
+  public boolean isDataChannelSkipped(int dataIndex) {
+    return channelType[dataIndex] == null;
   }
 
   public Type getColorChannelType(int colorChannel) {
@@ -193,12 +218,12 @@ public class PixelFormat {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof PixelFormat))
+    if (!(o instanceof PixelFormat)) {
       return false;
+    }
     PixelFormat f = (PixelFormat) o;
-    return Arrays.equals(f.colorToDataChannel, colorToDataChannel)
-        && Arrays.equals(f.channelType, channelType)
-        && Arrays.equals(f.bitSize, bitSize)
+    return Arrays.equals(f.colorToDataChannel, colorToDataChannel) && Arrays
+        .equals(f.channelType, channelType) && Arrays.equals(f.bitSize, bitSize)
         && f.alphaDataChannel == alphaDataChannel;
   }
 

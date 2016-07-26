@@ -1,19 +1,17 @@
 package com.lhkbob.imaje.layout;
 
-import com.lhkbob.imaje.data.ByteSource;
-import com.lhkbob.imaje.data.DoubleSource;
-import com.lhkbob.imaje.data.FloatSource;
-import com.lhkbob.imaje.data.IntSource;
-import com.lhkbob.imaje.data.LongSource;
-import com.lhkbob.imaje.data.NumericDataSource;
-import com.lhkbob.imaje.data.ShortSource;
-import com.lhkbob.imaje.data.types.BinaryNumericSource;
+import com.lhkbob.imaje.data.ByteData;
+import com.lhkbob.imaje.data.DoubleData;
+import com.lhkbob.imaje.data.FloatData;
+import com.lhkbob.imaje.data.IntData;
+import com.lhkbob.imaje.data.LongData;
+import com.lhkbob.imaje.data.NumericData;
+import com.lhkbob.imaje.data.ShortData;
+import com.lhkbob.imaje.data.types.CustomBinaryData;
 import com.lhkbob.imaje.data.types.SignedInteger;
 import com.lhkbob.imaje.data.types.SignedNormalizedInteger;
 import com.lhkbob.imaje.data.types.UnsignedInteger;
 import com.lhkbob.imaje.data.types.UnsignedNormalizedInteger;
-
-import java.util.function.Predicate;
 
 /**
  *
@@ -21,10 +19,10 @@ import java.util.function.Predicate;
 public class UnpackedPixelArray implements PixelArray {
   private final PixelLayout layout;
   private final PixelFormat format;
-  private final NumericDataSource data;
+  private final NumericData<?> data;
   private final long offset;
 
-  public UnpackedPixelArray(PixelFormat format, PixelLayout layout, NumericDataSource data, long offset) {
+  public UnpackedPixelArray(PixelFormat format, PixelLayout layout, NumericData<?> data, long offset) {
     if (offset < 0)
       throw new IllegalArgumentException("Data offset must be at least 0: " + offset);
 
@@ -73,42 +71,42 @@ public class UnpackedPixelArray implements PixelArray {
     case UINT:
     case USCALED:
       // Must go through a known type with UINT semantics
-      if (data instanceof BinaryNumericSource && ((BinaryNumericSource) data)
+      if (data instanceof CustomBinaryData && ((CustomBinaryData) data)
           .getBinaryRepresentation() instanceof UnsignedInteger) {
         badType = false;
       }
     case SINT:
     case SSCALED:
       // Native short, int, long, byte is preferred
-      if (data instanceof ByteSource || data instanceof ShortSource || data instanceof IntSource
-          || data instanceof LongSource) {
+      if (data instanceof ByteData || data instanceof ShortData || data instanceof IntData
+          || data instanceof LongData) {
         badType = false;
-      } else if (data instanceof BinaryNumericSource && ((BinaryNumericSource) data)
+      } else if (data instanceof CustomBinaryData && ((CustomBinaryData) data)
           .getBinaryRepresentation() instanceof SignedInteger) {
         badType = false;
       }
       break;
     case UNORM:
       // Must go through a known type with UNORM semantics
-      if (data instanceof BinaryNumericSource && ((BinaryNumericSource) data)
+      if (data instanceof CustomBinaryData && ((CustomBinaryData) data)
           .getBinaryRepresentation() instanceof UnsignedNormalizedInteger) {
         badType = false;
       }
       break;
     case SNORM:
       // Must go through a known type with SNORM semantics
-      if (data instanceof BinaryNumericSource && ((BinaryNumericSource) data)
+      if (data instanceof CustomBinaryData && ((CustomBinaryData) data)
           .getBinaryRepresentation() instanceof SignedNormalizedInteger) {
         badType = false;
       }
       break;
     case SFLOAT:
       // Native float or double is preferred
-      if (data instanceof FloatSource || data instanceof DoubleSource) {
+      if (data instanceof FloatData || data instanceof DoubleData) {
         badType = false;
-      } else if (data instanceof BinaryNumericSource) {
+      } else if (data instanceof CustomBinaryData) {
         // Only other valid source type is a BinaryNumericSource with one of the known SFLOAT types
-        BinaryNumericSource d = (BinaryNumericSource) data;
+        CustomBinaryData d = (CustomBinaryData) data;
         if (d.getBinaryRepresentation().isFloatingPoint() && !d.getBinaryRepresentation()
             .isUnsigned()) {
           badType = false;
@@ -116,8 +114,8 @@ public class UnpackedPixelArray implements PixelArray {
       }
       break;
     case UFLOAT:
-      if (data instanceof BinaryNumericSource) {
-        BinaryNumericSource d = (BinaryNumericSource) data;
+      if (data instanceof CustomBinaryData) {
+        CustomBinaryData d = (CustomBinaryData) data;
         if (d.getBinaryRepresentation().isFloatingPoint() && d.getBinaryRepresentation()
             .isUnsigned()) {
           badType = false;
@@ -154,7 +152,7 @@ public class UnpackedPixelArray implements PixelArray {
   }
 
   @Override
-  public NumericDataSource getData() {
+  public NumericData<?> getData() {
     return data;
   }
 
@@ -227,10 +225,5 @@ public class UnpackedPixelArray implements PixelArray {
     if (format.hasAlphaChannel()) {
       data.setValue(offset + layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()), alpha);
     } // otherwise no alpha channel so ignore the set request
-  }
-
-  @Override
-  public Predicate<GPUFormat> getGPUFormatFilter() {
-    return GPUFormat.bitSize(data.getBitSize()).and(GPUFormat.format(format)).and(GPUFormat::isUnpackedLayout);
   }
 }
