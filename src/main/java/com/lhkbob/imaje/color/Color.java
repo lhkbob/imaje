@@ -1,6 +1,7 @@
 package com.lhkbob.imaje.color;
 
 import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,7 +22,7 @@ public abstract class Color implements Cloneable {
   public Color() {
     Integer channelSize = channelCountCache.get(getClass());
     if (channelSize == null) {
-      // First time instantiating this cost, so lookup the Channels annotation
+      // First time instantiating this color, so lookup the Channels annotation
       Channels channelDef = getClass().getAnnotation(Channels.class);
       if (channelDef == null) {
         throw new IllegalStateException("Color subclasses must be annotated with @Channels");
@@ -44,6 +45,28 @@ public abstract class Color implements Cloneable {
     }
 
     channels = new double[channelSize];
+  }
+
+  public static int getChannelCount(Class<? extends Color> color) {
+    Arguments.notNull("color", color);
+
+    Integer size = channelCountCache.get(color);
+    if (size != null) {
+      return size;
+    } else {
+      // Instantiating this instance will cache the channel size automatically
+      return newInstance(color).getChannelCount();
+    }
+  }
+
+  public static <T extends Color> T newInstance(Class<T> color) {
+    Arguments.notNull("color", color);
+
+    try {
+      return color.newInstance();
+    } catch (InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException("Color not instantiable with reflection: " + color, e);
+    }
   }
 
   @Override
@@ -71,9 +94,8 @@ public abstract class Color implements Cloneable {
   }
 
   public final void set(double... values) {
-    if (values.length != channels.length) {
-      throw new IllegalArgumentException("Incorrect number of channel values provided, requires " + channels.length + " but received " + values.length);
-    }
+    Arguments.equals("channel count", channels.length, values.length);
+
     System.arraycopy(values, 0, channels, 0, channels.length);
   }
 

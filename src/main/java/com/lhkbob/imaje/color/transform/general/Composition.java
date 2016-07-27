@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.transform.general;
 
+import com.lhkbob.imaje.util.Arguments;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,10 +15,8 @@ public class Composition implements Transform {
   private final List<double[]> workVectors;
 
   public Composition(List<Transform> transforms) {
-    if (transforms.size() < 1) {
-      throw new IllegalArgumentException(
-          "Sequential transform must have at least one transform element");
-    }
+    Arguments.notEmpty("transforms", transforms);
+
     this.transforms = Collections.unmodifiableList(new ArrayList<>(transforms));
     workVectors = new ArrayList<>(transforms.size() - 1);
     for (int i = 0; i < transforms.size() - 1; i++) {

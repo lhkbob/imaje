@@ -46,6 +46,7 @@ public class PixelLayoutBuilder implements Cloneable {
   }
 
   private void setCompatible(PixelLayout layout, boolean flip) {
+    // FIXME handle SubImageLayout as well
     if (layout instanceof InvertedYLayout) {
       // Nested layout inversions, so negate the flip effect, which will collapse multiple inversions
       setCompatible(((InvertedYLayout) layout).getOriginalLayout(), !flip);

@@ -16,7 +16,7 @@ import java.nio.file.Path;
 /**
  *
  */
-public class DataSourceBuilder implements Cloneable {
+public class DataBufferBuilder implements Cloneable {
   private PixelFormat.Type type;
   private int bitSize;
 
@@ -24,7 +24,7 @@ public class DataSourceBuilder implements Cloneable {
   private Object existingData;
   private boolean useNIOBuffersForNewData;
 
-  public DataSourceBuilder() {
+  public DataBufferBuilder() {
     length = 0;
     existingData = null;
     useNIOBuffersForNewData = true;
@@ -33,11 +33,11 @@ public class DataSourceBuilder implements Cloneable {
   }
 
   @Override
-  public DataSourceBuilder clone() {
+  public DataBufferBuilder clone() {
     try {
       // All fields are immutable or primitive, except existingData which should be a shallow clone
       // so nothing needs to be done after calling super.clone().
-      return (DataSourceBuilder) super.clone();
+      return (DataBufferBuilder) super.clone();
     } catch (CloneNotSupportedException e) {
       throw new RuntimeException("Should not happen", e);
     }
@@ -178,72 +178,72 @@ public class DataSourceBuilder implements Cloneable {
     }
   }
 
-  public DataSourceBuilder length(long length) {
+  public DataBufferBuilder length(long length) {
     this.length = length;
     return this;
   }
 
-  public DataSourceBuilder type(PixelFormat.Type type) {
+  public DataBufferBuilder type(PixelFormat.Type type) {
     this.type = type;
     return this;
   }
 
-  public DataSourceBuilder bitSize(int bitSize) {
+  public DataBufferBuilder bitSize(int bitSize) {
     this.bitSize = bitSize;
     return this;
   }
 
-  public DataSourceBuilder useBuffersForNewData(boolean useNIO) {
+  public DataBufferBuilder useBuffersForNewData(boolean useNIO) {
     useNIOBuffersForNewData = useNIO;
     return this;
   }
 
-  public DataSourceBuilder allocateNewData() {
+  public DataBufferBuilder allocateNewData() {
     existingData = null;
     return this;
   }
 
-  public DataSourceBuilder wrapDataSource(DataBuffer existing) {
+  public DataBufferBuilder wrapDataSource(DataBuffer existing) {
     existingData = existing;
     return this;
   }
 
-  public DataSourceBuilder wrapBuffer(Buffer existing) {
+  public DataBufferBuilder wrapBuffer(Buffer existing) {
     existingData = existing;
     return this;
   }
 
-  public DataSourceBuilder wrapArray(float[] existing) {
+  public DataBufferBuilder wrapArray(float[] existing) {
     existingData = existing;
     return this;
   }
 
-  public DataSourceBuilder wrapArray(double[] existing) {
+  public DataBufferBuilder wrapArray(double[] existing) {
     existingData = existing;
     return this;
   }
 
-  public DataSourceBuilder wrapArray(int[] existing) {
+  public DataBufferBuilder wrapArray(int[] existing) {
     existingData = existing;
     return this;
   }
 
-  public DataSourceBuilder wrapArray(short[] existing) {
+  public DataBufferBuilder wrapArray(short[] existing) {
     existingData = existing;
     return this;
   }
 
-  public DataSourceBuilder wrapArray(long[] existing) {
+  public DataBufferBuilder wrapArray(long[] existing) {
     existingData = existing;
     return this;
   }
 
-  public DataSourceBuilder wrapArray(byte[] existing) {
+  public DataBufferBuilder wrapArray(byte[] existing) {
     existingData = existing;
     return this;
   }
 
-  public DataSourceBuilder mapFile(Path path) {
+  public DataBufferBuilder mapFile(Path path) {
     existingData = path;
     return this;
   }

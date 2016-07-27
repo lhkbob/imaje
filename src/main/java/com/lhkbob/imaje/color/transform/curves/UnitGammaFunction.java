@@ -54,6 +54,9 @@ public class UnitGammaFunction implements Curve {
 
   @Override
   public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
     if (!(o instanceof UnitGammaFunction)) {
       return false;
     }

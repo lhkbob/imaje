@@ -1,19 +1,36 @@
 package com.lhkbob.imaje.util;
 
+import java.lang.annotation.Documented;
+import java.util.Collection;
 import java.util.Objects;
 
 /**
  *
  */
 public final class Arguments {
+  @Documented
+  public @interface Nullable {
+
+  }
+
   private Arguments() {}
 
   public static void checkArrayRange(String name, long arrayLength, long rangeOffset, long rangeLength) {
     if (rangeOffset < 0L) {
       throw new IndexOutOfBoundsException(String.format("%s range offset must be at least 0: %d", name, rangeOffset));
     }
+    if (rangeLength < 1L) {
+      throw new IndexOutOfBoundsException(String.format("%s range length must be at least 1: %d", name, rangeLength));
+    }
     if (rangeOffset + rangeLength > arrayLength) {
       throw new IndexOutOfBoundsException(String.format("%s range length (%d) too long for size %d", name, rangeLength, arrayLength));
+    }
+  }
+
+  public static void notEmpty(String name, Collection<?> collection) {
+    notNull(name, collection);
+    if (collection.isEmpty()) {
+      throw new IllegalArgumentException(String.format("%s cannot be empty", name));
     }
   }
 

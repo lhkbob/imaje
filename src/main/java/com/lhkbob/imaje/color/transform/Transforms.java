@@ -1,21 +1,21 @@
 package com.lhkbob.imaje.color.transform;
 
 import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.color.Gamma;
+import com.lhkbob.imaje.color.annot.Gamma;
 import com.lhkbob.imaje.color.HLS;
 import com.lhkbob.imaje.color.HSV;
-import com.lhkbob.imaje.color.Illuminant;
+import com.lhkbob.imaje.color.annot.Illuminant;
 import com.lhkbob.imaje.color.Lab;
 import com.lhkbob.imaje.color.Luminance;
 import com.lhkbob.imaje.color.Luv;
-import com.lhkbob.imaje.color.OpponentAxis;
-import com.lhkbob.imaje.color.Primaries;
+import com.lhkbob.imaje.color.annot.OpponentAxis;
+import com.lhkbob.imaje.color.annot.Primaries;
 import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.SRGB;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.YCbCr;
 import com.lhkbob.imaje.color.YUV;
-import com.lhkbob.imaje.color.Yyx;
+import com.lhkbob.imaje.color.Yxy;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.color.transform.curves.UnitGammaFunction;
 import com.lhkbob.imaje.color.transform.general.CIELabToXYZ;
@@ -29,8 +29,9 @@ import com.lhkbob.imaje.color.transform.general.RGBToHLS;
 import com.lhkbob.imaje.color.transform.general.RGBToHSV;
 import com.lhkbob.imaje.color.transform.general.RGBToXYZ;
 import com.lhkbob.imaje.color.transform.general.RGBToYCbCr;
-import com.lhkbob.imaje.color.transform.general.XYZToYyx;
-import com.lhkbob.imaje.color.transform.general.YyxToXYZ;
+import com.lhkbob.imaje.color.transform.general.XYZToYxy;
+import com.lhkbob.imaje.color.transform.general.YxyToXYZ;
+import com.lhkbob.imaje.util.Arguments;
 
 import org.ejml.data.FixedMatrix3x3_64F;
 
@@ -44,35 +45,48 @@ import java.util.Map;
 public final class Transforms {
   private Transforms() {}
 
-  public static <I extends Color, O extends Color> TransformFactory<? super I, ? super O> findTransformFactory(
-      Class<I> input, Class<O> output) {
-    Class<? super I> currentInput = input;
-
-    while (isColorType(currentInput)) {
-      // Start over at the deepest output type
-      Class<? super O> currentOutput = output;
-      while (isColorType(currentOutput)) {
-        // Must strip generics from currentInput/Output since we can't syntactically assert that they are both super input/output
-        // but still Color types
-        @SuppressWarnings("unchecked") TransformFactory<? super I, ? super O> match = findExactTransformFactory(
-            (Class) currentInput, (Class) currentOutput);
-        if (match != null) {
-          return match;
-        }
-
-        currentOutput = currentOutput.getSuperclass();
-      }
-
-      currentInput = currentInput.getSuperclass();
-    }
-
-    return null;
-  }
-
   public static <I extends Color, O extends Color> TransformFactory<I, O> getTransformFactory(
       Class<I> input, Class<O> output) {
+    Arguments.notNull("input", input);
+    Arguments.notNull("output", output);
+
     synchronized (TRANSFORM_LOCK) {
-      return lookupTransform(input, output);
+      // See if there's an exact match
+      TransformFactory<I, O> transform = lookupTransform(input, output);
+      if (transform != null) {
+        return transform;
+      }
+
+      // Try finding an exact inverse of the requested configuration
+      TransformFactory<O, I> inverted = lookupTransform(output, input);
+      if (inverted != null) {
+        return invert(inverted);
+      }
+
+      // Try making a bridge through the XYZ color space
+      TransformFactory<I, XYZ> toXYZ = lookupTransform(input, XYZ.class);
+      if (toXYZ == null) {
+        // Try finding an the bridge from the other direction.
+        TransformFactory<XYZ, I> inverseToXYZ = lookupTransform(XYZ.class, input);
+        if (inverseToXYZ == null) {
+          // Bridge cannot be connected.
+          return null;
+        }
+        toXYZ = invert(inverseToXYZ);
+      }
+
+      TransformFactory<XYZ, O> fromXYZ = lookupTransform(XYZ.class, output);
+      if (fromXYZ == null) {
+        // Try finding an the bridge from the other direction.
+        TransformFactory<O, XYZ> inverseFromXYZ = lookupTransform(output, XYZ.class);
+        if (inverseFromXYZ == null) {
+          // Bridge cannot be connected.
+          return null;
+        }
+        fromXYZ = invert(inverseFromXYZ);
+      }
+
+      return throughXYZ(toXYZ, fromXYZ);
     }
   }
 
@@ -169,9 +183,9 @@ public final class Transforms {
     return newRGBToYUVFactory(RGB.HDTV.class, YUV.REC709.class);
   }
 
-  public static <I extends Color, O extends Color> ColorTransform<? super I, ? super O> newTransform(
+  public static <I extends Color, O extends Color> ColorTransform<I, O> newTransform(
       Class<I> input, Class<O> output) {
-    TransformFactory<? super I, ? super O> factory = findTransformFactory(input, output);
+    TransformFactory<I, O> factory = getTransformFactory(input, output);
     if (factory == null) {
       throw new UnsupportedOperationException(
           "No transform exists between " + input + " and " + output);
@@ -179,12 +193,13 @@ public final class Transforms {
     return factory.newTransform();
   }
 
-  public static TransformFactory<XYZ, Yyx> newXYZToYyxFactory() {
-    return new GeneralTransformFactory<>(XYZ.class, Yyx.class, new XYZToYyx(), new YyxToXYZ());
+  public static TransformFactory<XYZ, Yxy> newXYZToYyxFactory() {
+    return new GeneralTransformFactory<>(XYZ.class, Yxy.class, new XYZToYxy(), new YxyToXYZ());
   }
 
   public static <I extends Color, O extends Color> void registerTransformFactory(
       TransformFactory<I, O> transform) {
+    Arguments.notNull("transform", transform);
     synchronized (TRANSFORM_LOCK) {
       Map<Class<?>, TransformFactory<?, ?>> forInputType = transforms.get(transform.getInputType());
       if (forInputType == null) {
@@ -211,48 +226,6 @@ public final class Transforms {
       } else {
         return null;
       }
-    }
-  }
-
-  private static <I extends Color, O extends Color> TransformFactory<I, O> findExactTransformFactory(
-      Class<I> input, Class<O> output) {
-    synchronized (TRANSFORM_LOCK) {
-      // See if there's an exact match
-      TransformFactory<I, O> transform = lookupTransform(input, output);
-      if (transform != null) {
-        return transform;
-      }
-
-      // Try finding an exact inverse of the requested configuration
-      TransformFactory<O, I> inverted = lookupTransform(output, input);
-      if (inverted != null) {
-        return invert(inverted);
-      }
-
-      // Try making a bridge through the XYZ color space
-      TransformFactory<I, XYZ> toXYZ = lookupTransform(input, XYZ.class);
-      if (toXYZ == null) {
-        // Try finding an the bridge from the other direction.
-        TransformFactory<XYZ, I> inverseToXYZ = lookupTransform(XYZ.class, input);
-        if (inverseToXYZ == null) {
-          // Bridge cannot be connected.
-          return null;
-        }
-        toXYZ = invert(inverseToXYZ);
-      }
-
-      TransformFactory<XYZ, O> fromXYZ = lookupTransform(XYZ.class, output);
-      if (fromXYZ == null) {
-        // Try finding an the bridge from the other direction.
-        TransformFactory<O, XYZ> inverseFromXYZ = lookupTransform(output, XYZ.class);
-        if (inverseFromXYZ == null) {
-          // Bridge cannot be connected.
-          return null;
-        }
-        fromXYZ = invert(inverseFromXYZ);
-      }
-
-      return throughXYZ(toXYZ, fromXYZ);
     }
   }
 
@@ -291,7 +264,7 @@ public final class Transforms {
       yb = 0.06;
     }
 
-    Yyx whitepoint;
+    Yxy whitepoint;
     if (i != null) {
       whitepoint = Illuminants.fromIlluminant(i);
     } else {
@@ -302,11 +275,6 @@ public final class Transforms {
     newXYZToYyxFactory().newInverseTransform().apply(whitepoint, whiteXYZ);
 
     return RGBToXYZ.calculateLinearRGBToXYZ(xr, yr, xg, yg, xb, yb, whiteXYZ);
-  }
-
-  private static boolean isColorType(Class<?> type) {
-    // Strict subtype of Color
-    return !Color.class.equals(type) && Color.class.isAssignableFrom(type);
   }
 
   /*

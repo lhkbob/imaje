@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.layout;
 
+import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.IndexIterator;
 import com.lhkbob.imaje.util.IndexSpliterator;
 
@@ -16,13 +17,9 @@ public class RasterLayout implements PixelLayout {
   private final int channelCount;
 
   public RasterLayout(int imageWidth, int imageHeight, int channelCount) {
-    if (imageWidth <= 0 || imageHeight <= 0) {
-      throw new IllegalArgumentException(
-          "Image dimensions must be at least 1: " + imageWidth + " x " + imageHeight);
-    }
-    if (channelCount <= 0) {
-      throw new IllegalArgumentException("Channel count must be at least 1: " + channelCount);
-    }
+    Arguments.isPositive("imageWidth", imageWidth);
+    Arguments.isPositive("imageHeight", imageHeight);
+    Arguments.isPositive("channelCount", channelCount);
 
     this.channelCount = channelCount;
 
@@ -36,16 +33,13 @@ public class RasterLayout implements PixelLayout {
   }
 
   private void checkImageBounds(int x, int y) {
-    if (x < 0 || x >= imageWidth || y < 0 || y >= imageHeight) {
-      throw new IllegalArgumentException("(" + x + ", " + y + ") is outside image bounds");
-    }
+    Arguments.inRangeExcludeMax("x", 0, imageWidth, x);
+    Arguments.inRangeExcludeMax("y", 0, imageHeight, y);
   }
 
   @Override
   public void getChannelIndices(int x, int y, long[] channelIndices) {
-    if (channelIndices.length != channelCount) {
-      throw new IllegalArgumentException("channelIndices length must equal " + channelCount);
-    }
+    Arguments.equals("channelIndices.length", channelCount, channelIndices.length);
     checkImageBounds(x, y);
 
     long base = channelCount * (y * imageWidth + x);
@@ -56,9 +50,7 @@ public class RasterLayout implements PixelLayout {
 
   @Override
   public long getChannelIndex(int x, int y, int channel) {
-    if (channel < 0 || channel >= channelCount) {
-      throw new IndexOutOfBoundsException("Invalid channel: " + channel);
-    }
+    Arguments.inRangeExcludeMax("channel", 0, channelCount, channel);
     checkImageBounds(x, y);
 
     return channelCount * (y * imageWidth + x) + channel;

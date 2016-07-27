@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.icc;
 
+import com.lhkbob.imaje.util.Arguments;
+
 import java.util.Arrays;
 
 /**
@@ -18,6 +20,8 @@ public final class Colorant {
   private final double[] ys;
 
   public Colorant(double[] xs, double[] ys) {
+    Arguments.equals("array lengths", xs.length, ys.length);
+
     this.xs = xs;
     this.ys = ys;
   }

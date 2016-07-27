@@ -8,6 +8,7 @@ import com.lhkbob.imaje.data.types.SignedInteger;
 import com.lhkbob.imaje.data.types.SignedNormalizedInteger;
 import com.lhkbob.imaje.data.types.UnsignedInteger;
 import com.lhkbob.imaje.data.types.UnsignedNormalizedInteger;
+import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.Functions;
 
 /**
@@ -24,19 +25,10 @@ public class PackedPixelArray implements PixelArray {
   private final long[] fieldShifts;
 
   public PackedPixelArray(PixelFormat format, PixelLayout layout, BitData data, long offset) {
-    if (offset < 0)
-      throw new IllegalArgumentException("Data offset must be at least 0: " + offset);
-
-    if (layout.getChannelCount() != 1) {
-      throw new IllegalArgumentException(
-          "All color channel values must be packed into a single data channel");
-    }
-    if (data.getLength() < offset + layout.getRequiredDataElements()) {
-      throw new IllegalArgumentException(
-          "Data source does not have sufficient elements for image layout");
-    }
-    if (format.getTotalBitSize() != data.getBitSize())
-      throw new IllegalArgumentException("Total bit size of format does not match data source");
+    Arguments.isGreaterThanOrEqualToZero("offset", offset);
+    Arguments.equals("layout.getChannelCount()", 1, layout.getChannelCount());
+    Arguments.equals("bit size", format.getTotalBitSize(), data.getBitSize());
+    Arguments.checkArrayRange("data length", data.getLength(), offset, layout.getRequiredDataElements());
 
     fields = new BinaryRepresentation[format.getDataChannelCount()];
     fieldMasks = new long[fields.length];

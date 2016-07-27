@@ -21,6 +21,9 @@ public class LogGammaFunction implements Curve {
 
   @Override
   public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
     if (!(o instanceof LogGammaFunction)) {
       return false;
     }

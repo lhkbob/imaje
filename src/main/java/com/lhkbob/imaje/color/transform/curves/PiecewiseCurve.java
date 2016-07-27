@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.transform.curves;
 
+import com.lhkbob.imaje.util.Arguments;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,9 +14,7 @@ public class PiecewiseCurve implements Curve {
   private final List<Curve> segments;
 
   public PiecewiseCurve(List<Curve> segments) {
-    if (segments.isEmpty()) {
-      throw new IllegalArgumentException("Must provide at least one curve segment");
-    }
+    Arguments.notEmpty("segments", segments);
 
     // Confirm that segments are defined over a contiguous interval, even if
     // there are discontinuities (which is only worried about in inverted()).
@@ -33,6 +33,9 @@ public class PiecewiseCurve implements Curve {
 
   @Override
   public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
     if (!(o instanceof PiecewiseCurve)) {
       return false;
     }

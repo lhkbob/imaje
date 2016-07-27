@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.icc;
 
+import com.lhkbob.imaje.util.Arguments;
+
 import java.util.Arrays;
 
 /**
@@ -9,9 +11,9 @@ public final class ProfileID {
   private final byte[] id;
 
   public ProfileID(byte[] id) {
-    if (id.length != 16) {
-      throw new IllegalArgumentException("Profile ID is made of 16 bytes, not " + id.length);
-    }
+    Arguments.notNull("id", id);
+    Arguments.equals("id.length", 16, id.length);
+
     this.id = Arrays.copyOf(id, id.length);
   }
 

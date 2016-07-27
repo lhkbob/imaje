@@ -17,6 +17,7 @@ public class LongArrayData implements LongData, DataView<long[]> {
   }
 
   public LongArrayData(long[] array) {
+    Arguments.notNull("array", array);
     this.array = array;
   }
 

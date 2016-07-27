@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.data.types;
 
+import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.Functions;
 
 /**
@@ -18,10 +19,7 @@ public class UnsignedInteger implements BinaryRepresentation {
   private final double maxValue;
 
   public UnsignedInteger(int bits) {
-    if (bits > 64)
-      throw new IllegalArgumentException("Cannot convert integers requiring more than 64 bits: " + bits);
-    if (bits < 1)
-      throw new IllegalArgumentException("Bit count must be at least 1: " + bits);
+    Arguments.inRangeInclusive("bits", 1, 64, bits);
 
     this.bits = bits;
     maxValue = Math.pow(2.0, bits) - 1.0;

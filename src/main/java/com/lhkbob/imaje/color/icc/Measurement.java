@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.icc;
 
+import com.lhkbob.imaje.util.Arguments;
+
 /**
  *
  */
@@ -13,10 +15,7 @@ public final class Measurement {
   public Measurement(
       StandardObserver observer, MeasurementGeometry geometry, StandardIlluminant illuminant,
       double flare, GenericColorValue measurement) {
-    if (measurement.getType() != GenericColorValue.ColorType.NORMALIZED_CIEXYZ) {
-      throw new IllegalArgumentException(
-          "Measurement value must be specified as normalized CIEXYZ");
-    }
+    Arguments.equals("measurement.getType()", GenericColorValue.ColorType.NORMALIZED_CIEXYZ, measurement.getType());
 
     this.observer = observer;
     this.geometry = geometry;

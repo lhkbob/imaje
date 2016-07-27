@@ -2,6 +2,7 @@ package com.lhkbob.imaje.color.transform;
 
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.XYZ;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
@@ -12,6 +13,9 @@ public class IndirectXYZTransformFactory<I extends Color, O extends Color> imple
 
   public IndirectXYZTransformFactory(
       TransformFactory<I, XYZ> toXYZ, TransformFactory<XYZ, O> fromXYZ) {
+    Arguments.notNull("toXYZ", toXYZ);
+    Arguments.notNull("fromXYZ", fromXYZ);
+
     this.toXYZ = toXYZ;
     this.fromXYZ = fromXYZ;
   }
@@ -52,6 +56,15 @@ public class IndirectXYZTransformFactory<I extends Color, O extends Color> imple
       boolean result = toXYZ.apply(input, temp);
       result &= fromXYZ.apply(temp, output);
       return result;
+    }
+
+    @Override
+    public O apply(I input) {
+      boolean valid = toXYZ.apply(input, temp);
+      if (!valid)
+        return null;
+
+      return fromXYZ.apply(temp);
     }
   }
 }

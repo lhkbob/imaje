@@ -12,6 +12,7 @@ import com.lhkbob.imaje.data.types.SignedInteger;
 import com.lhkbob.imaje.data.types.SignedNormalizedInteger;
 import com.lhkbob.imaje.data.types.UnsignedInteger;
 import com.lhkbob.imaje.data.types.UnsignedNormalizedInteger;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
@@ -23,18 +24,9 @@ public class UnpackedPixelArray implements PixelArray {
   private final long offset;
 
   public UnpackedPixelArray(PixelFormat format, PixelLayout layout, NumericData<?> data, long offset) {
-    if (offset < 0)
-      throw new IllegalArgumentException("Data offset must be at least 0: " + offset);
-
-    if (format.getDataChannelCount() != layout.getChannelCount()) {
-      throw new IllegalArgumentException(
-          "PixelLayout is incompatible with PixelFormat, requires " + format.getDataChannelCount()
-              + " data channels, but layout provides " + layout.getChannelCount());
-    }
-    if (data.getLength() < offset + layout.getRequiredDataElements()) {
-      throw new IllegalArgumentException(
-          "Data source does not have sufficient elements for image layout");
-    }
+    Arguments.isPositive("offset", offset);
+    Arguments.equals("channel count", format.getDataChannelCount(), layout.getChannelCount());
+    Arguments.checkArrayRange("data length", data.getLength(), offset, layout.getRequiredDataElements());
 
     // Now verify that the format fits the mold expected of unpacked types
     // i.e. bit size for each channel is the same and type of each channel is the same.

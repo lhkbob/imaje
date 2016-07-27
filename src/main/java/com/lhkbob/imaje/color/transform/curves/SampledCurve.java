@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.transform.curves;
 
+import com.lhkbob.imaje.util.Arguments;
+
 import java.util.Arrays;
 
 /**
@@ -14,10 +16,7 @@ public class SampledCurve implements Curve {
   }
 
   SampledCurve(double[] xs, double[] ys, boolean owned) {
-    if (xs.length != ys.length) {
-      throw new IllegalArgumentException(
-          "x and y arrays must be of the same length: " + xs.length + " vs. " + ys.length);
-    }
+    Arguments.equals("array lengths", xs.length, ys.length);
     if (xs.length < 2) {
       throw new IllegalArgumentException("Must provide at least 2 samples");
     }

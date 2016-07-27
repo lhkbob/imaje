@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.transform.general;
 
+import com.lhkbob.imaje.util.Arguments;
+
 import java.util.Arrays;
 
 /**
@@ -20,19 +22,18 @@ public class LookupTable implements Transform {
   }
 
   public LookupTable(int inputChannels, int outputChannels, int[] gridSizes, double[] values) {
-    if (gridSizes.length != inputChannels) {
-      throw new IllegalArgumentException(
-          "Grid size array length must equal number of input channels");
-    }
+    Arguments.notNull("gridSizes", gridSizes);
+    Arguments.notNull("values", values);
+    Arguments.isPositive("inputChannels", inputChannels);
+    Arguments.isPositive("outputChannels", outputChannels);
+    Arguments.equals("gridSizes.length", inputChannels, gridSizes.length);
+
     int expected = outputChannels;
     for (int i = 0; i < inputChannels; i++) {
       expected *= gridSizes[i];
     }
-    if (expected != values.length) {
-      throw new IllegalArgumentException(
-          "Input channel, output channel and grid size do not match provided table length, expected: "
-              + expected + ", actual: " + values.length);
-    }
+    Arguments.equals("values.length", expected, values.length);
+
     this.inputChannels = inputChannels;
     this.outputChannels = outputChannels;
     this.gridSizes = Arrays.copyOf(gridSizes, gridSizes.length);

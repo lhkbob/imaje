@@ -17,6 +17,7 @@ public class IntArrayData implements IntData, DataView<int[]> {
   }
 
   public IntArrayData(int[] array) {
+    Arguments.notNull("array", array);
     this.array = array;
   }
 

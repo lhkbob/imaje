@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.icc;
 
+import com.lhkbob.imaje.util.Arguments;
+
 /**
  *
  */
@@ -8,7 +10,10 @@ public final class NamedColor {
   private final String name;
   private final GenericColorValue pcs;
 
-  public NamedColor(String name, GenericColorValue pcs, GenericColorValue device) {
+  public NamedColor(String name, GenericColorValue pcs, @Arguments.Nullable GenericColorValue device) {
+    Arguments.notNull("name", name);
+    Arguments.notNull("pcs", pcs);
+
     if (pcs.getType() != GenericColorValue.ColorType.PCSLAB
         && pcs.getType() != GenericColorValue.ColorType.PCSXYZ) {
       throw new IllegalArgumentException("PCS color must be of type PCSLAB or PCSXYZ");

@@ -17,6 +17,7 @@ public class FloatArrayData implements FloatData, DataView<float[]> {
   }
 
   public FloatArrayData(float[] array) {
+    Arguments.notNull("array", array);
     this.array = array;
   }
 

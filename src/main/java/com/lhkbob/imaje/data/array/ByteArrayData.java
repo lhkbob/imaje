@@ -17,6 +17,7 @@ public class ByteArrayData implements ByteData, DataView<byte[]> {
   }
 
   public ByteArrayData(byte[] array) {
+    Arguments.notNull("array", array);
     this.array = array;
   }
 

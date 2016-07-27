@@ -1,6 +1,7 @@
 package com.lhkbob.imaje.color.transform.general;
 
 import com.lhkbob.imaje.color.XYZ;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  *

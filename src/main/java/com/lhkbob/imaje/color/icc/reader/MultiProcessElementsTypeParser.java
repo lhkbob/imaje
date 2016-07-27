@@ -346,6 +346,11 @@ public final class MultiProcessElementsTypeParser implements TagParser<Transform
     }
 
     @Override
+    public Transform getLocallySafeInstance() {
+      return this;
+    }
+
+    @Override
     public int getOutputChannels() {
       return 0;
     }

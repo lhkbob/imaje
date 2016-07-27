@@ -19,6 +19,7 @@ public class FloatBufferData implements FloatData, DataView<FloatBuffer> {
   }
 
   public FloatBufferData(FloatBuffer buffer) {
+    Arguments.notNull("buffer", buffer);
     this.buffer = buffer;
   }
 

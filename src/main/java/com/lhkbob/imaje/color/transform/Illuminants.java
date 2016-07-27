@@ -1,7 +1,7 @@
 package com.lhkbob.imaje.color.transform;
 
-import com.lhkbob.imaje.color.Illuminant;
-import com.lhkbob.imaje.color.Yyx;
+import com.lhkbob.imaje.color.annot.Illuminant;
+import com.lhkbob.imaje.color.Yxy;
 
 /**
  *
@@ -9,7 +9,7 @@ import com.lhkbob.imaje.color.Yyx;
 public final class Illuminants {
   private Illuminants() {}
 
-  public static Yyx fromIlluminant(Illuminant illum) {
+  public static Yxy fromIlluminant(Illuminant illum) {
     double l = illum.luminance();
     switch (illum.type()) {
     case A:
@@ -55,25 +55,25 @@ public final class Illuminants {
     case TEMPERATURE:
       return newCorrelatedColorTemperature(illum.temperature(), l);
     case CHROMATICITY:
-      return new Yyx(l, illum.chromaticity().x(), illum.chromaticity().y());
+      return new Yxy(l, illum.chromaticity().x(), illum.chromaticity().y());
     default:
       throw new IllegalArgumentException("Unsupported illuminant type: " + illum.type());
     }
   }
 
-  public static Yyx newA(double luminance) {
-    return new Yyx(luminance, 0.44757, 0.40745);
+  public static Yxy newA(double luminance) {
+    return new Yxy(luminance, 0.44757, 0.40745);
   }
 
-  public static Yyx newB(double luminance) {
-    return new Yyx(luminance, 0.34842, 0.35161);
+  public static Yxy newB(double luminance) {
+    return new Yxy(luminance, 0.34842, 0.35161);
   }
 
-  public static Yyx newC(double luminance) {
-    return new Yyx(luminance, 0.31006, 0.31616);
+  public static Yxy newC(double luminance) {
+    return new Yxy(luminance, 0.31006, 0.31616);
   }
 
-  public static Yyx newCorrelatedColorTemperature(double temp, double luminance) {
+  public static Yxy newCorrelatedColorTemperature(double temp, double luminance) {
     // See https://en.wikipedia.org/wiki/Planckian_locus
     if (temp < 1667.0 || temp > 25000.0) {
       throw new IllegalArgumentException("Cannot calculate CCT outside of temp [1667, 25000]");
@@ -97,74 +97,74 @@ public final class Illuminants {
       y = 3.0817580 * x * x * x - 5.87338670 * x * x + 3.75112997 * x - 0.37001483;
     }
 
-    return new Yyx(luminance, x, y);
+    return new Yxy(luminance, x, y);
   }
 
-  public static Yyx newD50(double luminance) {
-    return new Yyx(luminance, 0.34567, 0.35850);
+  public static Yxy newD50(double luminance) {
+    return new Yxy(luminance, 0.34567, 0.35850);
   }
 
-  public static Yyx newD55(double luminance) {
-    return new Yyx(luminance, 0.33242, 0.34743);
+  public static Yxy newD55(double luminance) {
+    return new Yxy(luminance, 0.33242, 0.34743);
   }
 
-  public static Yyx newD65(double luminance) {
-    return new Yyx(luminance, 0.31271, 0.32902);
+  public static Yxy newD65(double luminance) {
+    return new Yxy(luminance, 0.31271, 0.32902);
   }
 
-  public static Yyx newD75(double luminance) {
-    return new Yyx(luminance, 0.29902, 0.31485);
+  public static Yxy newD75(double luminance) {
+    return new Yxy(luminance, 0.29902, 0.31485);
   }
 
-  public static Yyx newE(double luminance) {
-    return new Yyx(luminance, 1.0 / 3.0, 1.0 / 3.0);
+  public static Yxy newE(double luminance) {
+    return new Yxy(luminance, 1.0 / 3.0, 1.0 / 3.0);
   }
 
-  public static Yyx newF1(double luminance) {
-    return new Yyx(luminance, 0.31310, 0.33727);
+  public static Yxy newF1(double luminance) {
+    return new Yxy(luminance, 0.31310, 0.33727);
   }
 
-  public static Yyx newF10(double luminance) {
-    return new Yyx(luminance, 0.34609, 0.35986);
+  public static Yxy newF10(double luminance) {
+    return new Yxy(luminance, 0.34609, 0.35986);
   }
 
-  public static Yyx newF11(double luminance) {
-    return new Yyx(luminance, 0.38052, 0.37713);
+  public static Yxy newF11(double luminance) {
+    return new Yxy(luminance, 0.38052, 0.37713);
   }
 
-  public static Yyx newF12(double luminance) {
-    return new Yyx(luminance, 0.43695, 0.40441);
+  public static Yxy newF12(double luminance) {
+    return new Yxy(luminance, 0.43695, 0.40441);
   }
 
-  public static Yyx newF2(double luminance) {
-    return new Yyx(luminance, 0.37208, 0.37529);
+  public static Yxy newF2(double luminance) {
+    return new Yxy(luminance, 0.37208, 0.37529);
   }
 
-  public static Yyx newF3(double luminance) {
-    return new Yyx(luminance, 0.40910, 0.39430);
+  public static Yxy newF3(double luminance) {
+    return new Yxy(luminance, 0.40910, 0.39430);
   }
 
-  public static Yyx newF4(double luminance) {
-    return new Yyx(luminance, 0.44018, 0.40329);
+  public static Yxy newF4(double luminance) {
+    return new Yxy(luminance, 0.44018, 0.40329);
   }
 
-  public static Yyx newF5(double luminance) {
-    return new Yyx(luminance, 0.31379, 0.34531);
+  public static Yxy newF5(double luminance) {
+    return new Yxy(luminance, 0.31379, 0.34531);
   }
 
-  public static Yyx newF6(double luminance) {
-    return new Yyx(luminance, 0.37790, 0.38835);
+  public static Yxy newF6(double luminance) {
+    return new Yxy(luminance, 0.37790, 0.38835);
   }
 
-  public static Yyx newF7(double luminance) {
-    return new Yyx(luminance, 0.31292, 0.32933);
+  public static Yxy newF7(double luminance) {
+    return new Yxy(luminance, 0.31292, 0.32933);
   }
 
-  public static Yyx newF8(double luminance) {
-    return new Yyx(luminance, 0.34588, 0.35875);
+  public static Yxy newF8(double luminance) {
+    return new Yxy(luminance, 0.34588, 0.35875);
   }
 
-  public static Yyx newF9(double luminance) {
-    return new Yyx(luminance, 0.37417, 0.37281);
+  public static Yxy newF9(double luminance) {
+    return new Yxy(luminance, 0.37417, 0.37281);
   }
 }

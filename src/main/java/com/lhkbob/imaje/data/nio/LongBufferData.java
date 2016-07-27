@@ -19,6 +19,7 @@ public class LongBufferData implements LongData, DataView<LongBuffer> {
   }
 
   public LongBufferData(LongBuffer buffer) {
+    Arguments.notNull("buffer", buffer);
     this.buffer = buffer;
   }
 

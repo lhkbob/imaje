@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.layout;
 
+import com.lhkbob.imaje.util.Arguments;
+
 import java.util.Iterator;
 import java.util.PrimitiveIterator;
 import java.util.Spliterator;
@@ -17,6 +19,9 @@ public final class ImageCoordinate {
 
     public FastIterator(
         PrimitiveIterator.OfLong baseIterator, ObjLongConsumer<ImageCoordinate> indexToPixel) {
+      Arguments.notNull("baseIterator", baseIterator);
+      Arguments.notNull("indexToPixel", indexToPixel);
+
       indexIterator = baseIterator;
       updater = indexToPixel;
       output = new ImageCoordinate();
@@ -42,6 +47,9 @@ public final class ImageCoordinate {
     public FastSpliterator(
         Spliterator.OfLong baseSpliterator,
         ObjLongConsumer<ImageCoordinate> indexToPixel) {
+      Arguments.notNull("baseSpliterator", baseSpliterator);
+      Arguments.notNull("indexToPixel", indexToPixel);
+
       indexSpliterator = baseSpliterator;
       updater = indexToPixel;
       output = new ImageCoordinate();

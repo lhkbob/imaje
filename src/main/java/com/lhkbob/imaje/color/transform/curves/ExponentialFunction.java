@@ -21,6 +21,9 @@ public final class ExponentialFunction implements Curve {
 
   @Override
   public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
     if (!(o instanceof ExponentialFunction)) {
       return false;
     }

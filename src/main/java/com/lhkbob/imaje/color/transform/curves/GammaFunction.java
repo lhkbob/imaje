@@ -19,6 +19,9 @@ public final class GammaFunction implements Curve {
 
   @Override
   public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
     if (!(o instanceof GammaFunction)) {
       return false;
     }

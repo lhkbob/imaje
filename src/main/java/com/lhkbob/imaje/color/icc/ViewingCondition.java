@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.icc;
 
+import com.lhkbob.imaje.util.Arguments;
+
 /**
  *
  */
@@ -12,14 +14,9 @@ public final class ViewingCondition {
   public ViewingCondition(
       GenericColorValue illuminant, StandardIlluminant illuminantType, GenericColorValue surround,
       LocalizedString description) {
-    if (illuminant.getType() != GenericColorValue.ColorType.CIEXYZ) {
-      throw new IllegalArgumentException(
-          "Illuminant color values  must be specified as un-normalized CIEXYZ");
-    }
-    if (surround.getType() != GenericColorValue.ColorType.CIEXYZ) {
-      throw new IllegalArgumentException(
-          "Surround color values must be specified as un-normalized CIEXYZ");
-    }
+    Arguments.notNull("description", description);
+    Arguments.equals("illuminant.getType()", GenericColorValue.ColorType.CIEXYZ, illuminant.getType());
+    Arguments.equals("surround.getType()", GenericColorValue.ColorType.CIEXYZ, surround.getType());
 
     this.description = description;
     this.illuminant = illuminant;

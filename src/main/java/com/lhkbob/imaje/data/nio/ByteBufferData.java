@@ -18,6 +18,7 @@ public class ByteBufferData implements ByteData, DataView<ByteBuffer> {
   }
 
   public ByteBufferData(ByteBuffer buffer) {
+    Arguments.notNull("buffer", buffer);
     this.buffer = buffer;
   }
 

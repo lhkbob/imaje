@@ -1,6 +1,7 @@
 package com.lhkbob.imaje.color.transform.general;
 
 import com.lhkbob.imaje.color.transform.curves.Curve;
+import com.lhkbob.imaje.util.Arguments;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ public class Curves implements Transform {
   private final List<Curve> curves;
 
   public Curves(List<? extends Curve> curves) {
+    Arguments.notEmpty("curves", curves);
     this.curves = new ArrayList<>(curves);
   }
 

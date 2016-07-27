@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.transform.general;
 
+import com.lhkbob.imaje.util.Arguments;
+
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -19,7 +21,7 @@ public class Matrix implements Transform {
     this(makeMatrix(numRows, numCols, matrix, null), false, true);
   }
 
-  public Matrix(int numRows, int numCols, double[] matrix, double[] translation) {
+  public Matrix(int numRows, int numCols, double[] matrix, @Arguments.Nullable double[] translation) {
     this(makeMatrix(numRows, numCols, matrix, translation), true, true);
   }
 
@@ -137,11 +139,18 @@ public class Matrix implements Transform {
   }
 
   private static DenseMatrix64F makeMatrix(
-      int numRows, int numCols, double[] matrix, double[] translation) {
+      int numRows, int numCols, double[] matrix, @Arguments.Nullable double[] translation) {
+    Arguments.isPositive("numRows", numRows);
+    Arguments.isPositive("numCols", numCols);
+    Arguments.notNull("matrix", matrix);
+
     if (translation == null) {
       // Assume that the data is a plain row-major matrix
       return new DenseMatrix64F(numRows, numCols, true, matrix);
     } else {
+      Arguments.equals("matrix.length", numRows * numCols, matrix.length);
+      Arguments.equals("translation.length", numRows, translation.length);
+
       // Assume that the matrix value is numRows x numCols but then add a row and column to
       // make it affine by adding [translation, 1.0] as a column and all 0s in the new last row (besides the 1)
       DenseMatrix64F m = new DenseMatrix64F(numRows + 1, numCols + 1);

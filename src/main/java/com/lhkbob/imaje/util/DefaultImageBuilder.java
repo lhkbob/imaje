@@ -25,7 +25,7 @@ import java.util.List;
 /**
  */
 public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B extends DefaultImageBuilder<T, I, B>>  {
-  private final DataSourceBuilder dataBuilder;
+  private final DataBufferBuilder dataBuilder;
   private final T defaultColor; // Also the default color for newly allocated data
   private final PixelFormatBuilder formatBuilder;
   private final PixelLayoutBuilder layoutBuilder;
@@ -36,10 +36,12 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
   private int layers;
 
   public DefaultImageBuilder(T color) {
+    Arguments.notNull("color", color);
+
     defaultColor = color;
     formatBuilder = new PixelFormatBuilder();
     layoutBuilder = new PixelLayoutBuilder();
-    dataBuilder = new DataSourceBuilder();
+    dataBuilder = new DataBufferBuilder();
     packed = false;
     storeMipmapsHighToLow = false;
     storeMipmapsTogether = false;

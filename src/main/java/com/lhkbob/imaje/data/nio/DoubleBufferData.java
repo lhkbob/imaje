@@ -19,6 +19,7 @@ public class DoubleBufferData implements DoubleData, DataView<DoubleBuffer> {
   }
 
   public DoubleBufferData(DoubleBuffer buffer) {
+    Arguments.notNull("buffer", buffer);
     this.buffer = buffer;
   }
 

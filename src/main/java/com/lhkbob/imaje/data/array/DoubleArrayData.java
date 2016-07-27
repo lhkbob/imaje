@@ -17,6 +17,7 @@ public class DoubleArrayData implements DoubleData, DataView<double[]> {
   }
 
   public DoubleArrayData(double[] array) {
+    Arguments.notNull("array", array);
     this.array = array;
   }
 

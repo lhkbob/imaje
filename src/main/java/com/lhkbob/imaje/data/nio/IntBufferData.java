@@ -19,6 +19,7 @@ public class IntBufferData implements IntData, DataView<IntBuffer> {
   }
 
   public IntBufferData(IntBuffer buffer) {
+    Arguments.notNull("buffer", buffer);
     this.buffer = buffer;
   }
 

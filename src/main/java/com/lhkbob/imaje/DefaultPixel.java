@@ -2,6 +2,7 @@ package com.lhkbob.imaje;
 
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.layout.PixelArray;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
@@ -15,13 +16,19 @@ public class DefaultPixel<T extends Color> implements Pixel<T> {
   private final PixelArray data;
   private final long[] channels;
 
-  private final T color;
+  private final T cachedColor;
   private transient double cachedAlpha;
 
   public DefaultPixel(Class<T> colorType, PixelArray data) {
+    Arguments.notNull("colorType", colorType);
+    Arguments.notNull("data", data);
+
     this.data = data;
     this.channels = new long[data.getLayout().getChannelCount()];
-    color = Color.newInstance(colorType);
+    cachedColor = Color.newInstance(colorType);
+
+    // Final validation to make sure channel counts are compatible
+    Arguments.equals("channel count", cachedColor.getChannelCount(), data.getFormat().getColorChannelCount());
   }
 
   public void setLevel(int level) {
@@ -33,14 +40,12 @@ public class DefaultPixel<T extends Color> implements Pixel<T> {
   }
 
   public void setPixel(int x, int y) {
-    this.x = x;
-    this.y = y;
-    refresh();
+    refresh(x, y);
   }
 
   @Override
   public T getColor() {
-    return color;
+    return cachedColor;
   }
 
   @Override
@@ -75,13 +80,15 @@ public class DefaultPixel<T extends Color> implements Pixel<T> {
 
   @Override
   public void setColor(T value, double a) {
-    if (value != color) {
-      // Copy the state of value into the internal color instance so that future calls to getColor
+    Arguments.notNull("value", value);
+
+    if (value != cachedColor) {
+      // Copy the state of value into the internal cachedColor instance so that future calls to getColor
       // are accurate
-      color.set(value.getChannels());
+      cachedColor.set(value.getChannels());
     }
 
-    // Now that color matches value, persist will correctly store the new value
+    // Now that cachedColor matches value, persist will correctly store the new value
     persist(a);
   }
 
@@ -99,11 +106,19 @@ public class DefaultPixel<T extends Color> implements Pixel<T> {
   @Override
   public void persist(double alpha) {
     cachedAlpha = alpha;
-    data.set(x, y, color.getChannels(), alpha, channels);
+    data.set(x, y, cachedColor.getChannels(), alpha, channels);
   }
 
   @Override
   public void refresh() {
-    cachedAlpha = data.get(x, y, color.getChannels(), channels);
+    refresh(x, y);
+  }
+
+  private void refresh(int x, int y) {
+    cachedAlpha = data.get(x, y, cachedColor.getChannels(), channels);
+    // The PixelArray validates x and y, so if code reaches here it was a valid coordinate and we
+    // can update the pixel's location
+    this.x = x;
+    this.y = y;
   }
 }

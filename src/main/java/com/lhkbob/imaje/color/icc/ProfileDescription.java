@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.icc;
 
+import com.lhkbob.imaje.util.Arguments;
+
 /**
  *
  */
@@ -23,6 +25,14 @@ public final class ProfileDescription {
       ProfileID id, LocalizedString description, Signature manufacturer, Signature model,
       DeviceAttributes attributes, DeviceTechnology technology, LocalizedString manufacturerDesc,
       LocalizedString modelDesc) {
+    Arguments.notNull("id", id);
+    Arguments.notNull("description", description);
+    Arguments.notNull("manufacturer", manufacturer);
+    Arguments.notNull("model", model);
+    Arguments.notNull("attributes", attributes);
+    Arguments.notNull("manufacturerDesc", manufacturerDesc);
+    Arguments.notNull("modelDesc", modelDesc);
+
     this.id = id;
     this.description = description;
     this.deviceManufacturer = manufacturer;

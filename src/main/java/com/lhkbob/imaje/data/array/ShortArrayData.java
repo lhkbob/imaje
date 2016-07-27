@@ -17,6 +17,7 @@ public class ShortArrayData implements ShortData, DataView<short[]> {
   }
 
   public ShortArrayData(short[] array) {
+    Arguments.notNull("array", array);
     this.array = array;
   }
 

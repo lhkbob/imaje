@@ -3,6 +3,7 @@ package com.lhkbob.imaje.color.transform.general;
 
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.transform.curves.Curve;
+import com.lhkbob.imaje.util.Arguments;
 
 import org.ejml.alg.fixed.FixedOps3;
 import org.ejml.data.FixedMatrix3_64F;
@@ -22,6 +23,9 @@ public class XYZToRGB implements Transform {
   }
 
   XYZToRGB(FixedMatrix3x3_64F xyzToLinearRGB, Curve invGammaCurve, boolean ownMatrix) {
+    Arguments.notNull("xyzToLinearRGB", xyzToLinearRGB);
+    Arguments.notNull("invGammaCurve", invGammaCurve);
+
     this.xyzToLinearRGB = (ownMatrix ? xyzToLinearRGB : xyzToLinearRGB.copy());
     this.invGammaCurve = invGammaCurve;
     workIn = new FixedMatrix3_64F();

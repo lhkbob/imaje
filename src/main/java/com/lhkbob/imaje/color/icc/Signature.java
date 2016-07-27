@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.icc;
 
+import com.lhkbob.imaje.util.Arguments;
+
 /**
  *
  */
@@ -10,6 +12,8 @@ public final class Signature {
   private final long uint32;
 
   private Signature(String text, long uint32) {
+    Arguments.notNull("text", text);
+
     this.text = text;
     this.uint32 = uint32;
   }
@@ -25,6 +29,7 @@ public final class Signature {
   }
 
   public static Signature fromName(String name) {
+    Arguments.notNull("name", name);
     if (name.length() > SIGNATURE_BYTE_LENGTH) {
       throw new IllegalArgumentException("Signature names can be up to 4 characters, not: " + name);
     }

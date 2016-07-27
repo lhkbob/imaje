@@ -12,6 +12,7 @@ public final class DomainWindow implements Curve {
     if (domainMin < f.getDomainMin() || domainMax > f.getDomainMax()) {
       throw new IllegalArgumentException("Domain window does not restrict curve's domain");
     }
+
     this.f = f;
     this.domainMax = domainMax;
     this.domainMin = domainMin;
@@ -19,12 +20,15 @@ public final class DomainWindow implements Curve {
 
   @Override
   public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
     if (!(o instanceof DomainWindow)) {
       return false;
     }
     DomainWindow c = (DomainWindow) o;
-    return Double.compare(c.domainMax, domainMax) == 0 &&
-        Double.compare(c.domainMin, domainMin) == 0 && c.f.equals(f);
+    return Double.compare(c.domainMax, domainMax) == 0
+        && Double.compare(c.domainMin, domainMin) == 0 && c.f.equals(f);
   }
 
   @Override

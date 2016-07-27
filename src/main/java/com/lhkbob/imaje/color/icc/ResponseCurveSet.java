@@ -1,6 +1,7 @@
 package com.lhkbob.imaje.color.icc;
 
 import com.lhkbob.imaje.color.transform.curves.Curve;
+import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -15,11 +16,14 @@ public final class ResponseCurveSet {
     private final Map<MeasurementUnit, UnitBuilder> unitResponses;
 
     private Builder(int channelCount) {
+      Arguments.isPositive("channelCount", channelCount);
+
       this.channelCount = channelCount;
       unitResponses = new HashMap<>();
     }
 
     public ResponseCurveSet build() {
+      // FIXME this needs some more validation, what if someone never completed a unit builder?
       Map<MeasurementUnit, ResponseCurves> responseCurves = new HashMap<>();
       for (Map.Entry<MeasurementUnit, UnitBuilder> e : unitResponses.entrySet()) {
         responseCurves.put(e.getKey(), e.getValue().build());
@@ -28,6 +32,8 @@ public final class ResponseCurveSet {
     }
 
     public UnitBuilder forUnit(MeasurementUnit units) {
+      Arguments.notNull("units", units);
+
       UnitBuilder b = unitResponses.get(units);
       if (b == null) {
         b = new UnitBuilder(channelCount);
@@ -47,6 +53,8 @@ public final class ResponseCurveSet {
     }
 
     public UnitBuilder setChannelMeasurement(int channel, GenericColorValue value) {
+      Arguments.notNull("value", value);
+
       if (value.getType() != GenericColorValue.ColorType.PCSXYZ) {
         throw new IllegalArgumentException(
             "Channel measurements must be in PCSXYZ, not: " + value.getType());
@@ -56,6 +64,8 @@ public final class ResponseCurveSet {
     }
 
     public UnitBuilder setResponseCurve(int channel, Curve curve) {
+      Arguments.notNull("curve", curve);
+
       if (curve.getDomainMin() != 0.0 && curve.getDomainMax() != 1.0) {
         throw new IllegalArgumentException("Response curve domain must be [0, 1]");
       }

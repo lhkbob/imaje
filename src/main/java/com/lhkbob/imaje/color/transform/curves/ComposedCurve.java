@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.transform.curves;
 
+import com.lhkbob.imaje.util.Arguments;
+
 /**
  *
  */
@@ -8,12 +10,19 @@ public class ComposedCurve implements Curve {
   private final Curve g;
 
   public ComposedCurve(Curve g, Curve f) {
+    Arguments.notNull("g", g);
+    Arguments.notNull("f", f);
+
     this.f = f;
     this.g = g;
   }
 
   @Override
   public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+
     if (!(o instanceof ComposedCurve)) {
       return false;
     }

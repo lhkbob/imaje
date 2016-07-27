@@ -1,12 +1,11 @@
 package com.lhkbob.imaje.color.transform.general;
 
 /**
- *
  */
-public class XYZToYyx implements Transform {
+public class YxyToXYZ implements Transform {
   @Override
   public boolean equals(Object o) {
-    return o instanceof XYZToYyx;
+    return o instanceof YxyToXYZ;
   }
 
   @Override
@@ -15,7 +14,7 @@ public class XYZToYyx implements Transform {
   }
 
   @Override
-  public XYZToYyx getLocallySafeInstance() {
+  public YxyToXYZ getLocallySafeInstance() {
     // This is purely functional so the instance can be used by any thread
     return this;
   }
@@ -27,29 +26,28 @@ public class XYZToYyx implements Transform {
 
   @Override
   public int hashCode() {
-    return XYZToYyx.class.hashCode();
+    return YxyToXYZ.class.hashCode();
   }
 
   @Override
-  public YyxToXYZ inverted() {
-    return new YyxToXYZ();
+  public XYZToYxy inverted() {
+    return new XYZToYxy();
   }
 
   @Override
   public String toString() {
-    return "XYZ -> Yyx Transform";
+    return "Yxy -> XYZ Transform";
   }
 
   @Override
   public void transform(double[] input, double[] output) {
     Transform.validateDimensions(this, input, output);
 
-    double sum = input[0] + input[1] + input[2];
+    // X from Y, x, and y
+    output[0] = input[0] * input[1] / input[2];
     // Y from Y
-    output[0] = input[1];
-    // y from X, Y, and Z
-    output[1] = input[0] / sum;
-    // x from X, Y, and Z
-    output[2] = input[1] / sum;
+    output[1] = input[0];
+    // Z from Y, y, and x
+    output[2] = input[0] * (1.0 - input[1] - input[2]) / input[2];
   }
 }

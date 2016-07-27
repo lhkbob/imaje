@@ -14,6 +14,9 @@ public final class LinearFunction implements Curve {
 
   @Override
   public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
     if (!(o instanceof LinearFunction)) {
       return false;
     }

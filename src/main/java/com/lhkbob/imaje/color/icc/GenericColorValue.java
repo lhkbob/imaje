@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.icc;
 
+import com.lhkbob.imaje.util.Arguments;
+
 import java.util.Arrays;
 
 /**
@@ -49,6 +51,8 @@ public final class GenericColorValue {
   }
 
   private GenericColorValue(ColorType type, double[] values, boolean owned) {
+    Arguments.notNull("values", values);
+
     if (type != ColorType.GENERIC && values.length != 3) {
       throw new IllegalArgumentException(
           "Non-generic color types expect 3 channels, not " + values.length);

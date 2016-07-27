@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.transform.general;
 
+import com.lhkbob.imaje.util.Arguments;
+
 import java.util.Arrays;
 
 /**
@@ -10,10 +12,8 @@ public class NormalizeChannels implements Transform {
   private final double[] channelMins;
 
   public NormalizeChannels(double[] channelMins, double[] channelMaxs) {
-    if (channelMins.length != channelMaxs.length) {
-      throw new IllegalArgumentException(
-          "Channel minimum and maximum value arrays must be of same length");
-    }
+    Arguments.equals("channel lengths", channelMaxs.length, channelMins.length);
+
     this.channelMaxs = new double[channelMaxs.length];
     this.channelMins = new double[channelMins.length];
     for (int i = 0; i < channelMaxs.length; i++) {

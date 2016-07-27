@@ -19,6 +19,7 @@ public class ShortBufferData implements ShortData, DataView<ShortBuffer> {
   }
 
   public ShortBufferData(ShortBuffer buffer) {
+    Arguments.notNull("buffer", buffer);
     this.buffer = buffer;
   }
 

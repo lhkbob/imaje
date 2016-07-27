@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.transform.curves;
 
+import com.lhkbob.imaje.util.Arguments;
+
 /**
  * xScalar = a
  * xOffset = x_o
@@ -29,6 +31,8 @@ public final class TransformedCurve implements Curve {
   private final double yScalar;
 
   public TransformedCurve(Curve f, double xScalar, double xOffset, double yScalar, double yOffset) {
+    Arguments.notNull("f", f);
+
     this.f = f;
     this.xScalar = xScalar;
     this.xOffset = xOffset;
@@ -38,6 +42,9 @@ public final class TransformedCurve implements Curve {
 
   @Override
   public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
     if (!(o instanceof TransformedCurve)) {
       return false;
     }

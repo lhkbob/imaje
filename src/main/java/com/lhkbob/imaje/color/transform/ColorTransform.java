@@ -10,4 +10,6 @@ import com.lhkbob.imaje.color.Color;
  */
 public interface ColorTransform<I extends Color, O extends Color> {
   boolean apply(I input, O output);
+
+  O apply(I input);
 }

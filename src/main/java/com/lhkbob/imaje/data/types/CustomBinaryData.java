@@ -3,6 +3,7 @@ package com.lhkbob.imaje.data.types;
 import com.lhkbob.imaje.data.BitData;
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.NumericData;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
@@ -12,9 +13,7 @@ public class CustomBinaryData<T extends BitData> implements NumericData<T>, Data
   private final BinaryRepresentation converter;
 
   public CustomBinaryData(BinaryRepresentation bitRep, T source) {
-    if (bitRep.getBitSize() != source.getBitSize()) {
-      throw new IllegalArgumentException("Binary representation is incompatible with bit size of data source; expected " + bitRep.getBitSize() + " but was " + source.getBitSize());
-    }
+    Arguments.equals("bit size", bitRep.getBitSize(), source.getBitSize());
     this.source = source;
     converter = bitRep;
   }

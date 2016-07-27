@@ -1,6 +1,7 @@
 package com.lhkbob.imaje;
 
 import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.ImageUtils;
 import com.lhkbob.imaje.util.IteratorChain;
 import com.lhkbob.imaje.util.SpliteratorChain;
@@ -12,14 +13,13 @@ import java.util.List;
 import java.util.Spliterator;
 
 /**
+ * FIXME add direct getters and setters like in Raster
  */
 public class Mipmap<T extends Color> implements Image<T> {
   private final List<Raster<T>> mipmaps;
 
   public Mipmap(List<Raster<T>> mipmaps) {
-    if (mipmaps.isEmpty()) {
-      throw new IllegalArgumentException("Must provide at least one image");
-    }
+    Arguments.notEmpty("mipmaps", mipmaps);
 
     // Verify that dimensions and properties are as expected
     ImageUtils.checkMultiImageCompatibility(mipmaps);
@@ -69,10 +69,7 @@ public class Mipmap<T extends Color> implements Image<T> {
 
   @Override
   public Pixel<T> getPixel(int x, int y, int level, int layer) {
-    if (layer != 0) {
-      throw new IllegalArgumentException(
-          "Image is not multilayered, layer must be 0, not: " + layer);
-    }
+    Arguments.equals("layer", 0, layer);
     return getPixel(x, y, level);
   }
 

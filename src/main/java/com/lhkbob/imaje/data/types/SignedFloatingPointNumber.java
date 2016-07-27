@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.data.types;
 
+import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.Functions;
 
 import static java.lang.Double.doubleToRawLongBits;
@@ -66,6 +67,8 @@ public class SignedFloatingPointNumber implements BinaryRepresentation {
           "mantissaBits must be less than mantissa size of a Java double (" + DOUBLE_MANTISSA_BITS
               + "): " + mantissaBits);
     }
+    Arguments.isPositive("exponentBits", exponentBits);
+    Arguments.isPositive("mantissaBits", mantissaBits);
 
     this.exponentBits = exponentBits;
     this.mantissaBits = mantissaBits;

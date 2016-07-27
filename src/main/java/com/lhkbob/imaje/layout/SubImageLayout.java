@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.layout;
 
+import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.IndexIterator;
 import com.lhkbob.imaje.util.IndexSpliterator;
 
@@ -18,14 +19,9 @@ public class SubImageLayout implements PixelLayout {
   private final int height;
 
   public SubImageLayout(PixelLayout original, int x, int y, int w, int h) {
-    if (x < 0 || y < 0 || w < 0 || h < 0)
-      throw new IllegalArgumentException("Offsets and dimensions cannot be negative");
-    if (x + w > original.getWidth()) {
-      throw new IllegalArgumentException("X offset and subimage width extend beyond width of original image");
-    }
-    if (y + h > original.getHeight()) {
-      throw new IllegalArgumentException("Y offset and subimage height extend beyond height of original image");
-    }
+    Arguments.notNull("original", original);
+    Arguments.checkArrayRange("width", original.getWidth(), x, w);
+    Arguments.checkArrayRange("height", original.getHeight(), y, h);
 
     this.original = original;
     offsetX = x;

@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.icc;
 
+import com.lhkbob.imaje.util.Arguments;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
@@ -17,6 +19,9 @@ public final class LocalizedString {
   }
 
   public LocalizedString(Map<Locale, String> variants, Locale dflt) {
+    Arguments.notNull("variants", variants);
+    Arguments.notNull("dflt", dflt);
+
     if (!variants.containsKey(dflt)) {
       throw new IllegalArgumentException("Default locale must be present in the variants map");
     }

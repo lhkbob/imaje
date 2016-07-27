@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.layout;
 
+import com.lhkbob.imaje.util.Arguments;
+
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
@@ -11,6 +13,7 @@ public class InvertedYLayout implements PixelLayout {
   private final PixelLayout original;
 
   public InvertedYLayout(PixelLayout toInvert) {
+    Arguments.notNull("toInvert", toInvert);
     original = toInvert;
   }
 

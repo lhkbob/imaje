@@ -1,6 +1,7 @@
 package com.lhkbob.imaje.color.transform;
 
 import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
@@ -9,6 +10,7 @@ public class InverseTransformFactory<I extends Color, O extends Color> implement
   private final TransformFactory<O, I> inverted;
 
   public InverseTransformFactory(TransformFactory<O, I> toInvert) {
+    Arguments.notNull("toInvert", toInvert);
     inverted = toInvert;
   }
 

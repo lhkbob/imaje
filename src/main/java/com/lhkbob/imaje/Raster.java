@@ -3,6 +3,7 @@ package com.lhkbob.imaje;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.layout.ImageCoordinate;
 import com.lhkbob.imaje.layout.PixelArray;
+import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Iterator;
 import java.util.Spliterator;
@@ -16,11 +17,9 @@ public class Raster<T extends Color> implements Image<T> {
   private final Class<T> colorType;
 
   public Raster(Class<T> colorType, PixelArray data) {
-    if (Color.getChannelCount(colorType) != data.getFormat().getColorChannelCount()) {
-      throw new IllegalArgumentException(String.format(
-          "PixelArray color channel count(%d) does not equal channel count of color(%d, %s)",
-          data.getFormat().getColorChannelCount(), Color.getChannelCount(colorType), colorType));
-    } this.colorType = colorType;
+    Arguments.equals("channel count", Color.getChannelCount(colorType), data.getFormat().getColorChannelCount());
+
+    this.colorType = colorType;
     this.data = data;
   }
 
@@ -54,14 +53,8 @@ public class Raster<T extends Color> implements Image<T> {
 
   @Override
   public Pixel<T> getPixel(int x, int y, int mipmapLevel, int layer) {
-    if (mipmapLevel != 0) {
-      throw new IllegalArgumentException(
-          "Image is not mipmapped, expected mipmap level of 0, not: " + mipmapLevel);
-    }
-    if (layer != 0) {
-      throw new IllegalArgumentException(
-          "Image is not multilayered, layer must be 0, not: " + layer);
-    }
+    Arguments.equals("mipmapLevel", 0, mipmapLevel);
+    Arguments.equals("layer", 0, layer);
     return getPixel(x, y);
   }
 
@@ -101,19 +94,12 @@ public class Raster<T extends Color> implements Image<T> {
     return spliteratorForMipmapArray(0, 0);
   }
 
-  private void checkImageCoordinates(int x, int y) {
-    if (x < 0 || x >= getWidth() || y < 0 || y >= getHeight()) {
-      throw new IndexOutOfBoundsException(
-          "(x, y) coordinates are outside of image dimensions: " + x + ", " + y);
-    }
-  }
-
   public PixelArray getPixelArray() {
     return data;
   }
 
   Pixel<T> getPixelForMipmapArray(int x, int y, int level, int layer) {
-    checkImageCoordinates(x, y);
+    // Pixel checks coordinates for us, so don't duplicate validation
     DefaultPixel<T> p = new DefaultPixel<>(colorType, data);
     p.setPixel(x, y);
     p.setLevel(level);
