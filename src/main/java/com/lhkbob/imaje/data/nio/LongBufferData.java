@@ -1,10 +1,10 @@
 package com.lhkbob.imaje.data.nio;
 
+import com.lhkbob.imaje.data.Data;
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.LongData;
 import com.lhkbob.imaje.util.Arguments;
 
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.LongBuffer;
 
@@ -15,12 +15,14 @@ public class LongBufferData implements LongData, DataView<LongBuffer> {
   private final LongBuffer buffer;
 
   public LongBufferData(int length) {
-    this(ByteBuffer.allocateDirect(length << 3).order(ByteOrder.nativeOrder()).asLongBuffer());
+    this(Data.getBufferFactory().newLongBuffer(length));
   }
 
   public LongBufferData(LongBuffer buffer) {
     Arguments.notNull("buffer", buffer);
-    this.buffer = buffer;
+    this.buffer = buffer.duplicate();
+    // Preserve the 0 -> capacity() rule for stored buffer without modifying original buffer's position and limit
+    this.buffer.clear();
   }
 
   @Override
@@ -30,7 +32,7 @@ public class LongBufferData implements LongData, DataView<LongBuffer> {
 
   @Override
   public LongBuffer getSource() {
-    return buffer;
+    return buffer.duplicate();
   }
 
   @Override
@@ -59,22 +61,19 @@ public class LongBufferData implements LongData, DataView<LongBuffer> {
     Arguments.checkArrayRange("values array", values.length, offset, length);
     Arguments.checkArrayRange("LongBufferData", getLength(), dataIndex, length);
 
-    // Preserve buffer state since we have to manipulate position when making bulk get call
-    int oldPos = buffer.position();
-    int oldLimit = buffer.limit();
-
-    int bufferOffset = Math.toIntExact(dataIndex);
-    buffer.limit(bufferOffset + length).position(bufferOffset);
+    setBufferRange(dataIndex, length);
     buffer.put(values, offset, length);
-
-    // Restore buffer state
-    buffer.limit(oldLimit).position(oldPos);
+    buffer.clear();
   }
 
   @Override
-  public void set(long dataIndex, LongBuffer values, int offset, int length) {
+  public void set(long dataIndex, LongBuffer values) {
     // Optimize with LongBuffer put
-    copy(values, offset, buffer, Math.toIntExact(dataIndex), length);
+    Arguments.checkArrayRange("LongBufferData", getLength(), dataIndex, values.remaining());
+
+    setBufferRange(dataIndex, values.remaining());
+    buffer.put(values);
+    buffer.clear();
   }
 
   @Override
@@ -83,44 +82,22 @@ public class LongBufferData implements LongData, DataView<LongBuffer> {
     Arguments.checkArrayRange("values array", values.length, offset, length);
     Arguments.checkArrayRange("LongBufferData", getLength(), dataIndex, length);
 
-    // Preserve buffer state since we have to manipulate position when making bulk get call
-    int oldPos = buffer.position();
-    int oldLimit = buffer.limit();
-
-    int bufferOffset = Math.toIntExact(dataIndex);
-    buffer.limit(bufferOffset + length).position(bufferOffset);
+    setBufferRange(dataIndex, length);
     buffer.get(values, offset, length);
-
-    // Restore buffer state
-    buffer.limit(oldLimit).position(oldPos);
+    buffer.clear();
   }
 
   @Override
-  public void get(long dataIndex, LongBuffer values, int offset, int length) {
+  public void get(long dataIndex, LongBuffer values) {
     // Optimize with LongBuffer put
-    copy(buffer, Math.toIntExact(dataIndex), values, offset, length);
-  }
+    Arguments.checkArrayRange("LongBufferData", getLength(), dataIndex, values.remaining());
 
-  private static void copy(
-      LongBuffer src, int srcOffset, LongBuffer dst, int dstOffset, int length) {
-    Arguments.checkArrayRange("source buffer", src.capacity(), srcOffset, length);
-    Arguments.checkArrayRange("dest buffer", dst.capacity(), dstOffset, length);
+    setBufferRange(dataIndex, values.remaining());
+    values.put(buffer);
+    buffer.clear();  }
 
-    // Preserve buffer state since we have to manipulate position when making bulk get call
-    int oldSrcPos = src.position();
-    int oldSrcLimit = src.limit();
-
-    int oldDstPos = dst.position();
-    int oldDstLimit = dst.limit();
-
-    // The bulk put stores all remaining values in src, using relative position of dst, so configure
-    // position and limit to match the requested range
-    src.limit(srcOffset + length).position(srcOffset);
-    dst.limit(dstOffset + length).position(dstOffset);
-    dst.put(src);
-
-    // Restore buffer state
-    src.limit(oldSrcLimit).position(oldSrcPos);
-    dst.limit(oldDstLimit).position(oldDstPos);
+  private void setBufferRange(long dataIndex, int length) {
+    int bufferOffset = Math.toIntExact(dataIndex);
+    buffer.limit(bufferOffset + length).position(bufferOffset);
   }
 }

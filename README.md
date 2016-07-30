@@ -31,6 +31,27 @@ as an example, the design of the I/O package that does provide a set of interfac
 image formats implement.
 1. Object arguments should be assumed not nullable unless appropriately annotated or documented.
 1. For simplicity in validation, it can be assumed that enum arguments are never null.
+1. NIO buffer allocation can create unpredictable performance problems if there are too many 
+implementations loaded into the JVM, eliminating virtual function optimizations that might otherwise
+be performed. To that end, the BufferFactory class is defined to allow some flexibility in how 
+buffers are allocated. Data.getBufferFactory() should be used for all buffer creations in any code
+within imaJe, and ideally that extends it. This helps preserve the consistent use of a given type of
+buffer, e.g. direct, native byte ordering, array backed, or using a third-party library to have more 
+optimized allocation.
+1. The mutable position and limit states of Buffers is awkward. To maintain consistency with the 
+NIO channel APIs, all get and set operations that read/write to buffer arguments will respect and
+modify the position and limit as appropriate. However, classes such as the XBufferData 
+implementations that wrap the contents of the Buffer will operate on the entire 0 to capacity range
+of elements. To preserve this guarantee, they make a duplicate() on creation, and expose duplicates
+with their getSource() methods. If a DataBuffer must wrap a subrange of an NIO buffer, then the 
+slice() function should be used to create a smaller Buffer that maps to that range while exposing 
+the data as expected by the XBufferData implementations.
+1. The I/O operations for reading/writing images offer two types of operation. Writing and reading
+to a channel, or encoding/decoding to a ByteBuffer. The channels are assumed to be 
+SeekableByteChannels (basically FileChannels), which tie that part of the interface to only reading
+or writing to a file system. It is outside the scope of this project to support networked image 
+storage. If desired, this can be simulated by using the direct buffer encoding/decoding and sending 
+that to an appropriately created stream or socket channel.
 
 Code Style
 ==========

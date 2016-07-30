@@ -597,7 +597,7 @@ public final class BufferedImageConverter {
         return Data.unorm32().wrapArray(((DataBufferInt) data).getData());
       }
     } else if (data instanceof DataBufferFloat) {
-      return Data.newFloatSource().wrapArray(((DataBufferFloat) data).getData());
+      return Data.newFloatData().wrapArray(((DataBufferFloat) data).getData());
     } else if (data instanceof DataBufferDouble) {
       return Data.newDoubleData().wrapArray(((DataBufferDouble) data).getData());
     } else {

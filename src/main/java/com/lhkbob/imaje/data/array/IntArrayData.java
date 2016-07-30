@@ -62,20 +62,10 @@ public class IntArrayData implements IntData, DataView<int[]> {
   }
 
   @Override
-  public void set(long dataIndex, IntBuffer values, int offset, int length) {
+  public void set(long dataIndex, IntBuffer values) {
     // Optimize with bulk get defined in IntBuffer
-    Arguments.checkArrayRange("values buffer", values.capacity(), offset, length);
-    Arguments.checkArrayRange("IntArrayData", getLength(), dataIndex, length);
-
-    // Preserve buffer state since we have to manipulate position when making bulk get call
-    int oldPos = values.position();
-    int oldLimit = values.limit();
-
-    values.limit(offset + length).position(offset);
-    values.get(array, Math.toIntExact(dataIndex), length);
-
-    // Restore buffer state
-    values.limit(oldLimit).position(oldPos);
+    Arguments.checkArrayRange("IntArrayData", getLength(), dataIndex, values.remaining());
+    values.get(array, Math.toIntExact(dataIndex), values.remaining());
   }
 
   @Override
@@ -88,19 +78,9 @@ public class IntArrayData implements IntData, DataView<int[]> {
   }
 
   @Override
-  public void get(long dataIndex, IntBuffer values, int offset, int length) {
+  public void get(long dataIndex, IntBuffer values) {
     // Optimize with bulk put defined in IntBuffer
-    Arguments.checkArrayRange("values buffer", values.capacity(), offset, length);
-    Arguments.checkArrayRange("IntArrayData", getLength(), dataIndex, length);
-
-    // Preserve buffer state since we have to manipulate position when making bulk get call
-    int oldPos = values.position();
-    int oldLimit = values.limit();
-
-    values.limit(offset + length).position(offset);
-    values.put(array, Math.toIntExact(dataIndex), length);
-
-    // Restore buffer state
-    values.limit(oldLimit).position(oldPos);
+    Arguments.checkArrayRange("IntArrayData", getLength(), dataIndex, values.remaining());
+    values.put(array, Math.toIntExact(dataIndex), values.remaining());
   }
 }

@@ -75,16 +75,15 @@ public interface ByteData extends BitData {
   }
 
   default void get(long dataIndex, ByteBuffer values) {
-    get(dataIndex, values, 0, values.capacity());
-  }
+    Arguments.checkArrayRange("ByteData", getLength(), dataIndex, values.remaining());
 
-  default void get(long dataIndex, ByteBuffer values, int offset, int length) {
-    Arguments.checkArrayRange("value buffer", values.capacity(), offset, length);
-    Arguments.checkArrayRange("ByteData", getLength(), dataIndex, length);
+    int rem = values.remaining();
+    int off = values.position();
 
-    for (int i = 0; i < length; i++) {
-      values.put(offset + i, get(dataIndex + i));
+    for (int i = 0; i < rem; i++) {
+      values.put(off + i, get(dataIndex + i));
     }
+    values.position(values.limit());
   }
 
   @Override
@@ -113,16 +112,15 @@ public interface ByteData extends BitData {
   }
 
   default void set(long dataIndex, ByteBuffer values) {
-    set(dataIndex, values, 0, values.capacity());
-  }
+    Arguments.checkArrayRange("ByteData", getLength(), dataIndex, values.remaining());
 
-  default void set(long dataIndex, ByteBuffer values, int offset, int length) {
-    Arguments.checkArrayRange("value buffer", values.capacity(), offset, length);
-    Arguments.checkArrayRange("ByteData", getLength(), dataIndex, length);
+    int rem = values.remaining();
+    int off = values.position();
 
-    for (int i = 0; i < length; i++) {
-      set(dataIndex + i, values.get(offset + i));
+    for (int i = 0; i < rem; i++) {
+      set(dataIndex + i, values.get(off + i));
     }
+    values.position(values.limit());
   }
 
   @Override

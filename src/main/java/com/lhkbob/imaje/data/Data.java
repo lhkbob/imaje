@@ -12,7 +12,9 @@ import com.lhkbob.imaje.data.large.LargeFloatData;
 import com.lhkbob.imaje.data.large.LargeIntData;
 import com.lhkbob.imaje.data.large.LargeLongData;
 import com.lhkbob.imaje.data.large.LargeShortData;
+import com.lhkbob.imaje.data.nio.BufferFactory;
 import com.lhkbob.imaje.data.nio.ByteBufferData;
+import com.lhkbob.imaje.data.nio.DirectBufferFactory;
 import com.lhkbob.imaje.data.nio.DoubleBufferData;
 import com.lhkbob.imaje.data.nio.FloatBufferData;
 import com.lhkbob.imaje.data.nio.IntBufferData;
@@ -26,8 +28,8 @@ import com.lhkbob.imaje.data.types.SignedInteger;
 import com.lhkbob.imaje.data.types.SignedNormalizedInteger;
 import com.lhkbob.imaje.data.types.UnsignedInteger;
 import com.lhkbob.imaje.data.types.UnsignedNormalizedInteger;
+import com.lhkbob.imaje.util.Arguments;
 
-import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -35,11 +37,7 @@ import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.nio.MappedByteBuffer;
 import java.nio.ShortBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.function.Function;
 
 /**
@@ -67,7 +65,6 @@ public final class Data {
   public static final BinaryRepresentation UNORM64 = new UnsignedNormalizedInteger(64);
   public static final BinaryRepresentation UNORM8 = new UnsignedNormalizedInteger(8);
 
-  // FIXME add endianness to file wrapping functions?
   public interface Builder<S extends DataBuffer, A, B extends Buffer> {
     Class<A> getArrayClass();
 
@@ -82,13 +79,20 @@ public final class Data {
     S wrapArray(A array);
 
     S wrapBuffer(B buffer);
-
-    S wrapFile(Path path) throws IOException;
-
-    S wrapFile(FileChannel channel, long offset, long length) throws IOException;
   }
 
+  private static volatile BufferFactory bufferFactory = DirectBufferFactory.nativeFactory();
+
   private Data() {}
+
+  public static BufferFactory getBufferFactory() {
+    return bufferFactory;
+  }
+
+  public static void setBufferFactory(BufferFactory factory) {
+    Arguments.notNull("factory", factory);
+    bufferFactory = factory;
+  }
 
   public static Object getViewedData(Object data) {
     while (data instanceof DataView) {
@@ -161,33 +165,6 @@ public final class Data {
       public ByteData wrapBuffer(ByteBuffer buffer) {
         return new ByteBufferData(buffer);
       }
-
-      @Override
-      public ByteData wrapFile(Path path) throws IOException {
-        try (
-            FileChannel channel = FileChannel
-                .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-          return wrapFile(channel, 0, channel.size());
-        }
-      }
-
-      @Override
-      public ByteData wrapFile(FileChannel channel, long offset, long length) throws IOException {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          ByteBufferData[] backingData = new ByteBufferData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, sizes[i]);
-            backingData[i] = new ByteBufferData(mapped);
-            offset += sizes[i];
-          }
-
-          return new LargeByteData(backingData);
-        } else {
-          MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, length);
-          return new ByteBufferData(mapped);
-        }
-      }
     };
   }
 
@@ -247,37 +224,10 @@ public final class Data {
       public DoubleData wrapBuffer(DoubleBuffer buffer) {
         return new DoubleBufferData(buffer);
       }
-
-      @Override
-      public DoubleData wrapFile(Path path) throws IOException {
-        try (
-            FileChannel channel = FileChannel
-                .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-          return wrapFile(channel, 0, channel.size());
-        }
-      }
-
-      @Override
-      public DoubleData wrapFile(FileChannel channel, long offset, long length) throws IOException {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          DoubleData[] backingData = new DoubleData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, sizes[i]);
-            backingData[i] = new DoubleBufferData(mapped.asDoubleBuffer());
-            offset += sizes[i];
-          }
-
-          return new LargeDoubleData(backingData);
-        } else {
-          MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, length);
-          return new DoubleBufferData(mapped.asDoubleBuffer());
-        }
-      }
     };
   }
 
-  public static Builder<FloatData, float[], FloatBuffer> newFloatSource() {
+  public static Builder<FloatData, float[], FloatBuffer> newFloatData() {
     return new Builder<FloatData, float[], FloatBuffer>() {
       @Override
       public Class<float[]> getArrayClass() {
@@ -332,35 +282,6 @@ public final class Data {
       @Override
       public FloatData wrapBuffer(FloatBuffer buffer) {
         return new FloatBufferData(buffer);
-      }
-
-      @Override
-      public FloatData wrapFile(Path path) throws IOException {
-        try (
-            FileChannel channel = FileChannel
-                .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-          return wrapFile(channel, 0, channel.size());
-        }
-      }
-
-      @Override
-      public FloatData wrapFile(FileChannel channel, long offset, long length) throws IOException {
-        boolean bigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
-
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          FloatData[] backingData = new FloatData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, sizes[i]);
-            backingData[i] = new FloatBufferData(mapped.asFloatBuffer());
-            offset += sizes[i];
-          }
-
-          return new LargeFloatData(backingData);
-        } else {
-          MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, length);
-          return new FloatBufferData(mapped.asFloatBuffer());
-        }
       }
     };
   }
@@ -421,35 +342,6 @@ public final class Data {
       public IntData wrapBuffer(IntBuffer buffer) {
         return new IntBufferData(buffer);
       }
-
-      @Override
-      public IntData wrapFile(Path path) throws IOException {
-        try (
-            FileChannel channel = FileChannel
-                .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-          return wrapFile(channel, 0, channel.size());
-        }
-      }
-
-      @Override
-      public IntData wrapFile(FileChannel channel, long offset, long length) throws IOException {
-        boolean bigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
-
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          IntData[] backingData = new IntData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, sizes[i]);
-            backingData[i] = new IntBufferData(mapped.asIntBuffer());
-            offset += sizes[i];
-          }
-
-          return new LargeIntData(backingData);
-        } else {
-          MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, length);
-          return new IntBufferData(mapped.asIntBuffer());
-        }
-      }
     };
   }
 
@@ -508,35 +400,6 @@ public final class Data {
       @Override
       public LongData wrapBuffer(LongBuffer buffer) {
         return new LongBufferData(buffer);
-      }
-
-      @Override
-      public LongData wrapFile(Path path) throws IOException {
-        try (
-            FileChannel channel = FileChannel
-                .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-          return wrapFile(channel, 0, channel.size());
-        }
-      }
-
-      @Override
-      public LongData wrapFile(FileChannel channel, long offset, long length) throws IOException {
-        boolean bigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
-
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          LongData[] backingData = new LongData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, sizes[i]);
-            backingData[i] = new LongBufferData(mapped.asLongBuffer());
-            offset += sizes[i];
-          }
-
-          return new LargeLongData(backingData);
-        } else {
-          MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, length);
-          return new LongBufferData(mapped.asLongBuffer());
-        }
       }
     };
   }
@@ -597,35 +460,6 @@ public final class Data {
       public ShortData wrapBuffer(ShortBuffer buffer) {
         return new ShortBufferData(buffer);
       }
-
-      @Override
-      public ShortData wrapFile(Path path) throws IOException {
-        try (
-            FileChannel channel = FileChannel
-                .open(path, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-          return wrapFile(channel, 0, channel.size());
-        }
-      }
-
-      @Override
-      public ShortData wrapFile(FileChannel channel, long offset, long length) throws IOException {
-        boolean bigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
-
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          ShortData[] backingData = new ShortData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, sizes[i]);
-            backingData[i] = new ShortBufferData(mapped.asShortBuffer());
-            offset += sizes[i];
-          }
-
-          return new LargeShortData(backingData);
-        } else {
-          MappedByteBuffer mapped = channel.map(FileChannel.MapMode.PRIVATE, offset, length);
-          return new ShortBufferData(mapped.asShortBuffer());
-        }
-      }
     };
   }
 
@@ -634,7 +468,7 @@ public final class Data {
   }
 
   public static Builder<? extends NumericData<IntData>, float[], FloatBuffer> sfloat32() {
-    return newFloatSource();
+    return newFloatData();
   }
 
   public static Builder<? extends NumericData<LongData>, double[], DoubleBuffer> sfloat64() {
@@ -772,17 +606,6 @@ public final class Data {
     public CustomBinaryData<I> wrapBuffer(B buffer) {
       return new CustomBinaryData<>(bitRep, source.wrapBuffer(buffer));
     }
-
-    @Override
-    public CustomBinaryData<I> wrapFile(Path path) throws IOException {
-      return new CustomBinaryData<>(bitRep, source.wrapFile(path));
-    }
-
-    @Override
-    public CustomBinaryData<I> wrapFile(FileChannel channel, long offset, long length) throws
-        IOException {
-      return new CustomBinaryData<>(bitRep, source.wrapFile(channel, offset, length));
-    }
   }
 
   private static class NumericBuilder<I extends BitData, N extends NumericData<I>, A, B extends Buffer> implements Builder<N, A, B> {
@@ -829,16 +652,6 @@ public final class Data {
     @Override
     public N wrapBuffer(B buffer) {
       return ctor.apply(source.wrapBuffer(buffer));
-    }
-
-    @Override
-    public N wrapFile(Path path) throws IOException {
-      return ctor.apply(source.wrapFile(path));
-    }
-
-    @Override
-    public N wrapFile(FileChannel channel, long offset, long length) throws IOException {
-      return ctor.apply(source.wrapFile(channel, offset, length));
     }
   }
 }
