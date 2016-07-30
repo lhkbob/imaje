@@ -2,7 +2,6 @@ package com.lhkbob.imaje.layout;
 
 import com.lhkbob.imaje.data.BitData;
 import com.lhkbob.imaje.data.Data;
-import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.data.types.BinaryRepresentation;
 import com.lhkbob.imaje.data.types.SignedInteger;
 import com.lhkbob.imaje.data.types.SignedNormalizedInteger;
@@ -88,7 +87,7 @@ public class PackedPixelArray implements PixelArray {
   }
 
   @Override
-  public DataBuffer getData() {
+  public BitData getData() {
     return data;
   }
 
