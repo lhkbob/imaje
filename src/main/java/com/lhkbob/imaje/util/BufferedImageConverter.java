@@ -15,10 +15,18 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.color.transform.Transforms;
 import com.lhkbob.imaje.data.BitData;
+import com.lhkbob.imaje.data.ByteData;
 import com.lhkbob.imaje.data.Data;
 import com.lhkbob.imaje.data.DataBuffer;
+import com.lhkbob.imaje.data.IntData;
 import com.lhkbob.imaje.data.NumericData;
-import com.lhkbob.imaje.io.ImageDecoder;
+import com.lhkbob.imaje.data.ShortData;
+import com.lhkbob.imaje.data.array.ByteArrayData;
+import com.lhkbob.imaje.data.array.DoubleArrayData;
+import com.lhkbob.imaje.data.array.FloatArrayData;
+import com.lhkbob.imaje.data.array.IntArrayData;
+import com.lhkbob.imaje.data.array.ShortArrayData;
+import com.lhkbob.imaje.data.types.CustomBinaryData;
 import com.lhkbob.imaje.layout.GeneralPixelLayout;
 import com.lhkbob.imaje.layout.InvertedYLayout;
 import com.lhkbob.imaje.layout.PackedPixelArray;
@@ -125,15 +133,10 @@ public final class BufferedImageConverter {
     return copy;
   }
 
-  private static Raster<SRGB> convertToSRGB(BufferedImage image, ImageDecoder.DataPolicy policy) {
-    ImageBuilder.OfRaster<SRGB> builder = Image.newRaster(SRGB.class).sized(image.getWidth(), image.getHeight()).rgb().unorm8();
+  private static Raster<SRGB> convertToSRGB(BufferedImage image, Data.Factory factory) {
+    ImageBuilder.OfRaster<SRGB> builder = Image.newRaster(SRGB.class).sized(image.getWidth(), image.getHeight()).rgb().unorm8().backedByNewData(factory);
     if (image.getColorModel().hasAlpha())
       builder.withAlpha();
-    if (policy == ImageDecoder.DataPolicy.ARRAY)
-      builder.backedByNewArray();
-    else
-      builder.backedByNewBuffer();
-
     Raster<SRGB> copy = builder.build();
 
     for (Pixel<SRGB> p : copy) {
@@ -155,13 +158,17 @@ public final class BufferedImageConverter {
     return copy;
   }
 
-  public static Raster<?> convert(BufferedImage image, ImageDecoder.DataPolicy policy) {
+  public static Raster<?> convert(BufferedImage image) {
+    return convert(image, Data.getDefaultDataFactory());
+  }
+
+  public static Raster<?> convert(BufferedImage image, Data.Factory factory) {
     Class<? extends Color> cType = getClassFromColorSpace(image.getColorModel().getColorSpace());
     if (cType == null) {
-      return convertToSRGB(image, policy);
+      return convertToSRGB(image, factory);
     }
 
-    ImageBuilder.OfRaster<?> builder = Image.newRaster(cType).sized(image.getWidth(), image.getHeight());
+    ImageBuilder.OfRaster<?> builder = Image.newRaster(cType).sized(image.getWidth(), image.getHeight()).backedByNewData(factory);
 
     // Try to preserve channel ordering and encoding resolution
     switch (image.getType()) {
@@ -219,11 +226,6 @@ public final class BufferedImageConverter {
         break;
       }
     }
-
-    if (policy == ImageDecoder.DataPolicy.ARRAY)
-      builder.backedByNewArray();
-    else
-      builder.backedByNewBuffer();
 
     Raster<?> copy = builder.build();
     if (copy.hasAlphaChannel()) {
@@ -462,15 +464,19 @@ public final class BufferedImageConverter {
     return convert(image);
   }
 
-  public static Raster<?> wrapOrConvert(BufferedImage image, ImageDecoder.DataPolicy policy) {
-    if (policy == ImageDecoder.DataPolicy.ARRAY) {
+  public static Raster<?> wrapOrConvert(BufferedImage image) {
+    return wrapOrConvert(image, Data.getDefaultDataFactory());
+  }
+
+  public static Raster<?> wrapOrConvert(BufferedImage image, Data.Factory factory) {
+    if (factory == Data.arrayDataFactory()) {
       Raster<?> wrapped = wrap(image);
       if (wrapped != null) {
         return wrapped;
       }
     }
 
-    return convert(image, policy);
+    return convert(image, factory);
   }
 
   private static int[] getBandMasksFromPackedPixelFormat(PixelFormat format) {
@@ -573,33 +579,37 @@ public final class BufferedImageConverter {
 
   private static DataBuffer getDataSourceFromBuffer(java.awt.image.DataBuffer data, boolean isPacked) {
     if (data instanceof DataBufferByte) {
+      ByteData wrapped = new ByteArrayData(((DataBufferByte) data).getData());
       if (isPacked) {
-        return Data.newByteData().wrapArray(((DataBufferByte) data).getData());
+        return wrapped;
       } else {
-        return Data.unorm8().wrapArray(((DataBufferByte) data).getData());
+        return new CustomBinaryData<>(Data.UNORM8, wrapped);
       }
     } else if (data instanceof DataBufferUShort) {
+      ShortData wrapped = new ShortArrayData(((DataBufferUShort) data).getData());
       if (isPacked) {
-        return Data.newShortData().wrapArray(((DataBufferUShort) data).getData());
+        return wrapped;
       } else {
-        return Data.unorm16().wrapArray(((DataBufferUShort) data).getData());
+        return new CustomBinaryData<>(Data.UNORM16, wrapped);
       }
     } else if (data instanceof DataBufferShort) {
+      ShortData wrapped = new ShortArrayData(((DataBufferShort) data).getData());
       if (isPacked) {
-        return Data.newShortData().wrapArray(((DataBufferShort) data).getData());
+        return wrapped;
       } else {
-        return Data.snorm16().wrapArray(((DataBufferShort) data).getData());
+        return new CustomBinaryData<>(Data.SNORM16, wrapped);
       }
     } else if (data instanceof DataBufferInt) {
+      IntData wrapped = new IntArrayData(((DataBufferInt) data).getData());
       if (isPacked) {
-        return Data.newIntData().wrapArray(((DataBufferInt) data).getData());
+        return wrapped;
       } else {
-        return Data.unorm32().wrapArray(((DataBufferInt) data).getData());
+        return new CustomBinaryData<>(Data.UNORM32, wrapped);
       }
     } else if (data instanceof DataBufferFloat) {
-      return Data.newFloatData().wrapArray(((DataBufferFloat) data).getData());
+      return new FloatArrayData(((DataBufferFloat) data).getData());
     } else if (data instanceof DataBufferDouble) {
-      return Data.newDoubleData().wrapArray(((DataBufferDouble) data).getData());
+      return new DoubleArrayData(((DataBufferDouble) data).getData());
     } else {
       // Unknown DataBuffer implementation
       return null;

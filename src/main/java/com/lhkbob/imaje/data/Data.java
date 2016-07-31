@@ -21,7 +21,6 @@ import com.lhkbob.imaje.data.nio.IntBufferData;
 import com.lhkbob.imaje.data.nio.LongBufferData;
 import com.lhkbob.imaje.data.nio.ShortBufferData;
 import com.lhkbob.imaje.data.types.BinaryRepresentation;
-import com.lhkbob.imaje.data.types.CustomBinaryData;
 import com.lhkbob.imaje.data.types.Signed64FloatingPointNumber;
 import com.lhkbob.imaje.data.types.SignedFloatingPointNumber;
 import com.lhkbob.imaje.data.types.SignedInteger;
@@ -30,15 +29,7 @@ import com.lhkbob.imaje.data.types.UnsignedInteger;
 import com.lhkbob.imaje.data.types.UnsignedNormalizedInteger;
 import com.lhkbob.imaje.util.Arguments;
 
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.ShortBuffer;
-import java.util.function.Function;
 
 /**
  *
@@ -65,33 +56,39 @@ public final class Data {
   public static final BinaryRepresentation UNORM64 = new UnsignedNormalizedInteger(64);
   public static final BinaryRepresentation UNORM8 = new UnsignedNormalizedInteger(8);
 
-  public interface Builder<S extends DataBuffer, A, B extends Buffer> {
-    Class<A> getArrayClass();
+  public interface Factory {
+    ByteData newByteData(long length);
 
-    Class<B> getBufferClass();
+    DoubleData newDoubleData(long length);
 
-    Class<S> getDataBufferClass();
+    FloatData newFloatData(long length);
 
-    S ofArray(long length);
+    IntData newIntData(long length);
 
-    S ofBuffer(long length);
+    LongData newLongData(long length);
 
-    S wrapArray(A array);
-
-    S wrapBuffer(B buffer);
+    ShortData newShortData(long length);
   }
 
   private static volatile BufferFactory bufferFactory = DirectBufferFactory.nativeFactory();
+  private static volatile Factory dataFactory = arrayDataFactory();
 
   private Data() {}
+
+  public static Factory arrayDataFactory() {
+    return ARRAY_DATA_FACTORY;
+  }
+
+  public static Factory bufferDataFactory() {
+    return BUFFER_DATA_FACTORY;
+  }
 
   public static BufferFactory getBufferFactory() {
     return bufferFactory;
   }
 
-  public static void setBufferFactory(BufferFactory factory) {
-    Arguments.notNull("factory", factory);
-    bufferFactory = factory;
+  public static Factory getDefaultDataFactory() {
+    return dataFactory;
   }
 
   public static Object getViewedData(Object data) {
@@ -109,434 +106,14 @@ public final class Data {
     return isNativeBigEndian() == source.isBigEndian();
   }
 
-  public static Builder<ByteData, byte[], ByteBuffer> newByteData() {
-    return new Builder<ByteData, byte[], ByteBuffer>() {
-      @Override
-      public Class<byte[]> getArrayClass() {
-        return byte[].class;
-      }
-
-      @Override
-      public Class<ByteBuffer> getBufferClass() {
-        return ByteBuffer.class;
-      }
-
-      @Override
-      public Class<ByteData> getDataBufferClass() {
-        return ByteData.class;
-      }
-
-      @Override
-      public ByteData ofArray(long length) {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          ByteArrayData[] backingData = new ByteArrayData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            backingData[i] = new ByteArrayData(sizes[i]);
-          }
-
-          return new LargeByteData(backingData);
-        } else {
-          return new ByteArrayData((int) length);
-        }
-      }
-
-      @Override
-      public ByteData ofBuffer(long length) {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          ByteBufferData[] backingData = new ByteBufferData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            backingData[i] = new ByteBufferData(sizes[i]);
-          }
-
-          return new LargeByteData(backingData);
-        } else {
-          return new ByteBufferData((int) length);
-        }
-      }
-
-      @Override
-      public ByteData wrapArray(byte[] array) {
-        return new ByteArrayData(array);
-      }
-
-      @Override
-      public ByteData wrapBuffer(ByteBuffer buffer) {
-        return new ByteBufferData(buffer);
-      }
-    };
+  public static void setBufferFactory(BufferFactory factory) {
+    Arguments.notNull("factory", factory);
+    bufferFactory = factory;
   }
 
-  public static Builder<DoubleData, double[], DoubleBuffer> newDoubleData() {
-    return new Builder<DoubleData, double[], DoubleBuffer>() {
-      @Override
-      public Class<double[]> getArrayClass() {
-        return double[].class;
-      }
-
-      @Override
-      public Class<DoubleBuffer> getBufferClass() {
-        return DoubleBuffer.class;
-      }
-
-      @Override
-      public Class<DoubleData> getDataBufferClass() {
-        return DoubleData.class;
-      }
-
-      @Override
-      public DoubleData ofArray(long length) {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          DoubleArrayData[] backingData = new DoubleArrayData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            backingData[i] = new DoubleArrayData(sizes[i]);
-          }
-
-          return new LargeDoubleData(backingData);
-        } else {
-          return new DoubleArrayData((int) length);
-        }
-      }
-
-      @Override
-      public DoubleData ofBuffer(long length) {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          DoubleBufferData[] backingData = new DoubleBufferData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            backingData[i] = new DoubleBufferData(sizes[i]);
-          }
-
-          return new LargeDoubleData(backingData);
-        } else {
-          return new DoubleBufferData((int) length);
-        }
-      }
-
-      @Override
-      public DoubleData wrapArray(double[] array) {
-        return new DoubleArrayData(array);
-      }
-
-      @Override
-      public DoubleData wrapBuffer(DoubleBuffer buffer) {
-        return new DoubleBufferData(buffer);
-      }
-    };
-  }
-
-  public static Builder<FloatData, float[], FloatBuffer> newFloatData() {
-    return new Builder<FloatData, float[], FloatBuffer>() {
-      @Override
-      public Class<float[]> getArrayClass() {
-        return float[].class;
-      }
-
-      @Override
-      public Class<FloatBuffer> getBufferClass() {
-        return FloatBuffer.class;
-      }
-
-      @Override
-      public Class<FloatData> getDataBufferClass() {
-        return FloatData.class;
-      }
-
-      @Override
-      public FloatData ofArray(long length) {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          FloatArrayData[] backingData = new FloatArrayData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            backingData[i] = new FloatArrayData(sizes[i]);
-          }
-
-          return new LargeFloatData(backingData);
-        } else {
-          return new FloatArrayData((int) length);
-        }
-      }
-
-      @Override
-      public FloatData ofBuffer(long length) {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          FloatBufferData[] backingData = new FloatBufferData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            backingData[i] = new FloatBufferData(sizes[i]);
-          }
-
-          return new LargeFloatData(backingData);
-        } else {
-          return new FloatBufferData((int) length);
-        }
-      }
-
-      @Override
-      public FloatData wrapArray(float[] array) {
-        return new FloatArrayData(array);
-      }
-
-      @Override
-      public FloatData wrapBuffer(FloatBuffer buffer) {
-        return new FloatBufferData(buffer);
-      }
-    };
-  }
-
-  public static Builder<IntData, int[], IntBuffer> newIntData() {
-    return new Builder<IntData, int[], IntBuffer>() {
-      @Override
-      public Class<int[]> getArrayClass() {
-        return int[].class;
-      }
-
-      @Override
-      public Class<IntBuffer> getBufferClass() {
-        return IntBuffer.class;
-      }
-
-      @Override
-      public Class<IntData> getDataBufferClass() {
-        return IntData.class;
-      }
-
-      @Override
-      public IntData ofArray(long length) {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          IntArrayData[] backingData = new IntArrayData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            backingData[i] = new IntArrayData(sizes[i]);
-          }
-
-          return new LargeIntData(backingData);
-        } else {
-          return new IntArrayData((int) length);
-        }
-      }
-
-      @Override
-      public IntData ofBuffer(long length) {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          IntBufferData[] backingData = new IntBufferData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            backingData[i] = new IntBufferData(sizes[i]);
-          }
-
-          return new LargeIntData(backingData);
-        } else {
-          return new IntBufferData((int) length);
-        }
-      }
-
-      @Override
-      public IntData wrapArray(int[] array) {
-        return new IntArrayData(array);
-      }
-
-      @Override
-      public IntData wrapBuffer(IntBuffer buffer) {
-        return new IntBufferData(buffer);
-      }
-    };
-  }
-
-  public static Builder<LongData, long[], LongBuffer> newLongData() {
-    return new Builder<LongData, long[], LongBuffer>() {
-      @Override
-      public Class<long[]> getArrayClass() {
-        return long[].class;
-      }
-
-      @Override
-      public Class<LongBuffer> getBufferClass() {
-        return LongBuffer.class;
-      }
-
-      @Override
-      public Class<LongData> getDataBufferClass() {
-        return LongData.class;
-      }
-
-      @Override
-      public LongData ofArray(long length) {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          LongArrayData[] backingData = new LongArrayData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            backingData[i] = new LongArrayData(sizes[i]);
-          }
-
-          return new LargeLongData(backingData);
-        } else {
-          return new LongArrayData((int) length);
-        }
-      }
-
-      @Override
-      public LongData ofBuffer(long length) {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          LongBufferData[] backingData = new LongBufferData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            backingData[i] = new LongBufferData(sizes[i]);
-          }
-
-          return new LargeLongData(backingData);
-        } else {
-          return new LongBufferData((int) length);
-        }
-      }
-
-      @Override
-      public LongData wrapArray(long[] array) {
-        return new LongArrayData(array);
-      }
-
-      @Override
-      public LongData wrapBuffer(LongBuffer buffer) {
-        return new LongBufferData(buffer);
-      }
-    };
-  }
-
-  public static Builder<ShortData, short[], ShortBuffer> newShortData() {
-    return new Builder<ShortData, short[], ShortBuffer>() {
-      @Override
-      public Class<short[]> getArrayClass() {
-        return short[].class;
-      }
-
-      @Override
-      public Class<ShortBuffer> getBufferClass() {
-        return ShortBuffer.class;
-      }
-
-      @Override
-      public Class<ShortData> getDataBufferClass() {
-        return ShortData.class;
-      }
-
-      @Override
-      public ShortData ofArray(long length) {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          ShortArrayData[] backingData = new ShortArrayData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            backingData[i] = new ShortArrayData(sizes[i]);
-          }
-
-          return new LargeShortData(backingData);
-        } else {
-          return new ShortArrayData((int) length);
-        }
-      }
-
-      @Override
-      public ShortData ofBuffer(long length) {
-        if (length > MAX_ARRAY_SIZE) {
-          int[] sizes = getLargeSourceSizes(length);
-          ShortBufferData[] backingData = new ShortBufferData[sizes.length];
-          for (int i = 0; i < sizes.length; i++) {
-            backingData[i] = new ShortBufferData(sizes[i]);
-          }
-
-          return new LargeShortData(backingData);
-        } else {
-          return new ShortBufferData((int) length);
-        }
-      }
-
-      @Override
-      public ShortData wrapArray(short[] array) {
-        return new ShortArrayData(array);
-      }
-
-      @Override
-      public ShortData wrapBuffer(ShortBuffer buffer) {
-        return new ShortBufferData(buffer);
-      }
-    };
-  }
-
-  public static Builder<? extends NumericData<ShortData>, short[], ShortBuffer> sfloat16() {
-    return new BinaryBuilder<>(newShortData(), SFLOAT16);
-  }
-
-  public static Builder<? extends NumericData<IntData>, float[], FloatBuffer> sfloat32() {
-    return newFloatData();
-  }
-
-  public static Builder<? extends NumericData<LongData>, double[], DoubleBuffer> sfloat64() {
-    return newDoubleData();
-  }
-
-  public static Builder<? extends NumericData<ShortData>, short[], ShortBuffer> sint16() {
-    return new NumericBuilder<>(ShortData.Numeric.class, ShortData.Numeric::new, newShortData());
-  }
-
-  public static Builder<? extends NumericData<IntData>, int[], IntBuffer> sint32() {
-    return new NumericBuilder<>(IntData.Numeric.class, IntData.Numeric::new, newIntData());
-  }
-
-  public static Builder<? extends NumericData<LongData>, long[], LongBuffer> sint64() {
-    return new NumericBuilder<>(LongData.Numeric.class, LongData.Numeric::new, newLongData());
-  }
-
-  public static Builder<? extends NumericData<ByteData>, byte[], ByteBuffer> sint8() {
-    return new NumericBuilder<>(ByteData.Numeric.class, ByteData.Numeric::new, newByteData());
-  }
-
-  public static Builder<? extends NumericData<ShortData>, short[], ShortBuffer> snorm16() {
-    return new BinaryBuilder<>(newShortData(), SNORM16);
-  }
-
-  public static Builder<? extends NumericData<IntData>, int[], IntBuffer> snorm32() {
-    return new BinaryBuilder<>(newIntData(), SNORM32);
-  }
-
-  public static Builder<? extends NumericData<LongData>, long[], LongBuffer> snorm64() {
-    return new BinaryBuilder<>(newLongData(), SNORM64);
-  }
-
-  public static Builder<? extends NumericData<ByteData>, byte[], ByteBuffer> snorm8() {
-    return new BinaryBuilder<>(newByteData(), SNORM8);
-  }
-
-  public static Builder<? extends NumericData<ShortData>, short[], ShortBuffer> uint16() {
-    return new BinaryBuilder<>(newShortData(), UINT16);
-  }
-
-  public static Builder<? extends NumericData<IntData>, int[], IntBuffer> uint32() {
-    return new BinaryBuilder<>(newIntData(), UINT32);
-  }
-
-  public static Builder<? extends NumericData<LongData>, long[], LongBuffer> uint64() {
-    return new BinaryBuilder<>(newLongData(), UINT64);
-  }
-
-  public static Builder<? extends NumericData<ByteData>, byte[], ByteBuffer> uint8() {
-    return new BinaryBuilder<>(newByteData(), UINT8);
-  }
-
-  public static Builder<? extends NumericData<ShortData>, short[], ShortBuffer> unorm16() {
-    return new BinaryBuilder<>(newShortData(), UNORM16);
-  }
-
-  public static Builder<? extends NumericData<IntData>, int[], IntBuffer> unorm32() {
-    return new BinaryBuilder<>(newIntData(), UNORM32);
-  }
-
-  public static Builder<? extends NumericData<LongData>, long[], LongBuffer> unorm64() {
-    return new BinaryBuilder<>(newLongData(), UNORM64);
-  }
-
-  public static Builder<? extends NumericData<ByteData>, byte[], ByteBuffer> unorm8() {
-    return new BinaryBuilder<>(newByteData(), UNORM8);
+  public static void setDefaultDataFactory(Factory factory) {
+    Arguments.notNull("factory", factory);
+    dataFactory = factory;
   }
 
   private static int[] getLargeSourceSizes(long length) {
@@ -560,98 +137,187 @@ public final class Data {
     }
   }
 
+  private static final Factory ARRAY_DATA_FACTORY = new Factory() {
+    @Override
+    public ByteData newByteData(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        ByteArrayData[] backingData = new ByteArrayData[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new ByteArrayData(sizes[i]);
+        }
+
+        return new LargeByteData(backingData);
+      } else {
+        return new ByteArrayData((int) length);
+      }
+    }
+
+    @Override
+    public DoubleData newDoubleData(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        DoubleArrayData[] backingData = new DoubleArrayData[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new DoubleArrayData(sizes[i]);
+        }
+
+        return new LargeDoubleData(backingData);
+      } else {
+        return new DoubleArrayData((int) length);
+      }
+    }
+
+    @Override
+    public FloatData newFloatData(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        FloatArrayData[] backingData = new FloatArrayData[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new FloatArrayData(sizes[i]);
+        }
+
+        return new LargeFloatData(backingData);
+      } else {
+        return new FloatArrayData((int) length);
+      }
+    }
+
+    @Override
+    public IntData newIntData(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        IntArrayData[] backingData = new IntArrayData[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new IntArrayData(sizes[i]);
+        }
+
+        return new LargeIntData(backingData);
+      } else {
+        return new IntArrayData((int) length);
+      }
+    }
+
+    @Override
+    public LongData newLongData(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        LongArrayData[] backingData = new LongArrayData[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new LongArrayData(sizes[i]);
+        }
+
+        return new LargeLongData(backingData);
+      } else {
+        return new LongArrayData((int) length);
+      }
+    }
+
+    @Override
+    public ShortData newShortData(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        ShortArrayData[] backingData = new ShortArrayData[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new ShortArrayData(sizes[i]);
+        }
+
+        return new LargeShortData(backingData);
+      } else {
+        return new ShortArrayData((int) length);
+      }
+    }
+  };
+  private static final Factory BUFFER_DATA_FACTORY = new Factory() {
+    @Override
+    public ByteData newByteData(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        ByteBufferData[] backingData = new ByteBufferData[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new ByteBufferData(sizes[i]);
+        }
+
+        return new LargeByteData(backingData);
+      } else {
+        return new ByteBufferData((int) length);
+      }
+    }
+
+    @Override
+    public DoubleData newDoubleData(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        DoubleBufferData[] backingData = new DoubleBufferData[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new DoubleBufferData(sizes[i]);
+        }
+
+        return new LargeDoubleData(backingData);
+      } else {
+        return new DoubleBufferData((int) length);
+      }
+    }
+
+    @Override
+    public FloatData newFloatData(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        FloatBufferData[] backingData = new FloatBufferData[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new FloatBufferData(sizes[i]);
+        }
+
+        return new LargeFloatData(backingData);
+      } else {
+        return new FloatBufferData((int) length);
+      }
+    }
+
+    @Override
+    public IntData newIntData(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        IntBufferData[] backingData = new IntBufferData[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new IntBufferData(sizes[i]);
+        }
+
+        return new LargeIntData(backingData);
+      } else {
+        return new IntBufferData((int) length);
+      }
+    }
+
+    @Override
+    public LongData newLongData(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        LongBufferData[] backingData = new LongBufferData[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new LongBufferData(sizes[i]);
+        }
+
+        return new LargeLongData(backingData);
+      } else {
+        return new LongBufferData((int) length);
+      }
+    }
+
+    @Override
+    public ShortData newShortData(long length) {
+      if (length > MAX_ARRAY_SIZE) {
+        int[] sizes = getLargeSourceSizes(length);
+        ShortBufferData[] backingData = new ShortBufferData[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+          backingData[i] = new ShortBufferData(sizes[i]);
+        }
+
+        return new LargeShortData(backingData);
+      } else {
+        return new ShortBufferData((int) length);
+      }
+    }
+  };
   private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE >> 1;
-
-  private static class BinaryBuilder<I extends BitData, A, B extends Buffer> implements Builder<CustomBinaryData<I>, A, B> {
-    private final BinaryRepresentation bitRep;
-    private final Builder<I, A, B> source;
-
-    public BinaryBuilder(Builder<I, A, B> source, BinaryRepresentation bitRep) {
-      this.source = source;
-      this.bitRep = bitRep;
-    }
-
-    @Override
-    public Class<A> getArrayClass() {
-      return source.getArrayClass();
-    }
-
-    @Override
-    public Class<B> getBufferClass() {
-      return source.getBufferClass();
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public Class<CustomBinaryData<I>> getDataBufferClass() {
-      return (Class) CustomBinaryData.class;
-    }
-
-    @Override
-    public CustomBinaryData<I> ofArray(long length) {
-      return new CustomBinaryData<>(bitRep, source.ofArray(length));
-    }
-
-    @Override
-    public CustomBinaryData<I> ofBuffer(long length) {
-      return new CustomBinaryData<>(bitRep, source.ofBuffer(length));
-    }
-
-    @Override
-    public CustomBinaryData<I> wrapArray(A array) {
-      return new CustomBinaryData<>(bitRep, source.wrapArray(array));
-    }
-
-    @Override
-    public CustomBinaryData<I> wrapBuffer(B buffer) {
-      return new CustomBinaryData<>(bitRep, source.wrapBuffer(buffer));
-    }
-  }
-
-  private static class NumericBuilder<I extends BitData, N extends NumericData<I>, A, B extends Buffer> implements Builder<N, A, B> {
-    private final Function<I, N> ctor;
-    private final Class<N> dataClass;
-    private final Builder<I, A, B> source;
-
-    public NumericBuilder(Class<N> dataClass, Function<I, N> ctor, Builder<I, A, B> source) {
-      this.dataClass = dataClass;
-      this.ctor = ctor;
-      this.source = source;
-    }
-
-    @Override
-    public Class<A> getArrayClass() {
-      return source.getArrayClass();
-    }
-
-    @Override
-    public Class<B> getBufferClass() {
-      return source.getBufferClass();
-    }
-
-    @Override
-    public Class<N> getDataBufferClass() {
-      return dataClass;
-    }
-
-    @Override
-    public N ofArray(long length) {
-      return ctor.apply(source.ofArray(length));
-    }
-
-    @Override
-    public N ofBuffer(long length) {
-      return ctor.apply(source.ofBuffer(length));
-    }
-
-    @Override
-    public N wrapArray(A array) {
-      return ctor.apply(source.wrapArray(array));
-    }
-
-    @Override
-    public N wrapBuffer(B buffer) {
-      return ctor.apply(source.wrapBuffer(buffer));
-    }
-  }
 }

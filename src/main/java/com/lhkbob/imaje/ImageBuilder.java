@@ -1,11 +1,11 @@
 package com.lhkbob.imaje;
 
 import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.data.Data;
 import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.layout.PixelFormat;
 
 import java.nio.Buffer;
-import java.nio.file.Path;
 
 /**
  */
@@ -54,13 +54,17 @@ public interface ImageBuilder<I extends Image<?>, B extends ImageBuilder<I, B>> 
 
   B backedBy(Buffer data);
 
-  B backedBy(Path path);
-
   B backedBy(DataBuffer data);
 
-  B backedByNewArray();
+  default B backedByNewArray() {
+    return backedByNewData(Data.arrayDataFactory());
+  }
 
-  B backedByNewBuffer();
+  default B backedByNewBuffer() {
+    return backedByNewData(Data.bufferDataFactory());
+  }
+
+  B backedByNewData(Data.Factory factory);
 
   B bgr();
 

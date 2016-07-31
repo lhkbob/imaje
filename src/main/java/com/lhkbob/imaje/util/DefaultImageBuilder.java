@@ -8,6 +8,7 @@ import com.lhkbob.imaje.Pixel;
 import com.lhkbob.imaje.Raster;
 import com.lhkbob.imaje.RasterArray;
 import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.data.Data;
 import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.data.NumericData;
 import com.lhkbob.imaje.layout.GeneralPixelLayout;
@@ -18,7 +19,6 @@ import com.lhkbob.imaje.layout.PixelLayout;
 import com.lhkbob.imaje.layout.UnpackedPixelArray;
 
 import java.nio.Buffer;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -151,9 +151,9 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
 
       formatBuilder.compatibleWith(data.getFormat());
       layoutBuilder.compatibleWith(data.getLayout());
+      // FIXME must handle SharedExponentArray
       packed = data instanceof PackedPixelArray;
-      dataBuilder.useBuffersForNewData(data.getData().isGPUAccessible());
-      // But don't modify newDataAllocated or mipmap organization
+      // But don't modify new data allocation or mipmap organization
       return builder();
     } else if (image instanceof RasterArray) {
       // There is nothing configurable about a RasterArray, so just grab the first raster since all
@@ -338,12 +338,6 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     return builder();
   }
 
-  public B backedBy(Path path) {
-    dataBuilder.mapFile(path);
-    newDataAllocated = false;
-    return builder();
-  }
-
   public B backedBy(DataBuffer data) {
     dataBuilder.wrapDataSource(data);
     newDataAllocated = false;
@@ -389,15 +383,8 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     return builder();
   }
 
-  public B backedByNewArray() {
-    dataBuilder.allocateNewData().useBuffersForNewData(false);
-    newDataAllocated = true;
-    return builder();
-  }
-
-  public B backedByNewBuffer() {
-    dataBuilder.allocateNewData().useBuffersForNewData(true);
-    newDataAllocated = true;
+  public B backedByNewData(Data.Factory factory) {
+    dataBuilder.allocateNewData(factory);
     return builder();
   }
 
