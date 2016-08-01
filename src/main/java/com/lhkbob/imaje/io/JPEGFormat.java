@@ -5,13 +5,13 @@ import com.lhkbob.imaje.data.Data;
 /**
  *
  */
-public class JPEGImageFormat extends ImageIOFormat {
+public class JPEGFormat extends ImageIOFormat {
   public static final String FILE_SUFFIX = "jpg";
 
-  public JPEGImageFormat() {
+  public JPEGFormat() {
     this(null);
   }
 
-  public JPEGImageFormat(Data.Factory factory) {
+  public JPEGFormat(Data.Factory factory) {
     super(FILE_SUFFIX, factory);
   }}

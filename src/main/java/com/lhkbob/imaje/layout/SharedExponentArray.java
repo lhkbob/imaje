@@ -8,7 +8,7 @@ import com.lhkbob.imaje.util.Functions;
 /**
  *
  */
-public class SharedExponentRGBArray implements PixelArray {
+public class SharedExponentArray implements PixelArray {
   private final PixelFormat format;
   private final PixelLayout layout;
   private final BitData data;
@@ -16,7 +16,7 @@ public class SharedExponentRGBArray implements PixelArray {
 
   private final UnsignedSharedExponent exp;
 
-  public SharedExponentRGBArray(PixelFormat format, PixelLayout layout, BitData data, long offset) {
+  public SharedExponentArray(PixelFormat format, PixelLayout layout, BitData data, long offset) {
     Arguments.isGreaterThanOrEqualToZero("offset", offset);
     Arguments.equals("layout.getChannelCount()", 1, layout.getChannelCount());
     Arguments.equals("bit size", format.getTotalBitSize(), data.getBitSize());
