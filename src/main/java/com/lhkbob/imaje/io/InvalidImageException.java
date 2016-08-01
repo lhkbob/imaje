@@ -1,9 +1,11 @@
 package com.lhkbob.imaje.io;
 
+import java.io.IOException;
+
 /**
  *
  */
-public class InvalidImageException extends RuntimeException {
+public class InvalidImageException extends IOException {
   public InvalidImageException() {
 
   }

@@ -1,9 +1,11 @@
 package com.lhkbob.imaje.io;
 
+import java.io.IOException;
+
 /**
  *
  */
-public class UnsupportedImageFormatException extends RuntimeException {
+public class UnsupportedImageFormatException extends IOException {
   public UnsupportedImageFormatException() {
 
   }

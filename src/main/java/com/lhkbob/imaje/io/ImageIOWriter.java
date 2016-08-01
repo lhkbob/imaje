@@ -23,7 +23,7 @@ public class ImageIOWriter implements ImageFileWriter {
 
   }
 
-  private javax.imageio.ImageWriter getWriter() {
+  private javax.imageio.ImageWriter getWriter() throws UnsupportedImageFormatException {
     Iterator<javax.imageio.ImageWriter> writers = ImageIO.getImageWritersBySuffix(formatSuffix);
     if (!writers.hasNext()) {
       throw new UnsupportedImageFormatException("Unavailable or unknown image format file suffix: " + formatSuffix);

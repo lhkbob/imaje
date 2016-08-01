@@ -33,7 +33,7 @@ public class ImageIOReader implements ImageFileReader {
     this.factory = factory;
   }
 
-  private ImageReader getReader() {
+  private ImageReader getReader() throws UnsupportedImageFormatException {
     Iterator<ImageReader> readers = ImageIO.getImageReadersBySuffix(formatSuffix);
     if (!readers.hasNext()) {
       throw new UnsupportedImageFormatException(
