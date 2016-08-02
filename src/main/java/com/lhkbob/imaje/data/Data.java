@@ -71,7 +71,6 @@ public final class Data {
   }
 
   private static volatile BufferFactory bufferFactory = DirectBufferFactory.nativeFactory();
-  private static volatile Factory dataFactory = arrayDataFactory();
 
   private Data() {}
 
@@ -137,6 +136,7 @@ public final class Data {
     }
   }
 
+  private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE >> 1;
   private static final Factory ARRAY_DATA_FACTORY = new Factory() {
     @Override
     public ByteData newByteData(long length) {
@@ -228,6 +228,7 @@ public final class Data {
       }
     }
   };
+  private static volatile Factory dataFactory = ARRAY_DATA_FACTORY;
   private static final Factory BUFFER_DATA_FACTORY = new Factory() {
     @Override
     public ByteData newByteData(long length) {
@@ -319,5 +320,4 @@ public final class Data {
       }
     }
   };
-  private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE >> 1;
 }
