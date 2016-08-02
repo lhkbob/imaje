@@ -23,19 +23,9 @@ public abstract class Color implements Cloneable {
     Integer channelSize = channelCountCache.get(getClass());
     if (channelSize == null) {
       // First time instantiating this color, so lookup the Channels annotation
-      Channels channelDef = getClass().getAnnotation(Channels.class);
-      if (channelDef == null) {
+      channelSize = getChannelCountFromAnnotation(getClass());
+      if (channelSize == null) {
         throw new IllegalStateException("Color subclasses must be annotated with @Channels");
-      }
-      if (channelDef.unnamedChannelCount() >= 0) {
-        // Assert that no names are provided and use reported channel count as the final size
-        if (channelDef.value().length > 0) {
-          throw new IllegalStateException("Cannot specify channel names when unnamedChannelCount is positive");
-        }
-        channelSize = channelDef.unnamedChannelCount();
-      } else {
-        // Number of channels is equal to the length of the provided channel names array
-        channelSize = channelDef.value().length;
       }
 
       // Cache for future allocations; there is no important race condition between puts with the
@@ -47,6 +37,24 @@ public abstract class Color implements Cloneable {
     channels = new double[channelSize];
   }
 
+  private static Integer getChannelCountFromAnnotation(Class<? extends Color> color) {
+    Channels channelDef = color.getAnnotation(Channels.class);
+    if (channelDef == null) {
+      return null;
+    }
+    if (channelDef.unnamedChannelCount() >= 0) {
+      // Assert that no names are provided and use reported channel count as the final size
+      if (channelDef.value().length > 0) {
+        throw new IllegalStateException(
+            "Cannot specify channel names when unnamedChannelCount is positive");
+      }
+      return channelDef.unnamedChannelCount();
+    } else {
+      // Number of channels is equal to the length of the provided channel names array
+      return channelDef.value().length;
+    }
+  }
+
   public static int getChannelCount(Class<? extends Color> color) {
     Arguments.notNull("color", color);
 
@@ -54,8 +62,15 @@ public abstract class Color implements Cloneable {
     if (size != null) {
       return size;
     } else {
-      // Instantiating this instance will cache the channel size automatically
-      return newInstance(color).getChannelCount();
+      // We could instantiate an instance for concrete color classes, but to support querying on
+      // abstract classes like RGB, the annotation is queried every time
+      size = getChannelCountFromAnnotation(color);
+      if (size == null) {
+        throw new IllegalArgumentException(
+            "Abstract color does not define a concrete channel size: " + color);
+      }
+      channelCountCache.put(color, size);
+      return size;
     }
   }
 
@@ -76,7 +91,7 @@ public abstract class Color implements Cloneable {
       // Make a deep clone of the channels array
       c.channels = Arrays.copyOf(channels, channels.length);
       return c;
-    } catch(CloneNotSupportedException e) {
+    } catch (CloneNotSupportedException e) {
       throw new RuntimeException("Should not happen");
     }
   }
@@ -110,8 +125,9 @@ public abstract class Color implements Cloneable {
 
   @Override
   public final boolean equals(Object o) {
-    if (o == this)
+    if (o == this) {
       return true;
+    }
     if (!getClass().isInstance(o)) {
       return false;
     }

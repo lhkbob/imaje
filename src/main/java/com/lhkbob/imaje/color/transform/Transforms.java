@@ -23,6 +23,7 @@ import com.lhkbob.imaje.color.transform.general.Curves;
 import com.lhkbob.imaje.color.transform.general.HLSToRGB;
 import com.lhkbob.imaje.color.transform.general.HSVToRGB;
 import com.lhkbob.imaje.color.transform.general.HunterLabToXYZ;
+import com.lhkbob.imaje.color.transform.general.Identity;
 import com.lhkbob.imaje.color.transform.general.LuminanceToXYZ;
 import com.lhkbob.imaje.color.transform.general.LuvToXYZ;
 import com.lhkbob.imaje.color.transform.general.RGBToHLS;
@@ -49,6 +50,11 @@ public final class Transforms {
       Class<I> input, Class<O> output) {
     Arguments.notNull("input", input);
     Arguments.notNull("output", output);
+
+    // Easy case if they are equal
+    if (input.equals(output)) {
+      return newIdentityFactory(input, output);
+    }
 
     synchronized (TRANSFORM_LOCK) {
       // See if there's an exact match
@@ -105,16 +111,23 @@ public final class Transforms {
     return new GeneralTransformFactory<>(Lab.Hunter.class, XYZ.class, t, t.inverted());
   }
 
+  public static <I extends Color, O extends Color> TransformFactory<I, O> newIdentityFactory(Class<I> in, Class<O> out) {
+    int inChannels = Color.getChannelCount(in);
+    int outChannels = Color.getChannelCount(out);
+    return new GeneralTransformFactory<>(in, out, new Identity(inChannels), new Identity(outChannels));
+  }
+
   public static <R extends RGB> TransformFactory<R, RGB.Linear> newLinearRGBFactory(
       Class<R> rgbType) {
     Curve gamma = getGammaCorrectionCurve(rgbType);
-    Curve invGamma = (gamma == null ? null : gamma.inverted());
+    if (gamma == null) {
+      // There is no gamma correction, so return an identity transform
+      return newIdentityFactory(rgbType, RGB.Linear.class);
+    }
 
-    // R to Linear applies inverse gamma
-    Curves t = new Curves(Arrays.asList(invGamma, invGamma, invGamma));
-    // Linear to R applies gamma correction
-    Curves tInv = new Curves(Arrays.asList(gamma, gamma, gamma));
-    return new GeneralTransformFactory<>(rgbType, RGB.Linear.class, t, tInv);
+    // R to Linear applies gamma
+    Curves t = new Curves(Arrays.asList(gamma, gamma, gamma));
+    return new GeneralTransformFactory<>(rgbType, RGB.Linear.class, t, t.inverted());
   }
 
   public static TransformFactory<RGB.Linear, XYZ> newLinearRGBToXYZFactory(
@@ -134,12 +147,12 @@ public final class Transforms {
     return new GeneralTransformFactory<>(Luv.class, XYZ.class, t, t.inverted());
   }
 
-  public static TransformFactory<RGB, HLS> newRGBToHLSFactory() {
-    return new GeneralTransformFactory<>(RGB.class, HLS.class, new RGBToHLS(), new HLSToRGB());
+  public static <T extends RGB> TransformFactory<T, HLS> newRGBToHLSFactory(Class<T> rgb) {
+    return new GeneralTransformFactory<>(rgb, HLS.class, new RGBToHLS(), new HLSToRGB());
   }
 
-  public static TransformFactory<RGB, HSV> newRGBToHSVFactory() {
-    return new GeneralTransformFactory<>(RGB.class, HSV.class, new RGBToHSV(), new HSVToRGB());
+  public static <T extends RGB> TransformFactory<T, HSV> newRGBToHSVFactory(Class<T> rgb) {
+    return new GeneralTransformFactory<>(rgb, HSV.class, new RGBToHSV(), new HSVToRGB());
   }
 
   public static <R extends RGB> TransformFactory<R, XYZ> newRGBToXYZFactory(Class<R> rgbType) {
@@ -313,8 +326,8 @@ public final class Transforms {
   static {
     registerTransformFactory(newXYZToYyxFactory());
 
-    registerTransformFactory(newRGBToHLSFactory());
-    registerTransformFactory(newRGBToHSVFactory());
+    registerTransformFactory(newRGBToHLSFactory(SRGB.class));
+    registerTransformFactory(newRGBToHSVFactory(SRGB.class));
 
     registerTransformFactory(newRGBToYCbCrREC601Factory());
     registerTransformFactory(newRGBToYCbCrREC709Factory());

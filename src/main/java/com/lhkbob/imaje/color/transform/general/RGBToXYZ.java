@@ -18,13 +18,11 @@ public class RGBToXYZ implements Transform {
   private final FixedMatrix3_64F workIn;
   private final FixedMatrix3_64F workOut;
 
-  public RGBToXYZ(FixedMatrix3x3_64F linearRGBToXYZ, Curve gammaCurve) {
+  public RGBToXYZ(FixedMatrix3x3_64F linearRGBToXYZ, @Arguments.Nullable Curve gammaCurve) {
     this(linearRGBToXYZ, gammaCurve, false);
   }
 
-  RGBToXYZ(FixedMatrix3x3_64F linearRGBToXYZ, Curve gammaCurve, boolean ownMatrix) {
-    Arguments.notNull("gammCurve", gammaCurve);
-
+  RGBToXYZ(FixedMatrix3x3_64F linearRGBToXYZ, @Arguments.Nullable Curve gammaCurve, boolean ownMatrix) {
     this.linearRGBToXYZ = (ownMatrix ? linearRGBToXYZ : linearRGBToXYZ.copy());
     this.gammaCurve = gammaCurve;
     workIn = new FixedMatrix3_64F();

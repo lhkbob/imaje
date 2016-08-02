@@ -18,13 +18,12 @@ public class XYZToRGB implements Transform {
   private final FixedMatrix3_64F workOut;
   private final FixedMatrix3x3_64F xyzToLinearRGB;
 
-  public XYZToRGB(FixedMatrix3x3_64F xyzToLinearRGB, Curve invGammaCurve) {
+  public XYZToRGB(FixedMatrix3x3_64F xyzToLinearRGB, @Arguments.Nullable Curve invGammaCurve) {
     this(xyzToLinearRGB, invGammaCurve, false);
   }
 
-  XYZToRGB(FixedMatrix3x3_64F xyzToLinearRGB, Curve invGammaCurve, boolean ownMatrix) {
+  XYZToRGB(FixedMatrix3x3_64F xyzToLinearRGB, @Arguments.Nullable Curve invGammaCurve, boolean ownMatrix) {
     Arguments.notNull("xyzToLinearRGB", xyzToLinearRGB);
-    Arguments.notNull("invGammaCurve", invGammaCurve);
 
     this.xyzToLinearRGB = (ownMatrix ? xyzToLinearRGB : xyzToLinearRGB.copy());
     this.invGammaCurve = invGammaCurve;
