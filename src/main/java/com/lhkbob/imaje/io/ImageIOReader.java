@@ -1,6 +1,6 @@
 package com.lhkbob.imaje.io;
 
-import com.lhkbob.imaje.Image;
+import com.lhkbob.imaje.Raster;
 import com.lhkbob.imaje.data.Data;
 import com.lhkbob.imaje.util.BufferedImageConverter;
 
@@ -43,7 +43,7 @@ public class ImageIOReader implements ImageFileReader {
   }
 
   @Override
-  public Image<?> read(SeekableByteChannel in) throws IOException {
+  public Raster<?> read(SeekableByteChannel in) throws IOException {
     // ImageIO uses plain Java IO as its interface, so unwrap NIO type
     InputStream ioWrapper = Channels.newInputStream(in);
     try (ImageInputStream stream = ImageIO.createImageInputStream(ioWrapper)) {

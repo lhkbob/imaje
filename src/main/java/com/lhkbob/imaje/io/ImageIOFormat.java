@@ -1,6 +1,7 @@
 package com.lhkbob.imaje.io;
 
 import com.lhkbob.imaje.Image;
+import com.lhkbob.imaje.Raster;
 import com.lhkbob.imaje.data.Data;
 
 import java.io.IOException;
@@ -19,7 +20,7 @@ public abstract class ImageIOFormat implements ImageFileFormat {
   }
 
   @Override
-  public Image<?> read(SeekableByteChannel in) throws IOException {
+  public Raster<?> read(SeekableByteChannel in) throws IOException {
     return reader.read(in);
   }
 
