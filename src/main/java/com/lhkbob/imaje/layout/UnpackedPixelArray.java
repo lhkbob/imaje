@@ -24,7 +24,7 @@ public class UnpackedPixelArray implements PixelArray {
   private final long offset;
 
   public UnpackedPixelArray(PixelFormat format, PixelLayout layout, NumericData<?> data, long offset) {
-    Arguments.isPositive("offset", offset);
+    Arguments.isGreaterThanOrEqualToZero("offset", offset);
     Arguments.equals("channel count", format.getDataChannelCount(), layout.getChannelCount());
     Arguments.checkArrayRange("data length", data.getLength(), offset, layout.getRequiredDataElements());
 
