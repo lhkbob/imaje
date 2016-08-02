@@ -409,12 +409,12 @@ public class DataBufferBuilder implements Cloneable {
       }
     } else {
       // If we get here, the bit size and pixel interpretation type combination is unknown
-      throw new UnsupportedImageFormatException(String.format("Unknown bit size (%d) and pixel type combination (%s)", bitSize, type));
+      throw new UnsupportedOperationException(String.format("Unknown bit size (%d) and pixel type combination (%s)", bitSize, type));
     }
 
     // If we get here, the bit size and type combination were known, but the existing data
     // provided was not compatible
-    throw new UnsupportedImageFormatException(String.format("Existing data is incompatible with pixel format (%s, %d): %s", type, bitSize, existingData));
+    throw new UnsupportedOperationException(String.format("Existing data is incompatible with pixel format (%s, %d): %s", type, bitSize, existingData));
   }
 
   public NumericData<?> build() {
