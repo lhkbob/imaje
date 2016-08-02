@@ -90,24 +90,28 @@ public final class BufferedImageConverter {
         .createInterleavedRaster(type, image.getWidth(), image.getHeight(), numComponents, null);
 
     BufferedImage copy = new BufferedImage(
-        new ComponentColorModel(cType, image.hasAlphaChannel(), false, ColorModel.TRANSLUCENT, type), w, false, new Hashtable<>());
+        new ComponentColorModel(cType, image.hasAlphaChannel(), false, ColorModel.TRANSLUCENT,
+            type), w, false, new Hashtable<>());
 
-    if (image.hasAlphaChannel()) {
-      double[] allChannels = new double[numComponents];
-      for (Pixel<?> p : image) {
-        // Copy the color channels into the first part of the array
-        System.arraycopy(p.getColor().getChannels(), 0, allChannels, 0, numColorChannels);
-        // Add alpha value at the end
-        allChannels[numColorChannels] = p.getAlpha();
+    float[] normalizedComponents = new float[copy.getColorModel().getNumComponents()];
+    Object dataElems = null;
+    for (Pixel<?> p : image) {
+      // Copy the double channel values into the float array, and clamp to the minimum supported ranges
+      // in BufferedImage
+      double[] channelValues = p.getColor().getChannels();
+      for (int i = 0; i < channelValues.length; i++) {
+        normalizedComponents[i] = (float) Functions
+            .clamp(channelValues[i], cType.getMinValue(i), cType.getMaxValue(i));
+      }
 
-        // Set pixel with flipped Y value
-        w.setPixel(p.getX(), image.getHeight() - p.getY() - 1, allChannels);
+      // Add alpha if necessary
+      if (image.hasAlphaChannel()) {
+        normalizedComponents[normalizedComponents.length - 1] = (float) p.getAlpha();
       }
-    } else {
-      for (Pixel<?> p : image) {
-        // Flip the y axis, and can send the color channels directly since alpha does not need to be appended
-        w.setPixel(p.getX(), image.getHeight() - p.getY() - 1, p.getColor().getChannels());
-      }
+
+      // Convert to data elements to send to the raster, and flip Y coordinate
+      dataElems = copy.getColorModel().getDataElements(normalizedComponents, 0, dataElems);
+      w.setDataElements(p.getX(), image.getHeight() - p.getY() - 1, dataElems);
     }
 
     return copy;
@@ -117,7 +121,7 @@ public final class BufferedImageConverter {
     int type = image.hasAlphaChannel() ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
     BufferedImage copy = new BufferedImage(image.getWidth(), image.getHeight(), type);
     ColorTransform<T, SRGB> toSRGB = Transforms.newTransform(image.getColorType(), SRGB.class);
-    for (Pixel<T> p: image) {
+    for (Pixel<T> p : image) {
       SRGB output = toSRGB.apply(p.getColor());
 
       byte a = (byte) Data.UNORM8.toBits(p.getAlpha());
@@ -134,9 +138,11 @@ public final class BufferedImageConverter {
   }
 
   private static Raster<SRGB> convertToSRGB(BufferedImage image, Data.Factory factory) {
-    ImageBuilder.OfRaster<SRGB> builder = Image.newRaster(SRGB.class).sized(image.getWidth(), image.getHeight()).rgb().unorm8().backedByNewData(factory);
-    if (image.getColorModel().hasAlpha())
+    ImageBuilder.OfRaster<SRGB> builder = Image.newRaster(SRGB.class)
+        .sized(image.getWidth(), image.getHeight()).rgb().unorm8().backedByNewData(factory);
+    if (image.getColorModel().hasAlpha()) {
       builder.withAlpha();
+    }
     Raster<SRGB> copy = builder.build();
 
     for (Pixel<SRGB> p : copy) {
@@ -168,7 +174,8 @@ public final class BufferedImageConverter {
       return convertToSRGB(image, factory);
     }
 
-    ImageBuilder.OfRaster<?> builder = Image.newRaster(cType).sized(image.getWidth(), image.getHeight()).backedByNewData(factory);
+    ImageBuilder.OfRaster<?> builder = Image.newRaster(cType)
+        .sized(image.getWidth(), image.getHeight()).backedByNewData(factory);
 
     // Try to preserve channel ordering and encoding resolution
     switch (image.getType()) {
@@ -228,35 +235,27 @@ public final class BufferedImageConverter {
     }
 
     Raster<?> copy = builder.build();
-    if (copy.hasAlphaChannel()) {
-      // If there is an alpha channel, then the band array from the BufferedImage is one element
-      // larger and holds the alpha value as its last element
-      double[] bandValues = new double[image.getSampleModel().getNumBands()];
+    // ColorModel converts to normalized components (which we want for transfer) in float[] only
+    float[] normalizedComponents = new float[image.getColorModel().getNumComponents()];
+    double[] channelValues = new double[Color.getChannelCount(copy.getColorType())];
 
-      for (Pixel<?> p : copy) {
-        // Flip Y coordinate when lookuping up BufferedImage's pixel value
-        image.getRaster().getPixel(p.getX(), image.getHeight() - p.getY() - 1, bandValues);
-        double[] channelValues = p.getColor().getChannels();
+    Object dataElements = null;
+    for (Pixel<?> p : copy) {
+      // Get underlying data elements for pixel with inverted Y value
+      dataElements = image.getRaster()
+          .getDataElements(p.getX(), image.getHeight() - p.getY() - 1, dataElements);
+      // Convert to normalized components
+      image.getColorModel().getNormalizedComponents(dataElements, normalizedComponents, 0);
 
-        // Undo premultiplication if necessary
-        double alpha = bandValues[bandValues.length - 1];
-        if (image.isAlphaPremultiplied()) {
-          for (int j = 0; j < channelValues.length; j++) {
-            channelValues[j] = bandValues[j] / alpha;
-          }
-        } else {
-          System.arraycopy(bandValues, 0, channelValues, 0, channelValues.length);
-        }
-
-        p.persist(alpha);
+      // There is no premultiplication for normalized components to worry about, just convert the
+      // float values to double, and extract the alpha from the end if necessary
+      for (int i = 0; i < channelValues.length; i++) {
+        channelValues[i] = normalizedComponents[i];
       }
-    } else {
-      // There is no alpha, so the band array can be sent directly to the color instance
-      for (Pixel<?> p : copy) {
-        // Flip the y coordinate so that we use the expected origin
-        image.getRaster().getPixel(p.getX(), image.getHeight() - p.getY() - 1, p.getColor().getChannels());
-        p.persist();
-      }
+      double alpha = (image.getColorModel().hasAlpha() ? normalizedComponents[
+          normalizedComponents.length - 1] : 1.0);
+      p.getColor().set(channelValues);
+      p.persist(alpha);
     }
 
     return copy;
@@ -300,7 +299,7 @@ public final class BufferedImageConverter {
       return null;
     }
 
-    DataBuffer wrappedData = getDataSourceFromBuffer(image.getRaster().getDataBuffer(),
+    DataBuffer wrappedData = getImajeBuffer(image.getRaster().getDataBuffer(),
         image.getSampleModel() instanceof SinglePixelPackedSampleModel);
     if (wrappedData == null) {
       // Unknown DataBuffer implementation
@@ -361,8 +360,7 @@ public final class BufferedImageConverter {
       return null;
     }
 
-    PixelArray data = image
-        .getPixelArray(); // This is non-null because the adapter is a simple adapter
+    PixelArray data = image.getPixelArray();
     boolean isPacked = data instanceof PackedPixelArray;
     if (!(data instanceof PackedPixelArray) && !(data instanceof UnpackedPixelArray)) {
       // Unexpected type of pixel array, most likely does something other than what would be
@@ -376,7 +374,7 @@ public final class BufferedImageConverter {
       return null;
     }
 
-    java.awt.image.DataBuffer wrappedData = getDataBufferFromSource(data.getData());
+    java.awt.image.DataBuffer wrappedData = getAWTBuffer(data.getData(), data.getFormat());
     if (wrappedData == null) {
       // Unsupported DataSource type, e.g. NIO instead of array
       return null;
@@ -555,21 +553,31 @@ public final class BufferedImageConverter {
     }
   }
 
-  private static java.awt.image.DataBuffer getDataBufferFromSource(DataBuffer source) {
+  private static boolean isChannelType(PixelFormat format, PixelFormat.Type type) {
+    for (int i = 0; i < format.getDataChannelCount(); i++) {
+      if (!format.isDataChannelSkipped(i) && format.getDataChannelType(i) != type) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private static java.awt.image.DataBuffer getAWTBuffer(DataBuffer source, PixelFormat format) {
     Object realData = Data.getViewedData(source);
-    if (realData instanceof byte[]) {
+    if (realData instanceof byte[] && isChannelType(format, PixelFormat.Type.UNORM)) {
       byte[] d = (byte[]) realData;
       return new DataBufferByte(d, d.length);
-    } else if (realData instanceof short[]) {
+    } else if (realData instanceof short[] && isChannelType(format, PixelFormat.Type.UNORM)) {
       short[] d = (short[]) realData;
       return new DataBufferUShort(d, d.length);
-    } else if (realData instanceof int[]) {
+    } else if (realData instanceof int[] && isChannelType(format, PixelFormat.Type.UNORM)) {
       int[] d = (int[]) realData;
       return new DataBufferInt(d, d.length);
-    } else if (realData instanceof float[]) {
+    } else if (realData instanceof float[] && isChannelType(format, PixelFormat.Type.SFLOAT)) {
       float[] d = (float[]) realData;
       return new DataBufferFloat(d, d.length);
-    } else if (realData instanceof double[]) {
+    } else if (realData instanceof double[] && isChannelType(format, PixelFormat.Type.SFLOAT)) {
       double[] d = (double[]) realData;
       return new DataBufferDouble(d, d.length);
     } else {
@@ -577,7 +585,7 @@ public final class BufferedImageConverter {
     }
   }
 
-  private static DataBuffer getDataSourceFromBuffer(java.awt.image.DataBuffer data, boolean isPacked) {
+  private static DataBuffer getImajeBuffer(java.awt.image.DataBuffer data, boolean isPacked) {
     if (data instanceof DataBufferByte) {
       ByteData wrapped = new ByteArrayData(((DataBufferByte) data).getData());
       if (isPacked) {
@@ -661,7 +669,8 @@ public final class BufferedImageConverter {
 
   private static PixelFormat getFormatFromSinglePixelSampleModel(
       BufferedImage image, SinglePixelPackedSampleModel s) {
-    int primitiveBits = java.awt.image.DataBuffer.getDataTypeSize(image.getRaster().getTransferType());
+    int primitiveBits = java.awt.image.DataBuffer
+        .getDataTypeSize(image.getRaster().getTransferType());
 
     // Get bit masks and bit offsets from sample model once, since it returns a cloned array each time
     int[] sampleOffsets = s.getBitOffsets();
