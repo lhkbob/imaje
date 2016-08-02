@@ -13,6 +13,7 @@ import com.lhkbob.imaje.layout.PixelLayout;
 import com.lhkbob.imaje.layout.RasterLayout;
 import com.lhkbob.imaje.layout.UnpackedPixelArray;
 import com.lhkbob.imaje.util.ByteOrderUtils;
+import com.lhkbob.imaje.util.IOUtils;
 import com.lhkbob.imaje.util.PixelFormatBuilder;
 
 import java.io.IOException;
@@ -45,6 +46,8 @@ public class RadianceFormat implements ImageFileReader {
   @SuppressWarnings("unchecked")
   public Raster<?> read(SeekableByteChannel in) throws IOException {
     ByteBuffer work = Data.getBufferFactory().newByteBuffer(WORK_BUFFER_LEN);
+    // Configure buffer limit to be ready for getContent()
+    work.limit(0);
 
     // Validate magic number at the beginning of the file
     checkMagicNumber(in, work);
@@ -53,9 +56,9 @@ public class RadianceFormat implements ImageFileReader {
 
     // Determine imaJe color type based on format line
     Class<? extends Color> colorType;
-    if ("32-bit-rle-rgbe".equals(vars.get("FORMAT"))) {
+    if ("32-bit_rle_rgbe".equals(vars.get("FORMAT"))) {
       colorType = RGB.Linear.class;
-    } else if ("32-bit-rle-xyze".equals(vars.get("FORMAT"))) {
+    } else if ("32-bit_rle_xyze".equals(vars.get("FORMAT"))) {
       colorType = XYZ.class;
     } else {
       // Unknown and illegal format specification
@@ -97,6 +100,7 @@ public class RadianceFormat implements ImageFileReader {
 
     // Now process resolution line
     Matcher m = RESOLUTION_PATTERN.matcher(vars.get("RESOLUTION"));
+    m.matches(); // This is known to be true since that's how processVariables() terminates
     int height = Integer.parseInt(m.group(2));
     boolean topToBottom = m.group(1).equals("-");
     int width = Integer.parseInt(m.group(4));
@@ -118,13 +122,11 @@ public class RadianceFormat implements ImageFileReader {
   }
 
   private void checkMagicNumber(SeekableByteChannel in, ByteBuffer work) throws IOException {
-    // Magic number must be '#?RGBE' or '#?RADIANCE'
     int count = 0;
     boolean[] matches = new boolean[MAGIC_NUMBERS.length];
     Arrays.fill(matches, true);
 
-    while (work.position() > 0 || in.read(work) >= 0) {
-      work.flip();
+    while(IOUtils.read(in, work)) {
       while (work.hasRemaining()) {
         byte toCheck = work.get();
 
@@ -143,9 +145,8 @@ public class RadianceFormat implements ImageFileReader {
             // Wrong byte value for this sequence, so it cannot match anymore.
             matches[i] = false;
           } else if (count == MAGIC_NUMBERS[i].length - 1) {
-            // Completed the match, so compact the buffer so any additional data is available for
-            // the next section of the reader.
-            work.compact();
+            // Completed the magic number, so terminate - this is valid assuming that none of the
+            // accepted magic numbers are prefixes of one another (currently true).
             return;
           } else {
             // The sequence remains valid
@@ -153,13 +154,12 @@ public class RadianceFormat implements ImageFileReader {
           }
         }
 
-        if (!stillMatching) {
+        if (stillMatching) {
+          count++;
+        } else {
           throw new UnsupportedImageFormatException("Radiance magic number not found");
         }
       }
-
-      // Clear for the next read, there are no more remaining valid bytes in work
-      work.clear();
     }
 
     // If the end of the file was reached before completing the magic number, that is also a failure
@@ -170,10 +170,7 @@ public class RadianceFormat implements ImageFileReader {
       IOException {
     Map<String, String> vars = new HashMap<>();
     StringBuilder sb = new StringBuilder();
-    while (work.position() > 0 || in.read(work) >= 0) {
-      // Continue reading until the end of file, this will break out once resolution variable
-      // has been specified, which is the signal that the variable preface of the file is finished.
-      work.flip();
+    while(IOUtils.read(in, work)) {
       // Process every read byte by appending it to the string builder
       while (work.hasRemaining()) {
         byte b = work.get();
@@ -187,7 +184,6 @@ public class RadianceFormat implements ImageFileReader {
               vars.put(line.substring(0, equals), line.substring(equals + 1));
             } else if (RESOLUTION_PATTERN.matcher(line).matches()) {
               // Return resolution specification in special variable
-              work.compact();
               vars.put("RESOLUTION", line);
               return vars;
             } else if (!line.startsWith("#")) {
@@ -203,9 +199,6 @@ public class RadianceFormat implements ImageFileReader {
           sb.append((char) b);
         }
       }
-
-      // Read everything from the work buffer, so reset it for the next read
-      work.clear();
     }
 
     throw new InvalidImageException("Did not encounter resolution specification");
@@ -230,10 +223,11 @@ public class RadianceFormat implements ImageFileReader {
 
       // Now convert the interleaved RGBE byte values into floating point RGB values
       for (int x = 0; x < width; x++) {
-        byte r = scan[4 * (y * width + x)];
-        byte g = scan[4 * (y * width + x) + 1];
-        byte b = scan[4 * (y * width + x) + 2];
-        byte e = scan[4 * (y * width + x) + 3];
+        int offset = 4 * x;
+        byte r = scan[offset];
+        byte g = scan[offset + 1];
+        byte b = scan[offset + 2];
+        byte e = scan[offset + 3];
         CONVERSION.toNumericValues(ByteOrderUtils.bytesToIntBE(r, g, b, e), rgb);
 
         // Apply channel corrections to undo modifications to the written pixel values
@@ -259,8 +253,8 @@ public class RadianceFormat implements ImageFileReader {
       int x = 0; // Logical progress through scanline
       int remaining = 0; // Remaining bytes in scan block to read
       int repeat = 1;
-      while (x < imgWidth && (work.position() > 0 || in.read(work) >= 0)) {
-        work.flip();
+
+      while (x < imgWidth && IOUtils.read(in, work)) {
         while (x < imgWidth && work.hasRemaining()) {
           if (remaining == 0) {
             // The next byte specifies the type of run block
@@ -289,12 +283,6 @@ public class RadianceFormat implements ImageFileReader {
             remaining--;
           }
         }
-
-        if (work.hasRemaining()) {
-          work.compact();
-        } else {
-          work.clear();
-        }
       }
 
       if (x != imgWidth) {
@@ -310,29 +298,30 @@ public class RadianceFormat implements ImageFileReader {
     // reading any bytes
     if (imgWidth >= 8 && imgWidth <= 0x7fff) {
       // Must read 4 bytes to detect if the scanline is run length encoded
-      while (work.position() < 4) {
-        if (in.read(work) < 0) {
-          throw new InvalidImageException("Unable to read scanline byte marker before end-of-file");
-        }
+      if (!IOUtils.read(in, work, 4)) {
+        throw new InvalidImageException("Unexpected EOF while reading scanline");
       }
 
-      // Use absolute gets so we don't mess up the position in case the scanline is not RLE
-      // and the first bytes must be included as actual pixel data.
-      if (work.get(0) == 2 && work.get(1) == 2 && (work.get(2) & 0x80) == 0) {
+      // The read ensures we have at least 4 bytes available
+      byte w1 = work.get();
+      byte w2 = work.get();
+      byte w3 = work.get();
+      byte w4 = work.get();
+      if (w1 == 2 && w2 == 2 && (w3 & 0x80) == 0) {
         // Validate scan width to ensure it matches the image dimensions:
-        // since we know work[2]'s 8th bit is a 0, we don't need to mask it to properly preserve unsigned byte-ness
+        // since we know w3's 8th bit is a 0, we don't need to mask it to properly preserve unsigned byte-ness
         // this is not the case for work[3]
-        int scanWidth = (work.get(2) << 8) | (0xff & work.get(3));
+        int scanWidth = (w3 << 8) | (0xff & w4);
         if (scanWidth != imgWidth) {
           throw new InvalidImageException(
               "Scanline width was " + scanWidth + " but expected " + imgWidth);
         }
 
-        // Discard the 4 bytes that controlled the scanline specification
-        work.flip().position(4);
-        work.compact();
         readRLEScanLine(imgWidth, in, work, scanlineBuffer);
         return;
+      } else {
+        // Move position back 4 elements to include the previously peeked at words
+        work.position(work.position() - 4);
       }
     }
 
@@ -345,19 +334,11 @@ public class RadianceFormat implements ImageFileReader {
       IOException {
     // The scanline is just a sequence of 4 * imgWidth bytes with interleaved RGBE values.
     int x = 0;
-    while (x < imgWidth && (work.position() >= 4 || in.read(work) >= 0)) {
-      work.flip(); // Make ready for reading
-
+    while(x < imgWidth && IOUtils.read(in, work, 4)) {
       // Process bytes 4 at a time
       int pixels = Math.min(work.remaining() / 4, imgWidth - x);
       work.get(scanlineBuffer, 4 * x, pixels * 4);
       x += pixels;
-
-      if (work.hasRemaining()) {
-        work.compact();
-      } else {
-        work.clear();
-      }
     }
 
     // Check if the entire scanline was read before EOF was reached
@@ -377,5 +358,5 @@ public class RadianceFormat implements ImageFileReader {
   };
   private static final Pattern RESOLUTION_PATTERN = Pattern
       .compile("([-\\+])Y (\\d+) ([-\\+])X (\\d+)");
-  private static final int WORK_BUFFER_LEN = 2048;
+  private static final int WORK_BUFFER_LEN = 4096;
 }
