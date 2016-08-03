@@ -125,7 +125,7 @@ public class UnitGammaFunction implements Curve {
       // Things are invertible if the linear portion has a positive slop and connects to the
       // gamma curve. If it doesn't connect, it's not continuous. If it's negative sloped, it could
       // technically still be invertible but it would require swapping the inequality direction.
-      if (Math.abs(power(linearThreshold) - linear(linearThreshold)) >= EPS) {
+      if (Math.abs(power(linearThreshold) - linear(linearThreshold)) >= CONNECTIVITY_EPS) {
         // Not continuous
         return null;
       }
@@ -184,5 +184,6 @@ public class UnitGammaFunction implements Curve {
     return power;
   }
 
+  private static final double CONNECTIVITY_EPS = 1e-2; // Be more forgiving due to precision and decimal issues in specs.
   private static final double EPS = 1e-8;
 }
