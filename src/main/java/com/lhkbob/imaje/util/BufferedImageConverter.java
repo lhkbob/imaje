@@ -69,66 +69,38 @@ public final class BufferedImageConverter {
       .channels(PixelFormat.SKIP_CHANNEL, 0, 1, 2).bits(1, 5, 5, 5).types(PixelFormat.Type.UNORM)
       .build();
 
-
   private BufferedImageConverter() {}
 
   public static BufferedImage convert(Raster<?> image) {
-    ColorSpace cType = getColorSpaceFromClass(image.getColorType());
-    if (cType == null) {
-      return convertToSRGB(image);
-    }
-
-    // The actually supported and useful types for BufferedImages is surprisingly limited
-    int type = java.awt.image.DataBuffer.TYPE_BYTE;
-    if (image.getPixelArray().getData().getBitSize() > 8) {
-      type = java.awt.image.DataBuffer.TYPE_USHORT;
-    }
-
-    int numColorChannels = cType.getNumComponents();
-    int numComponents = numColorChannels + (image.hasAlphaChannel() ? 1 : 0);
-    WritableRaster w = WritableRaster
-        .createInterleavedRaster(type, image.getWidth(), image.getHeight(), numComponents, null);
-
-    BufferedImage copy = new BufferedImage(
-        new ComponentColorModel(cType, image.hasAlphaChannel(), false, ColorModel.TRANSLUCENT,
-            type), w, false, new Hashtable<>());
-
-    float[] normalizedComponents = new float[copy.getColorModel().getNumComponents()];
-    Object dataElems = null;
-    for (Pixel<?> p : image) {
-      // Copy the double channel values into the float array, and clamp to the minimum supported ranges
-      // in BufferedImage
-      double[] channelValues = p.getColor().getChannels();
-      for (int i = 0; i < channelValues.length; i++) {
-        normalizedComponents[i] = (float) Functions
-            .clamp(channelValues[i], cType.getMinValue(i), cType.getMaxValue(i));
-      }
-
-      // Add alpha if necessary
-      if (image.hasAlphaChannel()) {
-        normalizedComponents[normalizedComponents.length - 1] = (float) p.getAlpha();
-      }
-
-      // Convert to data elements to send to the raster, and flip Y coordinate
-      dataElems = copy.getColorModel().getDataElements(normalizedComponents, 0, dataElems);
-      w.setDataElements(p.getX(), image.getHeight() - p.getY() - 1, dataElems);
-    }
-
-    return copy;
+    return convertViaSRGB(image);
   }
 
-  private static <T extends Color> BufferedImage convertToSRGB(Raster<T> image) {
-    int type = image.hasAlphaChannel() ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
+  private static <T extends Color> BufferedImage convertViaSRGB(Raster<T> image) {
+    int type;
+    if (image.getColorType().equals(Luminance.class)) {
+      if (image.getPixelArray().getFormat().getColorChannelBitSize(0) > 8) {
+        type = BufferedImage.TYPE_USHORT_GRAY;
+      } else {
+        type = BufferedImage.TYPE_BYTE_GRAY;
+      }
+    } else if (image.hasAlphaChannel()) {
+      type = BufferedImage.TYPE_INT_ARGB;
+    } else {
+      type = BufferedImage.TYPE_INT_BGR;
+    }
+
     BufferedImage copy = new BufferedImage(image.getWidth(), image.getHeight(), type);
     ColorTransform<T, SRGB> toSRGB = Transforms.newTransform(image.getColorType(), SRGB.class);
     for (Pixel<T> p : image) {
+      if (p.getX() == 640 && p.getY() == 523) {
+        System.out.println("DEBUG");
+      }
       SRGB output = toSRGB.apply(p.getColor());
-
       byte a = (byte) Data.UNORM8.toBits(p.getAlpha());
-      byte r = (byte) Data.UNORM8.toBits(output.r());
-      byte g = (byte) Data.UNORM8.toBits(output.g());
-      byte b = (byte) Data.UNORM8.toBits(output.b());
-      int rgb = (a << 24) | (r << 16) | (g << 8) | b;
+      byte r = (byte) Data.UNORM8.toBits(Functions.clamp(output.r(), 0.0, 1.0));
+      byte g = (byte) Data.UNORM8.toBits(Functions.clamp(output.g(), 0.0, 1.0));
+      byte b = (byte) Data.UNORM8.toBits(Functions.clamp(output.b(), 0.0, 1.0));
+      int rgb = ((0xff & a) << 24) | ((0xff & r) << 16) | ((0xff & g) << 8) | (0xff & b);
 
       // Flip the Y coordinate of the pixel when storing
       copy.setRGB(p.getX(), image.getHeight() - p.getY() - 1, rgb);
@@ -137,47 +109,75 @@ public final class BufferedImageConverter {
     return copy;
   }
 
-  private static Raster<SRGB> convertToSRGB(BufferedImage image, Data.Factory factory) {
-    ImageBuilder.OfRaster<SRGB> builder = Image.newRaster(SRGB.class)
-        .sized(image.getWidth(), image.getHeight()).rgb().unorm8().backedByNewData(factory);
+  private static void configureBuilderType(ImageBuilder<?, ?> builder, int transferType) {
+    switch (transferType) {
+    case java.awt.image.DataBuffer.TYPE_BYTE:
+      builder.unorm8();
+      break;
+    case java.awt.image.DataBuffer.TYPE_INT:
+      builder.unorm32();
+      break;
+    case java.awt.image.DataBuffer.TYPE_SHORT:
+      builder.snorm16();
+      break;
+    case java.awt.image.DataBuffer.TYPE_USHORT:
+      builder.unorm16();
+      break;
+    case java.awt.image.DataBuffer.TYPE_FLOAT:
+      builder.sfloat32();
+      break;
+    case java.awt.image.DataBuffer.TYPE_DOUBLE:
+      builder.sfloat64();
+      break;
+    }
+  }
+
+  private static double packedToSRGB(int packedSRGB, boolean isAlphaPremultiplied, SRGB result) {
+    double r = ((packedSRGB & 0xff0000) >> 16) / 255.0;
+    double g = ((packedSRGB & 0xff00) >> 8) / 255.0;
+    double b = (packedSRGB & 0xff) / 255.0;
+    double a = ((packedSRGB & 0xff000000) >> 24) / 255.0;
+
+    if (isAlphaPremultiplied) {
+      result.set(r / a, g / a, b / a);
+    } else {
+      result.set(r, g, b);
+    }
+
+    return a;
+  }
+
+  private static Raster<Luminance> convertToLuminance(BufferedImage image, Data.Factory factory) {
+    ImageBuilder.OfRaster<Luminance> builder = Image.newRaster(Luminance.class)
+        .sized(image.getWidth(), image.getHeight()).backedByNewData(factory);
+    // Builder is already configured for r(), which is the only option we have really
+    configureBuilderType(builder, image.getSampleModel().getDataType());
     if (image.getColorModel().hasAlpha()) {
       builder.withAlpha();
     }
-    Raster<SRGB> copy = builder.build();
 
-    for (Pixel<SRGB> p : copy) {
+    SRGB temp = new SRGB();
+    ColorTransform<SRGB, Luminance> toLuminance = Transforms
+        .newTransform(SRGB.class, Luminance.class);
+    Raster<Luminance> copy = builder.build();
+
+    boolean alphaPremult = image.isAlphaPremultiplied() && image.getColorModel().hasAlpha();
+    for (Pixel<Luminance> p : copy) {
       // Look up flipped Y coordinate
       int v = image.getRGB(p.getX(), image.getHeight() - p.getY() - 1);
-      double r = ((v & 0xff0000) >> 16) / 255.0;
-      double g = ((v & 0xff00) >> 8) / 255.0;
-      double b = (v & 0xff) / 255.0;
-      double a = ((v & 0xff000000) >> 24) / 255.0;
-
-      if (image.isAlphaPremultiplied()) {
-        p.getColor().set(r / a, g / a, b / a);
-      } else {
-        p.getColor().set(r, g, b);
-      }
+      double a = packedToSRGB(v, alphaPremult, temp);
+      toLuminance.apply(temp, p.getColor());
       p.persist(a);
     }
 
     return copy;
   }
 
-  public static Raster<?> convert(BufferedImage image) {
-    return convert(image, Data.getDefaultDataFactory());
-  }
-
-  public static Raster<?> convert(BufferedImage image, Data.Factory factory) {
-    Class<? extends Color> cType = getClassFromColorSpace(image.getColorModel().getColorSpace());
-    if (cType == null) {
-      return convertToSRGB(image, factory);
-    }
-
-    ImageBuilder.OfRaster<?> builder = Image.newRaster(cType)
+  private static Raster<SRGB> convertToSRGB(BufferedImage image, Data.Factory factory) {
+    ImageBuilder.OfRaster<SRGB> builder = Image.newRaster(SRGB.class)
         .sized(image.getWidth(), image.getHeight()).backedByNewData(factory);
 
-    // Try to preserve channel ordering and encoding resolution
+    // Try and match channel arrangement and bit depths based on known types
     switch (image.getType()) {
     case BufferedImage.TYPE_3BYTE_BGR:
       builder.bgr().unorm8();
@@ -188,9 +188,6 @@ public final class BufferedImageConverter {
     case BufferedImage.TYPE_4BYTE_ABGR_PRE:
     case BufferedImage.TYPE_4BYTE_ABGR:
       builder.abgr().unorm8();
-      break;
-    case BufferedImage.TYPE_BYTE_GRAY:
-      builder.r().unorm8();
       break;
     case BufferedImage.TYPE_INT_ARGB:
     case BufferedImage.TYPE_INT_ARGB_PRE:
@@ -205,60 +202,41 @@ public final class BufferedImageConverter {
     case BufferedImage.TYPE_USHORT_565_RGB:
       builder.packedR5G6B5();
       break;
-    case BufferedImage.TYPE_USHORT_GRAY:
-      builder.r().unorm16();
-      break;
     default:
-      if (image.getColorModel().hasAlpha()) {
-        builder.withAlpha();
-      }
-      switch (image.getSampleModel().getTransferType()) {
-      case java.awt.image.DataBuffer.TYPE_BYTE:
-        builder.unorm8();
-        break;
-      case java.awt.image.DataBuffer.TYPE_INT:
-        builder.unorm32();
-        break;
-      case java.awt.image.DataBuffer.TYPE_SHORT:
-        builder.snorm16();
-        break;
-      case java.awt.image.DataBuffer.TYPE_USHORT:
-        builder.unorm16();
-        break;
-      case java.awt.image.DataBuffer.TYPE_FLOAT:
-        builder.sfloat32();
-        break;
-      case java.awt.image.DataBuffer.TYPE_DOUBLE:
-        builder.sfloat64();
-        break;
-      }
+      configureBuilderType(builder, image.getSampleModel().getDataType());
+      break;
     }
 
-    Raster<?> copy = builder.build();
-    // ColorModel converts to normalized components (which we want for transfer) in float[] only
-    float[] normalizedComponents = new float[image.getColorModel().getNumComponents()];
-    double[] channelValues = new double[Color.getChannelCount(copy.getColorType())];
+    if (image.getColorModel().hasAlpha()) {
+      builder.withAlpha();
+    }
 
-    Object dataElements = null;
-    for (Pixel<?> p : copy) {
-      // Get underlying data elements for pixel with inverted Y value
-      dataElements = image.getRaster()
-          .getDataElements(p.getX(), image.getHeight() - p.getY() - 1, dataElements);
-      // Convert to normalized components
-      image.getColorModel().getNormalizedComponents(dataElements, normalizedComponents, 0);
-
-      // There is no premultiplication for normalized components to worry about, just convert the
-      // float values to double, and extract the alpha from the end if necessary
-      for (int i = 0; i < channelValues.length; i++) {
-        channelValues[i] = normalizedComponents[i];
-      }
-      double alpha = (image.getColorModel().hasAlpha() ? normalizedComponents[
-          normalizedComponents.length - 1] : 1.0);
-      p.getColor().set(channelValues);
-      p.persist(alpha);
+    boolean alphaPremult = image.isAlphaPremultiplied() && image.getColorModel().hasAlpha();
+    Raster<SRGB> copy = builder.build();
+    for (Pixel<SRGB> p : copy) {
+      // Look up flipped Y coordinate
+      int v = image.getRGB(p.getX(), image.getHeight() - p.getY() - 1);
+      double a = packedToSRGB(v, alphaPremult, p.getColor());
+      p.persist(a);
     }
 
     return copy;
+  }
+
+  public static Raster<?> convert(BufferedImage image) {
+    return convert(image, Data.getDefaultDataFactory());
+  }
+
+  public static Raster<?> convert(BufferedImage image, Data.Factory factory) {
+    // To function better with java.image and javax.imageio's limited application of color space
+    // correction, the converted images are treated very simply. Gray scale images are calculated
+    // by first converting to SRGB and then to luminance as well.
+    boolean isGrayscale = image.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY;
+    if (isGrayscale) {
+      return convertToLuminance(image, factory);
+    } else {
+      return convertToSRGB(image, factory);
+    }
   }
 
   public static Raster<?> wrap(BufferedImage image) {
