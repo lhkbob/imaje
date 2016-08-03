@@ -92,9 +92,6 @@ public final class BufferedImageConverter {
     BufferedImage copy = new BufferedImage(image.getWidth(), image.getHeight(), type);
     ColorTransform<T, SRGB> toSRGB = Transforms.newTransform(image.getColorType(), SRGB.class);
     for (Pixel<T> p : image) {
-      if (p.getX() == 640 && p.getY() == 523) {
-        System.out.println("DEBUG");
-      }
       SRGB output = toSRGB.apply(p.getColor());
       byte a = (byte) Data.UNORM8.toBits(p.getAlpha());
       byte r = (byte) Data.UNORM8.toBits(Functions.clamp(output.r(), 0.0, 1.0));
