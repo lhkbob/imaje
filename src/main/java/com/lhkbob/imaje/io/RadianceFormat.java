@@ -1,9 +1,12 @@
 package com.lhkbob.imaje.io;
 
+import com.lhkbob.imaje.Image;
 import com.lhkbob.imaje.Raster;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.XYZ;
+import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transforms;
 import com.lhkbob.imaje.data.Data;
 import com.lhkbob.imaje.data.NumericData;
 import com.lhkbob.imaje.data.types.CustomBinaryData;
@@ -26,9 +29,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * TODO: implement file writing as well
+ * TODO: implement an actual image stream for this file type
+ * http://radsite.lbl.gov/radiance/refer/filefmts.pdf
+ * https://github.com/NREL/Radiance/blob/combined/src/common/color.c
  */
-public class RadianceFormat implements ImageFileReader {
+public class RadianceFormat implements ImageFileFormat {
   private final Data.Factory dataFactory;
 
   public RadianceFormat() {
@@ -119,6 +124,68 @@ public class RadianceFormat implements ImageFileReader {
     readImage(pixelArray, channelCorrection, topToBottom, leftToRight, in, work);
 
     return new Raster(colorType, pixelArray);
+  }
+
+  @Override
+  public void write(Image<?> image, SeekableByteChannel out) throws IOException {
+    if (!(image instanceof Raster)) {
+      throw new InvalidImageException("Only 2D Raster images are supported");
+    }
+
+    writeRaster((Raster<?>) image, out);
+  }
+
+  private <T extends Color> void writeRaster(Raster<T> image, SeekableByteChannel out) throws IOException {
+    ColorTransform<T, RGB.Linear> toLinear = Transforms.newTransform(image.getColorType(), RGB.Linear.class);
+    ByteBuffer work = Data.getBufferFactory().newByteBuffer(WORK_BUFFER_LEN);
+
+    // Build header text
+    StringBuilder header = new StringBuilder();
+    // Magic number
+    header.append("#?RADIANCE\n");
+    // Comment
+    header.append("#Written by imaJe\n");
+    // Format, while we could choose to write XYZE as well, RGBE seems to be more universally supported
+    // and since a conversion has to happen might as well take it to RGB
+    header.append("FORMAT=32-bit_rle_rgbe\n");
+    // Exposure, which we default to 1.0 -> in the future it might be worthwhile to find an exposure
+    // that minimizes data loss when the unexposed pixel values are encoded as 4 bytes.
+    header.append("EXPOSURE=1.0\n");
+    // FIXME we could try and include color correction and/or primaries if we know that T is
+    // a particular type of RGB space, etc.
+
+    // Set resolution and use the common -Y height +X width layout even if the data is likely
+    // in the +Y +X format. Other libraries may not be as flexible at consuming other layouts.
+    header.append("-Y ").append(image.getHeight()).append(" +X ").append(image.getWidth()).append("\n");
+
+
+    // Write header bytes as ASCII
+    work.put(header.toString().getBytes("ASCII")).flip();
+    IOUtils.write(work, out);
+
+    T color = Color.newInstance(image.getColorType());
+    // FIXME implement some RLE encoding for images of appropriate size
+    for (int y = image.getHeight() - 1; y >= 0; y--) {
+      for (int x = 0; x < image.getWidth(); x++) {
+        image.get(x, y, color); // Ignore alpha since Radiance can't store that
+
+        // Convert to linear RGB
+        RGB.Linear toWrite = toLinear.apply(color);
+
+        // Encode RGB as 4 bytes
+        ByteOrderUtils.intToBytesBE((int) CONVERSION.toBits(toWrite.getChannels()), work);
+
+        // Push pixel data to channel if we've reached the end
+        if (work.remaining() < 4) {
+          IOUtils.write(work, out);
+        }
+      }
+    }
+
+    // Flush out any last row of pixel data
+    if (work.hasRemaining()) {
+      IOUtils.write(work, out);
+    }
   }
 
   private void checkMagicNumber(SeekableByteChannel in, ByteBuffer work) throws IOException {
@@ -224,11 +291,7 @@ public class RadianceFormat implements ImageFileReader {
       // Now convert the interleaved RGBE byte values into floating point RGB values
       for (int x = 0; x < width; x++) {
         int offset = 4 * x;
-        byte r = scan[offset];
-        byte g = scan[offset + 1];
-        byte b = scan[offset + 2];
-        byte e = scan[offset + 3];
-        CONVERSION.toNumericValues(ByteOrderUtils.bytesToIntBE(r, g, b, e), rgb);
+        CONVERSION.toNumericValues(ByteOrderUtils.bytesToIntBE(scan, offset), rgb);
 
         // Apply channel corrections to undo modifications to the written pixel values
         for (int i = 0; i < 3; i++) {
@@ -332,13 +395,34 @@ public class RadianceFormat implements ImageFileReader {
   private void readSimpleScanLine(
       int imgWidth, SeekableByteChannel in, ByteBuffer work, byte[] scanlineBuffer) throws
       IOException {
-    // The scanline is just a sequence of 4 * imgWidth bytes with interleaved RGBE values.
+    // The scanline is either a sequence of interleaved 4 RGBE bytes or postfixed specified
+    // RLE-encoded data. Consecutive RLE packets indicate LE-ordered larger run lengths.
     int x = 0;
+    int consecutiveRuns = 0;
     while(x < imgWidth && IOUtils.read(in, work, 4)) {
       // Process bytes 4 at a time
-      int pixels = Math.min(work.remaining() / 4, imgWidth - x);
-      work.get(scanlineBuffer, 4 * x, pixels * 4);
-      x += pixels;
+      while (x < imgWidth && work.remaining() > 4) {
+        int offset = 4 * x;
+        work.get(scanlineBuffer, offset, 4);
+
+        // Old way of specifying a run line is to have every mantissa set to 1, in which
+        // case the exponent encodes the length of the run and copies the previous pixel value
+        if (scanlineBuffer[offset] == 1 && scanlineBuffer[offset + 1] == 1 && scanlineBuffer[offset + 2] == 1) {
+          // Shift the exponent byte left based on how many previous runs have been encountered,
+          // each previous run moves this to a higher order byte block (i.e 8 * runs)
+          int runLength = (0xff & scanlineBuffer[offset + 3]) << (8 * consecutiveRuns);
+          // Copy the previous pixel value in scanlineBuffr to the current offset runLength times
+          for (int i = 0; i < runLength; i++) {
+            System.arraycopy(scanlineBuffer, offset - 4, scanlineBuffer, offset + runLength * 4, 4);
+          }
+          consecutiveRuns++;
+          x += runLength;
+        } else {
+          // Raw pixel value, already copied into the scanline, just clear the run counter
+          consecutiveRuns = 0;
+          x++;
+        }
+      }
     }
 
     // Check if the entire scanline was read before EOF was reached
