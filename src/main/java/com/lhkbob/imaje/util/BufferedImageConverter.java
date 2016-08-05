@@ -28,7 +28,7 @@ import com.lhkbob.imaje.data.array.IntArrayData;
 import com.lhkbob.imaje.data.array.ShortArrayData;
 import com.lhkbob.imaje.data.types.CustomBinaryData;
 import com.lhkbob.imaje.layout.GeneralPixelLayout;
-import com.lhkbob.imaje.layout.InvertedYLayout;
+import com.lhkbob.imaje.layout.InvertedLayout;
 import com.lhkbob.imaje.layout.PackedPixelArray;
 import com.lhkbob.imaje.layout.PixelArray;
 import com.lhkbob.imaje.layout.PixelFormat;
@@ -86,7 +86,7 @@ public final class BufferedImageConverter {
     } else if (image.hasAlphaChannel()) {
       type = BufferedImage.TYPE_INT_ARGB;
     } else {
-      type = BufferedImage.TYPE_INT_BGR;
+      type = BufferedImage.TYPE_INT_RGB;
     }
 
     BufferedImage copy = new BufferedImage(image.getWidth(), image.getHeight(), type);
@@ -297,7 +297,7 @@ public final class BufferedImageConverter {
 
       // It will use a packed pixel array
       wrapper = new PackedPixelArray(
-          format, new InvertedYLayout(layout), (BitData) wrappedData, 0L);
+          format, new InvertedLayout(layout, false, true), (BitData) wrappedData, 0L);
     } else if (image.getSampleModel() instanceof ComponentSampleModel) {
       ComponentSampleModel s = (ComponentSampleModel) image.getSampleModel();
       GeneralPixelLayout.InterleavingUnit interleave = getInterleaving(s);
@@ -319,7 +319,7 @@ public final class BufferedImageConverter {
 
       // Unpacked pixel array
       wrapper = new UnpackedPixelArray(
-          format, new InvertedYLayout(layout), (NumericData) wrappedData, 0L);
+          format, new InvertedLayout(layout, false, true), (NumericData) wrappedData, 0L);
     } else {
       // Unknown sample model, so data arrangement is unknown
       return null;
@@ -356,12 +356,12 @@ public final class BufferedImageConverter {
     }
 
     PixelLayout layout = data.getLayout();
-    if (!(layout instanceof InvertedYLayout)) {
+    if (!(layout instanceof InvertedLayout)) {
       // Must flip Y axis so that coordinate systems align
       return null;
     }
 
-    layout = ((InvertedYLayout) layout).getOriginalLayout();
+    layout = ((InvertedLayout) layout).getOriginalLayout();
 
     WritableRaster raster;
     ColorModel colorModel;
@@ -515,15 +515,11 @@ public final class BufferedImageConverter {
   private static ColorSpace getColorSpaceFromClass(Class<? extends Color> cType) {
     if (Luminance.class.equals(cType)) {
       return ColorSpace.getInstance(ColorSpace.CS_GRAY);
-    } else if (XYZ.class.equals(cType)) {
-      return ColorSpace.getInstance(ColorSpace.CS_CIEXYZ);
-    } else if (RGB.Linear.class.equals(cType)) {
-      return ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB);
     } else if (SRGB.class.equals(cType)) {
       return ColorSpace.getInstance(ColorSpace.CS_sRGB);
     } else {
-      // Would need ICC profiles for the others since no defined color space is provided for
-      // lab, luv, or cmyk in AWT.
+      // While AWT defines other color spaces besides the above two, the I/O image pipeline in AWT
+      // seems to just assume srgb without doing any conversion.
       return null;
     }
   }
