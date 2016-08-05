@@ -193,6 +193,16 @@ public class GeneralPixelLayout implements PixelLayout {
   }
 
   @Override
+  public boolean isDataBottomToTop() {
+    return true;
+  }
+
+  @Override
+  public boolean isDataLeftToRight() {
+    return true;
+  }
+
+  @Override
   public Iterator<ImageCoordinate> iterator() {
     return new ImageCoordinate.FastIterator(
         new IndexIterator(imageWidth * imageHeight), this::updateCoordinate);

@@ -24,43 +24,7 @@ import java.util.List;
 
 /**
  */
-public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B extends DefaultImageBuilder<T, I, B>>  {
-  private final DataBufferBuilder dataBuilder;
-  private final T defaultColor; // Also the default color for newly allocated data
-  private final PixelFormatBuilder formatBuilder;
-  private final PixelLayoutBuilder layoutBuilder;
-  private boolean packed;
-  private boolean storeMipmapsHighToLow;
-  private boolean storeMipmapsTogether;
-  private boolean newDataAllocated;
-  private int layers;
-
-  public DefaultImageBuilder(T color) {
-    Arguments.notNull("color", color);
-
-    defaultColor = color;
-    formatBuilder = new PixelFormatBuilder();
-    layoutBuilder = new PixelLayoutBuilder();
-    dataBuilder = new DataBufferBuilder();
-    packed = false;
-    storeMipmapsHighToLow = false;
-    storeMipmapsTogether = false;
-    newDataAllocated = true;
-
-    defaultFormat();
-  }
-
-  public static class OfRaster<T extends Color> extends DefaultImageBuilder<T, Raster<T>, OfRaster<T>> implements ImageBuilder.OfRaster<T> {
-    public OfRaster(T color) {
-      super(color);
-    }
-
-    @Override
-    public Raster<T> build() {
-      return newRaster();
-    }
-  }
-
+public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B extends DefaultImageBuilder<T, I, B>> {
   public static class OfMipmap<T extends Color> extends DefaultImageBuilder<T, Mipmap<T>, OfMipmap<T>> implements ImageBuilder.OfMipmap<T> {
     public OfMipmap(T color) {
       super(color);
@@ -79,22 +43,6 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     @Override
     public DefaultImageBuilder.OfMipmap<T> orderMipmapsLowToHigh() {
       return super.orderMipmapsLowToHigh();
-    }
-  }
-
-  public static class OfRasterArray<T extends Color> extends DefaultImageBuilder<T, RasterArray<T>, OfRasterArray<T>> implements ImageBuilder.OfRasterArray<T> {
-    public OfRasterArray(T color) {
-      super(color);
-    }
-
-    @Override
-    public RasterArray<T> build() {
-      return newRasterArray();
-    }
-
-    @Override
-    public DefaultImageBuilder.OfRasterArray<T> layers(int count) {
-      return super.layers(count);
     }
   }
 
@@ -133,58 +81,57 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
       return super.orderMipmapsLowToHigh();
     }
   }
-  
-  @SuppressWarnings("unchecked")
-  protected B builder() {
-    return (B) this;
-  }
 
-  protected B layers(int count) {
-    layers = count;
-    return builder();
-  }
+  public static class OfRaster<T extends Color> extends DefaultImageBuilder<T, Raster<T>, OfRaster<T>> implements ImageBuilder.OfRaster<T> {
+    public OfRaster(T color) {
+      super(color);
+    }
 
-  public B compatibleWith(Image<?> image) {
-    if (image instanceof Raster) {
-      // First extract the PixelArray
-      PixelArray data = ((Raster<?>) image).getPixelArray();
-
-      formatBuilder.compatibleWith(data.getFormat());
-      layoutBuilder.compatibleWith(data.getLayout());
-      // FIXME must handle SharedExponentArray
-      packed = data instanceof PackedPixelArray;
-      // But don't modify new data allocation or mipmap organization
-      return builder();
-    } else if (image instanceof RasterArray) {
-      // There is nothing configurable about a RasterArray, so just grab the first raster since all
-      // rasters in the array are formatted the same.
-      return compatibleWith(((RasterArray<?>) image).getLayer(0));
-    } else if (image instanceof Mipmap) {
-      // Try and determine the mipmap ordering and set that property, then configure the rest
-      // of the builder based on the highest level mipmap.
-      // FIXME
-      return compatibleWith(((Mipmap<?>) image).getMipmap(0));
-    } else if (image instanceof MipmapArray) {
-      // Try to determine mipmap grouping, then configure the rest of the
-      // builder based on the first layer (which also handles mipmap ordering)
-      // FIXME
-      return compatibleWith(((MipmapArray<?>) image).getLayer(0));
-    } else {
-      throw new UnsupportedOperationException(
-          "Unknown Image implementation, cannot be used to update builder: " + image);
+    @Override
+    public Raster<T> build() {
+      return newRaster();
     }
   }
 
-  public B format(PixelFormat format) {
-    formatBuilder.compatibleWith(format);
-    packed = false;
-    return builder();
+  public static class OfRasterArray<T extends Color> extends DefaultImageBuilder<T, RasterArray<T>, OfRasterArray<T>> implements ImageBuilder.OfRasterArray<T> {
+    public OfRasterArray(T color) {
+      super(color);
+    }
+
+    @Override
+    public RasterArray<T> build() {
+      return newRasterArray();
+    }
+
+    @Override
+    public DefaultImageBuilder.OfRasterArray<T> layers(int count) {
+      return super.layers(count);
+    }
   }
 
-  public B packedFormat(PixelFormat format) {
-    formatBuilder.compatibleWith(format);
-    packed = true;
-    return builder();
+  private final DataBufferBuilder dataBuilder;
+  private final T defaultColor; // Also the default color for newly allocated data
+  private final PixelFormatBuilder formatBuilder;
+  private final PixelLayoutBuilder layoutBuilder;
+  private int layers;
+  private boolean newDataAllocated;
+  private boolean packed;
+  private boolean storeMipmapsHighToLow;
+  private boolean storeMipmapsTogether;
+
+  public DefaultImageBuilder(T color) {
+    Arguments.notNull("color", color);
+
+    defaultColor = color;
+    formatBuilder = new PixelFormatBuilder();
+    layoutBuilder = new PixelLayoutBuilder();
+    dataBuilder = new DataBufferBuilder();
+    packed = false;
+    storeMipmapsHighToLow = false;
+    storeMipmapsTogether = false;
+    newDataAllocated = true;
+
+    defaultFormat();
   }
 
   public B abgr() {
@@ -192,108 +139,9 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     return builder();
   }
 
-  public B withAlpha() {
-    formatBuilder.addChannel(PixelFormat.ALPHA_CHANNEL);
-    return builder();
-  }
-
-  public B withAlpha(int bits) {
-    formatBuilder.addChannel(PixelFormat.ALPHA_CHANNEL, bits);
-    return builder();
-  }
-
-  public B withAlpha(PixelFormat.Type type) {
-    formatBuilder.addChannel(PixelFormat.ALPHA_CHANNEL, type);
-    return builder();
-  }
-
-  public B withAlpha(int bits, PixelFormat.Type type) {
-    formatBuilder.addChannel(PixelFormat.ALPHA_CHANNEL, bits, type);
-    return builder();
-  }
-
   public B argb() {
     formatBuilder.channels(PixelFormat.ALPHA_CHANNEL, 0, 1, 2);
     return builder();
-  }
-
-  public B bgr() {
-    formatBuilder.channels(2, 1, 0);
-    return builder();
-  }
-
-  public B bgra() {
-    formatBuilder.channels(2, 1, 0, PixelFormat.ALPHA_CHANNEL);
-    return builder();
-  }
-
-  protected Mipmap<T> newMipmap() {
-    PixelFormat format = formatBuilder.build();
-    PixelLayout layout = buildLayout(format);
-    NumericData<?> data = buildDataSource(format, layout, true, 1);
-
-    int mipmapCount = ImageUtils.getMipmapCount(layout.getWidth(), layout.getHeight());
-    List<Raster<T>> levels = new ArrayList<>(mipmapCount);
-    for (int i = 0; i < mipmapCount; i++) {
-      levels.add(buildRaster(format, layout, data, i, 0, 1));
-    }
-
-    Mipmap<T> image = new Mipmap<>(levels);
-    setDefaultColor(image);
-    return image;
-  }
-
-  protected MipmapArray<T> newMipmapArray() {
-    PixelFormat format = formatBuilder.build();
-    PixelLayout layout = buildLayout(format);
-    NumericData<?> data = buildDataSource(format, layout, true, layers);
-
-    int mipmapCount = ImageUtils.getMipmapCount(layout.getWidth(), layout.getHeight());
-    List<Mipmap<T>> layerImages = new ArrayList<>(layers);
-    for (int i = 0; i < layers; i++) {
-      List<Raster<T>> levels = new ArrayList<>(mipmapCount);
-      for (int j = 0; j < mipmapCount; j++) {
-        levels.add(buildRaster(format, layout, data, j, i, layers));
-      }
-      layerImages.add(new Mipmap<>(levels));
-    }
-
-    MipmapArray<T> image = new MipmapArray<>(layerImages);
-    setDefaultColor(image);
-    return image;
-  }
-
-  private PixelLayout buildLayout(PixelFormat format) {
-    if (packed) {
-      return layoutBuilder.clone().channels(1).build();
-    } else {
-      return layoutBuilder.clone().channels(format.getDataChannelCount()).build();
-    }
-  }
-
-  protected Raster<T> newRaster() {
-    PixelFormat format = formatBuilder.build();
-    PixelLayout layout = buildLayout(format);
-    NumericData<?> data = buildDataSource(format, layout, false, 1);
-
-    Raster<T> image = buildRaster(format, layout, data, -1, 0, 1);
-    setDefaultColor(image);
-    return image;
-  }
-
-  protected RasterArray<T> newRasterArray() {
-    PixelFormat format = formatBuilder.build();
-    PixelLayout layout = buildLayout(format);
-    NumericData<?> data = buildDataSource(format, layout, false, layers);
-
-    List<Raster<T>> layerImages = new ArrayList<>(layers);
-    for (int i = 0; i < layers; i++) {
-      layerImages.add(buildRaster(format, layout, data, -1, i, layers));
-    }
-
-    RasterArray<T> image = new RasterArray<>(layerImages);
-    setDefaultColor(image);
-    return image;
   }
 
   public B backedBy(byte[] data) {
@@ -344,22 +192,18 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     return builder();
   }
 
-  private void setDefaultColor(Image<T> image) {
-    if (newDataAllocated) {
-      // Only update pixel contents if existing data was not provided.
-      for (Pixel<T> p : image) {
-        p.setColor(defaultColor, 1.0);
-      }
-    }
-  }
-
-  protected B groupLayersByMipmap() {
-    storeMipmapsTogether = false;
+  public B backedByNewData(Data.Factory factory) {
+    dataBuilder.allocateNewData(factory);
     return builder();
   }
 
-  protected B groupMipmapsByLayer() {
-    storeMipmapsTogether = true;
+  public B bgr() {
+    formatBuilder.channels(2, 1, 0);
+    return builder();
+  }
+
+  public B bgra() {
+    formatBuilder.channels(2, 1, 0, PixelFormat.ALPHA_CHANNEL);
     return builder();
   }
 
@@ -383,46 +227,72 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     return builder();
   }
 
-  public B backedByNewData(Data.Factory factory) {
-    dataBuilder.allocateNewData(factory);
-    return builder();
-  }
+  public B compatibleWith(Image<?> image) {
+    if (image instanceof Raster) {
+      // First extract the PixelArray
+      PixelArray data = ((Raster<?>) image).getPixelArray();
 
-  public B untiled() {
-    // Explicitly set an invalid dimension rather than setting to null, since that could cause
-    // the tiling to be inherited from the compatible image
-    layoutBuilder.tileWidth(-1).tileHeight(-1);
-    return builder();
+      formatBuilder.compatibleWith(data.getFormat());
+      layoutBuilder.compatibleWith(data.getLayout());
+      // FIXME must handle SharedExponentArray
+      packed = data instanceof PackedPixelArray;
+      // But don't modify new data allocation or mipmap organization
+      return builder();
+    } else if (image instanceof RasterArray) {
+      // There is nothing configurable about a RasterArray, so just grab the first raster since all
+      // rasters in the array are formatted the same.
+      return compatibleWith(((RasterArray<?>) image).getLayer(0));
+    } else if (image instanceof Mipmap) {
+      // Try and determine the mipmap ordering and set that property, then configure the rest
+      // of the builder based on the highest level mipmap.
+      // FIXME
+      return compatibleWith(((Mipmap<?>) image).getMipmap(0));
+    } else if (image instanceof MipmapArray) {
+      // Try to determine mipmap grouping, then configure the rest of the
+      // builder based on the first layer (which also handles mipmap ordering)
+      // FIXME
+      return compatibleWith(((MipmapArray<?>) image).getLayer(0));
+    } else {
+      throw new UnsupportedOperationException(
+          "Unknown Image implementation, cannot be used to update builder: " + image);
+    }
   }
 
   public B dataArrangedBottomUp() {
-    layoutBuilder.standardYAxis();
+    layoutBuilder.bottomToTop();
     return builder();
   }
 
-  protected B orderMipmapsHighToLow() {
-    storeMipmapsHighToLow = true;
+  public B dataArrangedTopDown() {
+    layoutBuilder.topToBottom();
     return builder();
   }
 
-  protected B orderMipmapsLowToHigh() {
-    storeMipmapsHighToLow = false;
+  public B dataArrangedLeftToRight() {
+    layoutBuilder.leftToRight();
     return builder();
   }
 
-  protected B packed() {
-    packed = true;
+  public B dataArrangedRightToLeft() {
+    layoutBuilder.rightToLeft();
     return builder();
   }
 
-  public B packedA2B10G10R10() {
-    formatBuilder.bits(2, 10, 10, 10).types(PixelFormat.Type.UNORM);
-    return packed().abgr();
+  public B defaultFormat() {
+    int channels = defaultColor.getChannelCount();
+    int[] seqMap = new int[channels];
+    for (int i = 0; i < channels; i++) {
+      seqMap[i] = i;
+    }
+    formatBuilder.reset().channels(seqMap);
+    packed = false;
+    return builder();
   }
 
-  public B packedA8B8G8R8() {
-    formatBuilder.bits(8).types(PixelFormat.Type.UNORM);
-    return packed().abgr();
+  public B format(PixelFormat format) {
+    formatBuilder.compatibleWith(format);
+    packed = false;
+    return builder();
   }
 
   public B packedA1R5G5B5() {
@@ -430,14 +300,19 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     return packed().argb();
   }
 
+  public B packedA2B10G10R10() {
+    formatBuilder.bits(2, 10, 10, 10).types(PixelFormat.Type.UNORM);
+    return packed().abgr();
+  }
+
   public B packedA2R10G10B10() {
     formatBuilder.bits(2, 10, 10, 10).types(PixelFormat.Type.UNORM);
     return packed().argb();
   }
 
-  public B packedB5G6R5() {
-    formatBuilder.bits(5, 6, 5).types(PixelFormat.Type.UNORM);
-    return packed().bgr();
+  public B packedA8B8G8R8() {
+    formatBuilder.bits(8).types(PixelFormat.Type.UNORM);
+    return packed().abgr();
   }
 
   public B packedB4G4R4A4() {
@@ -450,24 +325,9 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     return packed().bgra();
   }
 
-  public B packedR5G6B5() {
+  public B packedB5G6R5() {
     formatBuilder.bits(5, 6, 5).types(PixelFormat.Type.UNORM);
-    return packed().rgb();
-  }
-
-  public B packedR4G4B4A4() {
-    formatBuilder.bits(4).types(PixelFormat.Type.UNORM);
-    return packed().rgba();
-  }
-
-  public B packedR5G5B5A1() {
-    formatBuilder.bits(5, 5, 5, 1).types(PixelFormat.Type.UNORM);
-    return packed().rgba();
-  }
-
-  public B packedR4G4() {
-    formatBuilder.channels(0, 1).bits(4).types(PixelFormat.Type.UNORM);
-    return packed();
+    return packed().bgr();
   }
 
   public B packedD24() {
@@ -480,15 +340,30 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     return packed();
   }
 
-  public B defaultFormat() {
-    int channels = defaultColor.getChannelCount();
-    int[] seqMap = new int[channels];
-    for (int i = 0; i < channels; i++) {
-      seqMap[i] = i;
-    }
-    formatBuilder.reset().channels(seqMap);
-    packed = false;
+  public B packedFormat(PixelFormat format) {
+    formatBuilder.compatibleWith(format);
+    packed = true;
     return builder();
+  }
+
+  public B packedR4G4() {
+    formatBuilder.channels(0, 1).bits(4).types(PixelFormat.Type.UNORM);
+    return packed();
+  }
+
+  public B packedR4G4B4A4() {
+    formatBuilder.bits(4).types(PixelFormat.Type.UNORM);
+    return packed().rgba();
+  }
+
+  public B packedR5G5B5A1() {
+    formatBuilder.bits(5, 5, 5, 1).types(PixelFormat.Type.UNORM);
+    return packed().rgba();
+  }
+
+  public B packedR5G6B5() {
+    formatBuilder.bits(5, 6, 5).types(PixelFormat.Type.UNORM);
+    return packed().rgb();
   }
 
   public B r() {
@@ -596,11 +471,6 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     return builder();
   }
 
-  public B dataArrangedTopDown() {
-    layoutBuilder.flippedYAxis();
-    return builder();
-  }
-
   public B uint16() {
     formatBuilder.bits(16).types(PixelFormat.Type.UINT);
     return builder();
@@ -641,6 +511,13 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     return builder();
   }
 
+  public B untiled() {
+    // Explicitly set an invalid dimension rather than setting to null, since that could cause
+    // the tiling to be inherited from the compatible image
+    layoutBuilder.tileWidth(-1).tileHeight(-1);
+    return builder();
+  }
+
   public B uscaled16() {
     formatBuilder.bits(16).types(PixelFormat.Type.USCALED);
     return builder();
@@ -661,6 +538,122 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     return builder();
   }
 
+  public B withAlpha() {
+    formatBuilder.addChannel(PixelFormat.ALPHA_CHANNEL);
+    return builder();
+  }
+
+  public B withAlpha(int bits) {
+    formatBuilder.addChannel(PixelFormat.ALPHA_CHANNEL, bits);
+    return builder();
+  }
+
+  public B withAlpha(PixelFormat.Type type) {
+    formatBuilder.addChannel(PixelFormat.ALPHA_CHANNEL, type);
+    return builder();
+  }
+
+  public B withAlpha(int bits, PixelFormat.Type type) {
+    formatBuilder.addChannel(PixelFormat.ALPHA_CHANNEL, bits, type);
+    return builder();
+  }
+
+  @SuppressWarnings("unchecked")
+  protected B builder() {
+    return (B) this;
+  }
+
+  protected B groupLayersByMipmap() {
+    storeMipmapsTogether = false;
+    return builder();
+  }
+
+  protected B groupMipmapsByLayer() {
+    storeMipmapsTogether = true;
+    return builder();
+  }
+
+  protected B layers(int count) {
+    layers = count;
+    return builder();
+  }
+
+  protected Mipmap<T> newMipmap() {
+    PixelFormat format = formatBuilder.build();
+    PixelLayout layout = buildLayout(format);
+    NumericData<?> data = buildDataSource(format, layout, true, 1);
+
+    int mipmapCount = ImageUtils.getMipmapCount(layout.getWidth(), layout.getHeight());
+    List<Raster<T>> levels = new ArrayList<>(mipmapCount);
+    for (int i = 0; i < mipmapCount; i++) {
+      levels.add(buildRaster(format, layout, data, i, 0, 1));
+    }
+
+    Mipmap<T> image = new Mipmap<>(levels);
+    setDefaultColor(image);
+    return image;
+  }
+
+  protected MipmapArray<T> newMipmapArray() {
+    PixelFormat format = formatBuilder.build();
+    PixelLayout layout = buildLayout(format);
+    NumericData<?> data = buildDataSource(format, layout, true, layers);
+
+    int mipmapCount = ImageUtils.getMipmapCount(layout.getWidth(), layout.getHeight());
+    List<Mipmap<T>> layerImages = new ArrayList<>(layers);
+    for (int i = 0; i < layers; i++) {
+      List<Raster<T>> levels = new ArrayList<>(mipmapCount);
+      for (int j = 0; j < mipmapCount; j++) {
+        levels.add(buildRaster(format, layout, data, j, i, layers));
+      }
+      layerImages.add(new Mipmap<>(levels));
+    }
+
+    MipmapArray<T> image = new MipmapArray<>(layerImages);
+    setDefaultColor(image);
+    return image;
+  }
+
+  protected Raster<T> newRaster() {
+    PixelFormat format = formatBuilder.build();
+    PixelLayout layout = buildLayout(format);
+    NumericData<?> data = buildDataSource(format, layout, false, 1);
+
+    Raster<T> image = buildRaster(format, layout, data, -1, 0, 1);
+    setDefaultColor(image);
+    return image;
+  }
+
+  protected RasterArray<T> newRasterArray() {
+    PixelFormat format = formatBuilder.build();
+    PixelLayout layout = buildLayout(format);
+    NumericData<?> data = buildDataSource(format, layout, false, layers);
+
+    List<Raster<T>> layerImages = new ArrayList<>(layers);
+    for (int i = 0; i < layers; i++) {
+      layerImages.add(buildRaster(format, layout, data, -1, i, layers));
+    }
+
+    RasterArray<T> image = new RasterArray<>(layerImages);
+    setDefaultColor(image);
+    return image;
+  }
+
+  protected B orderMipmapsHighToLow() {
+    storeMipmapsHighToLow = true;
+    return builder();
+  }
+
+  protected B orderMipmapsLowToHigh() {
+    storeMipmapsHighToLow = false;
+    return builder();
+  }
+
+  protected B packed() {
+    packed = true;
+    return builder();
+  }
+
   private NumericData<?> buildDataSource(
       PixelFormat format, PixelLayout layout, boolean mipmapped, int layers) {
     long imageSize = ImageUtils
@@ -673,6 +666,14 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     } else {
       return dataBuilder.bitSize(format.getColorChannelBitSize(0))
           .type(format.getColorChannelType(0)).length(imageSize).build();
+    }
+  }
+
+  private PixelLayout buildLayout(PixelFormat format) {
+    if (packed) {
+      return layoutBuilder.clone().channels(1).build();
+    } else {
+      return layoutBuilder.clone().channels(format.getDataChannelCount()).build();
     }
   }
 
@@ -727,9 +728,17 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
       layout = mippedLayout;
     }
 
-    PixelArray image =
-        packed ? new PackedPixelArray(format, layout, data.asBitData(), baseOffset)
-            : new UnpackedPixelArray(format, layout, data, baseOffset);
+    PixelArray image = packed ? new PackedPixelArray(format, layout, data.asBitData(), baseOffset)
+        : new UnpackedPixelArray(format, layout, data, baseOffset);
     return new Raster<>((Class<T>) defaultColor.getClass(), image);
+  }
+
+  private void setDefaultColor(Image<T> image) {
+    if (newDataAllocated) {
+      // Only update pixel contents if existing data was not provided.
+      for (Pixel<T> p : image) {
+        p.setColor(defaultColor, 1.0);
+      }
+    }
   }
 }

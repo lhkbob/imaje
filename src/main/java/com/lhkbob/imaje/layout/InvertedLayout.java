@@ -9,16 +9,31 @@ import java.util.function.Consumer;
 /**
  *
  */
-public class InvertedYLayout implements PixelLayout {
+public class InvertedLayout implements PixelLayout {
+  private final boolean invertX;
+  private final boolean invertY;
   private final PixelLayout original;
 
-  public InvertedYLayout(PixelLayout toInvert) {
-    Arguments.notNull("toInvert", toInvert);
-    original = toInvert;
+  public InvertedLayout(PixelLayout original, boolean invertX, boolean invertY) {
+    Arguments.notNull("original", original);
+    if (!invertX && !invertY) {
+      throw new IllegalArgumentException("At least one of invertX and invertY should be true");
+    }
+    this.original = original;
+    this.invertX = invertX;
+    this.invertY = invertY;
   }
 
   public PixelLayout getOriginalLayout() {
     return original;
+  }
+
+  public boolean isXAxisInverted() {
+    return invertX;
+  }
+
+  public boolean isYAxisInverted() {
+    return invertY;
   }
 
   @Override
@@ -28,12 +43,12 @@ public class InvertedYLayout implements PixelLayout {
 
   @Override
   public void getChannelIndices(int x, int y, long[] channelIndices) {
-    original.getChannelIndices(x, invertY(y), channelIndices);
+    original.getChannelIndices(getX(x), getY(y), channelIndices);
   }
 
   @Override
   public long getChannelIndex(int x, int y, int channel) {
-    return original.getChannelIndex(x, invertY(y), channel);
+    return original.getChannelIndex(getX(x), getY(y), channel);
   }
 
   @Override
@@ -48,16 +63,38 @@ public class InvertedYLayout implements PixelLayout {
 
   @Override
   public boolean isGPUCompatible() {
-    // If the Y is inverted, that means the image is flipped with respect to what the OpenGL coordinate
-    // system expects so this can never be GPU ready
-    // FIXME unless the original was already inverted, ad naseum. Perhaps we should explicitly
-    // disallow nested invertedYLayouts?
+    // If the X/Y is inverted, that means the image is flipped with respect to what the OpenGL coordinate
+    // system expects so this can never be GPU ready. Hypothetically this could be wrapping a raster
+    // that already flipped the X, restoring order, but that is tricky to get right. It is much easier to say
+    // that composed layouts are not GPU compatible.
     return false;
   }
 
   @Override
   public int getWidth() {
     return original.getWidth();
+  }
+
+  @Override
+  public boolean isDataBottomToTop() {
+    if (invertY) {
+      // Flip vertical ordering
+      return !original.isDataBottomToTop();
+    } else {
+      // Preserve vertical ordering
+      return original.isDataBottomToTop();
+    }
+  }
+
+  @Override
+  public boolean isDataLeftToRight() {
+    if (invertX) {
+      // Flip horizontal ordering
+      return !original.isDataLeftToRight();
+    } else {
+      // Preserve vertical ordering
+      return original.isDataLeftToRight();
+    }
   }
 
   @Override
@@ -70,8 +107,18 @@ public class InvertedYLayout implements PixelLayout {
     return new InvertingSpliterator(original.spliterator());
   }
 
-  private int invertY(int y) {
-    return getHeight() - y - 1;
+  private int getY(int y) {
+    if (invertY)
+      return getHeight() - y - 1;
+    else
+      return y;
+  }
+
+  private int getX(int x) {
+    if (invertX)
+      return getWidth() - x - 1;
+    else
+      return x;
   }
 
   private class InvertingIterator implements Iterator<ImageCoordinate> {
@@ -89,7 +136,8 @@ public class InvertedYLayout implements PixelLayout {
     @Override
     public ImageCoordinate next() {
       ImageCoordinate ic = base.next();
-      ic.setY(invertY(ic.getY()));
+      ic.setX(getX(ic.getX()));
+      ic.setY(getY(ic.getY()));
       return ic;
     }
   }
@@ -104,9 +152,10 @@ public class InvertedYLayout implements PixelLayout {
     @Override
     public boolean tryAdvance(
         Consumer<? super ImageCoordinate> action) {
-      return base.tryAdvance(imageCoordinate -> {
-        imageCoordinate.setY(invertY(imageCoordinate.getY()));
-        action.accept(imageCoordinate);
+      return base.tryAdvance(ic -> {
+        ic.setX(getX(ic.getX()));
+        ic.setY(getY(ic.getY()));
+        action.accept(ic);
       });
     }
 
@@ -133,7 +182,7 @@ public class InvertedYLayout implements PixelLayout {
     @Override
     public int characteristics() {
       // Make sure it's not SORTED; if some base spliterator somehow does sort image coordinates,
-      // the Y inversion is likely to mangle that ordering.
+      // the X/Y inversion is likely to mangle that ordering.
       return base.characteristics() & ~Spliterator.SORTED;
     }
   }

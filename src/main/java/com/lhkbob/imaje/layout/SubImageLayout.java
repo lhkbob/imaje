@@ -30,6 +30,18 @@ public class SubImageLayout implements PixelLayout {
     height = h;
   }
 
+  public int getOffsetX() {
+    return offsetX;
+  }
+
+  public int getOffsetY() {
+    return offsetY;
+  }
+
+  public PixelLayout getOriginalLayout() {
+    return original;
+  }
+
   @Override
   public int getHeight() {
     return height;
@@ -63,6 +75,18 @@ public class SubImageLayout implements PixelLayout {
   @Override
   public int getWidth() {
     return width;
+  }
+
+  @Override
+  public boolean isDataBottomToTop() {
+    // Preserve ordering
+    return original.isDataBottomToTop();
+  }
+
+  @Override
+  public boolean isDataLeftToRight() {
+    // Preserve ordering
+    return original.isDataLeftToRight();
   }
 
   @Override

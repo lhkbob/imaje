@@ -82,6 +82,10 @@ public interface ImageBuilder<I extends Image<?>, B extends ImageBuilder<I, B>> 
 
   B compatibleWith(Image<?> image);
 
+  B dataArrangedLeftToRight();
+
+  B dataArrangedRightToLeft();
+
   B dataArrangedBottomUp();
 
   B dataArrangedTopDown();

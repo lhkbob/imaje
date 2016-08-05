@@ -25,4 +25,8 @@ public interface PixelLayout extends Iterable<ImageCoordinate> {
   static PixelLayoutBuilder newBuilder() {
     return new PixelLayoutBuilder();
   }
+
+  boolean isDataBottomToTop();
+
+  boolean isDataLeftToRight();
 }

@@ -1,9 +1,10 @@
 package com.lhkbob.imaje.util;
 
 import com.lhkbob.imaje.layout.GeneralPixelLayout;
-import com.lhkbob.imaje.layout.InvertedYLayout;
+import com.lhkbob.imaje.layout.InvertedLayout;
 import com.lhkbob.imaje.layout.PixelLayout;
 import com.lhkbob.imaje.layout.RasterLayout;
+import com.lhkbob.imaje.layout.SubImageLayout;
 
 /**
  *
@@ -16,6 +17,7 @@ public class PixelLayoutBuilder implements Cloneable {
   private int channels;
   private GeneralPixelLayout.InterleavingUnit interleavingUnit;
   private boolean flipY;
+  private boolean flipX;
 
   public PixelLayoutBuilder() {
     // Defaults
@@ -26,6 +28,7 @@ public class PixelLayoutBuilder implements Cloneable {
     channels = 1;
     interleavingUnit = GeneralPixelLayout.InterleavingUnit.PIXEL;
     flipY = false;
+    flipX = false;
   }
 
   @Override
@@ -46,40 +49,54 @@ public class PixelLayoutBuilder implements Cloneable {
   }
 
   private void setCompatible(PixelLayout layout, boolean flip) {
-    // FIXME handle SubImageLayout as well
-    if (layout instanceof InvertedYLayout) {
-      // Nested layout inversions, so negate the flip effect, which will collapse multiple inversions
-      setCompatible(((InvertedYLayout) layout).getOriginalLayout(), !flip);
-    } else if (layout instanceof RasterLayout) {
-      RasterLayout l = (RasterLayout) layout;
-      width = l.getWidth();
-      height = l.getHeight();
-      channels = l.getChannelCount();
+    // Set properties that don't depend on the nesting/wrapping of layouts
+    width = layout.getWidth();
+    height = layout.getHeight();
+    channels = layout.getChannelCount();
+    flipX = !layout.isDataLeftToRight();
+    flipY = !layout.isDataBottomToTop();
+
+    // Extract base layout to determine pixel interleaving and tiling properties
+    while(layout instanceof SubImageLayout || layout instanceof InvertedLayout) {
+      if (layout instanceof SubImageLayout) {
+        layout = ((SubImageLayout) layout).getOriginalLayout();
+      } else {
+        layout = ((InvertedLayout) layout).getOriginalLayout();
+      }
+    }
+
+    if (layout instanceof RasterLayout) {
       tileWidth = -1;
       tileHeight = -1;
       interleavingUnit = GeneralPixelLayout.InterleavingUnit.PIXEL;
-      flipY = flip;
     } else if (layout instanceof GeneralPixelLayout) {
       GeneralPixelLayout l = (GeneralPixelLayout) layout;
-      width = l.getWidth();
-      height = l.getHeight();
-      channels = l.getChannelCount();
       tileWidth = l.getTileWidth();
       tileHeight = l.getTileHeight();
       interleavingUnit = l.getInterleavingUnit();
-      flipY = flip;
     } else {
-      throw new UnsupportedOperationException("Unsupported pixel layout class: " + layout.getClass());
+      throw new UnsupportedOperationException(
+          "Unsupported pixel layout class: " + layout.getClass());
     }
   }
 
-  public PixelLayoutBuilder flippedYAxis() {
+  public PixelLayoutBuilder topToBottom() {
     flipY = true;
     return this;
   }
 
-  public PixelLayoutBuilder standardYAxis() {
+  public PixelLayoutBuilder bottomToTop() {
     flipY = false;
+    return this;
+  }
+
+  public PixelLayoutBuilder leftToRight() {
+    flipX = false;
+    return this;
+  }
+
+  public PixelLayoutBuilder rightToLeft() {
+    flipX = true;
     return this;
   }
 
@@ -151,10 +168,10 @@ public class PixelLayoutBuilder implements Cloneable {
           width, height, tileWidth, tileHeight, channels, interleavingUnit);
     }
 
-    // Handle y-axis
-    if (flipY)
-      return new InvertedYLayout(layout);
-    else
+    if (flipY || flipX) {
+      return new InvertedLayout(layout, flipX, flipY);
+    } else {
       return layout;
+    }
   }
 }
