@@ -18,12 +18,43 @@ import com.lhkbob.imaje.util.Arguments;
  *
  */
 public class UnpackedPixelArray implements PixelArray {
-  private final PixelLayout layout;
+  private final DataLayout layout;
   private final PixelFormat format;
   private final NumericData<?> data;
   private final long offset;
 
-  public UnpackedPixelArray(PixelFormat format, PixelLayout layout, NumericData<?> data, long offset) {
+  // Returns true if all data bit sizes are the same size, all bit sizes equal 8, 16, 32, or 64.
+  // And all types are the same.
+  public static boolean isSupported(PixelFormat format) {
+    int reqBits = -1;
+    PixelFormat.Type reqType = null;
+    for (int i = 0; i < format.getDataChannelCount(); i++) {
+      if (reqBits < 0) {
+        reqBits = format.getDataChannelBitSize(i);
+        // Validate bit size, without a specific data buffer assume a Java primitive bit size
+        if (reqBits != 8 && reqBits != 16 && reqBits != 32 && reqBits != 64) {
+          // Channel cannot be fully stored in a single primitive
+          return false;
+        }
+      } else if (reqBits != format.getDataChannelBitSize(i)) {
+        // Channel does not have the same size
+        return false;
+      }
+
+      PixelFormat.Type curType = format.getDataChannelType(i);
+      if (reqType == null) {
+        // This could still be null if the data channel is skipped
+        reqType = curType;
+      } else if (curType != null && reqType != curType) {
+        // Unskipped channel differs from another unskipped channel
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public UnpackedPixelArray(PixelFormat format, DataLayout layout, NumericData<?> data, long offset) {
     Arguments.isGreaterThanOrEqualToZero("offset", offset);
     Arguments.equals("channel count", format.getDataChannelCount(), layout.getChannelCount());
     Arguments.checkArrayRange("data length", data.getLength(), offset, layout.getRequiredDataElements());
@@ -37,6 +68,9 @@ public class UnpackedPixelArray implements PixelArray {
     // (unlike with randomly accessing a data channel, which could have a null type if skipped)
     int channelBitSize = format.getColorChannelBitSize(0);
     PixelFormat.Type channelType = format.getColorChannelType(0);
+    // NOTE: this performs the equivalent validation as isSupported() but is also targeted directly
+    // with the bit size of the data buffer, so is more efficient and potentially more flexible if
+    // someone implemented a non-Java primitive sized numeric data source.
     for (int i = 0; i < format.getDataChannelCount(); i++) {
       if (format.getDataChannelType(i) != null && format.getDataChannelType(i) != channelType) {
         throw new IllegalArgumentException(
@@ -134,7 +168,7 @@ public class UnpackedPixelArray implements PixelArray {
   }
 
   @Override
-  public PixelLayout getLayout() {
+  public DataLayout getLayout() {
     return layout;
   }
 

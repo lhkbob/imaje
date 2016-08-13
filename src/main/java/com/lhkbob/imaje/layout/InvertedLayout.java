@@ -9,12 +9,12 @@ import java.util.function.Consumer;
 /**
  *
  */
-public class InvertedLayout implements PixelLayout {
+public class InvertedLayout implements DataLayout {
   private final boolean invertX;
   private final boolean invertY;
-  private final PixelLayout original;
+  private final DataLayout original;
 
-  public InvertedLayout(PixelLayout original, boolean invertX, boolean invertY) {
+  public InvertedLayout(DataLayout original, boolean invertX, boolean invertY) {
     Arguments.notNull("original", original);
     if (!invertX && !invertY) {
       throw new IllegalArgumentException("At least one of invertX and invertY should be true");
@@ -24,7 +24,7 @@ public class InvertedLayout implements PixelLayout {
     this.invertY = invertY;
   }
 
-  public PixelLayout getOriginalLayout() {
+  public DataLayout getOriginalLayout() {
     return original;
   }
 

@@ -10,7 +10,7 @@ import java.util.Spliterator;
 /**
  *
  */
-public class RasterLayout implements PixelLayout {
+public class RasterLayout implements DataLayout {
   private final int imageWidth; // width in pixels of the image
   private final int imageHeight; // height in pixels of the image
 

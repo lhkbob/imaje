@@ -3,10 +3,11 @@ package com.lhkbob.imaje.layout;
 import com.lhkbob.imaje.data.DataBuffer;
 
 /**
- *
+ * FIXME add an isReadOnly method or maybe isCompressed to indicate that storing values can't
+ * happen on a per-pixel basis
  */
 public interface PixelArray {
-  PixelLayout getLayout();
+  DataLayout getLayout();
 
   DataBuffer getData();
 

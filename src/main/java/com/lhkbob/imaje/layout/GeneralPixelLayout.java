@@ -10,7 +10,7 @@ import java.util.Spliterator;
 /**
  *
  */
-public class GeneralPixelLayout implements PixelLayout {
+public class GeneralPixelLayout implements DataLayout {
   public enum InterleavingUnit {
     PIXEL, SCANLINE, TILE, IMAGE
   }

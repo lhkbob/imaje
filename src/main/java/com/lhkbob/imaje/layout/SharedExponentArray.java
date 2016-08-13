@@ -10,13 +10,13 @@ import com.lhkbob.imaje.util.Functions;
  */
 public class SharedExponentArray implements PixelArray {
   private final PixelFormat format;
-  private final PixelLayout layout;
+  private final DataLayout layout;
   private final BitData data;
   private final long offset;
 
   private final UnsignedSharedExponent exp;
 
-  public SharedExponentArray(PixelFormat format, PixelLayout layout, BitData data, long offset) {
+  public SharedExponentArray(PixelFormat format, DataLayout layout, BitData data, long offset) {
     Arguments.isGreaterThanOrEqualToZero("offset", offset);
     Arguments.equals("layout.getChannelCount()", 1, layout.getChannelCount());
     Arguments.equals("bit size", format.getTotalBitSize(), data.getBitSize());
@@ -60,7 +60,7 @@ public class SharedExponentArray implements PixelArray {
   }
 
   @Override
-  public PixelLayout getLayout() {
+  public DataLayout getLayout() {
     return layout;
   }
 

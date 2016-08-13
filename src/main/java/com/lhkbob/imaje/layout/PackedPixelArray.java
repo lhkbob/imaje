@@ -14,7 +14,7 @@ import com.lhkbob.imaje.util.Functions;
  *
  */
 public class PackedPixelArray implements PixelArray {
-  private final PixelLayout layout;
+  private final DataLayout layout;
   private final PixelFormat format;
   private final BitData data;
   private final long offset;
@@ -23,7 +23,15 @@ public class PackedPixelArray implements PixelArray {
   private final long[] fieldMasks;
   private final long[] fieldShifts;
 
-  public PackedPixelArray(PixelFormat format, PixelLayout layout, BitData data, long offset) {
+  public static boolean isSupported(PixelFormat format) {
+    // PixelFormat's structure already guarantees the channels will be packed, and any bits that
+    // are ignored will be marked as SKIPPED. Thus, the only validation is that the total bit
+    // size must equal one of Java's primitive types.
+    int bits = format.getTotalBitSize();
+    return bits == 8 || bits == 16 || bits == 32 || bits == 64;
+  }
+
+  public PackedPixelArray(PixelFormat format, DataLayout layout, BitData data, long offset) {
     Arguments.isGreaterThanOrEqualToZero("offset", offset);
     Arguments.equals("layout.getChannelCount()", 1, layout.getChannelCount());
     Arguments.equals("bit size", format.getTotalBitSize(), data.getBitSize());
@@ -82,7 +90,7 @@ public class PackedPixelArray implements PixelArray {
   }
 
   @Override
-  public PixelLayout getLayout() {
+  public DataLayout getLayout() {
     return layout;
   }
 

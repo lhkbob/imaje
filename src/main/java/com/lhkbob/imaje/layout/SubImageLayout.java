@@ -10,15 +10,15 @@ import java.util.Spliterator;
 /**
  *
  */
-public class SubImageLayout implements PixelLayout {
-  private final PixelLayout original;
+public class SubImageLayout implements DataLayout {
+  private final DataLayout original;
 
   private final int offsetX;
   private final int offsetY;
   private final int width;
   private final int height;
 
-  public SubImageLayout(PixelLayout original, int x, int y, int w, int h) {
+  public SubImageLayout(DataLayout original, int x, int y, int w, int h) {
     Arguments.notNull("original", original);
     Arguments.checkArrayRange("width", original.getWidth(), x, w);
     Arguments.checkArrayRange("height", original.getHeight(), y, h);
@@ -38,7 +38,7 @@ public class SubImageLayout implements PixelLayout {
     return offsetY;
   }
 
-  public PixelLayout getOriginalLayout() {
+  public DataLayout getOriginalLayout() {
     return original;
   }
 

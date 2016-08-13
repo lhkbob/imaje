@@ -5,7 +5,7 @@ import com.lhkbob.imaje.util.PixelLayoutBuilder;
 /**
  *
  */
-public interface PixelLayout extends Iterable<ImageCoordinate> {
+public interface DataLayout extends Iterable<ImageCoordinate> {
   int getHeight();
 
   void getChannelIndices(int x, int y, long[] channelIndices);
