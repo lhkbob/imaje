@@ -1,6 +1,8 @@
 package com.lhkbob.imaje;
 
 import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.layout.ArrayBackedPixel;
+import com.lhkbob.imaje.layout.PixelArray;
 import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.ImageUtils;
 import com.lhkbob.imaje.util.IteratorChain;
@@ -13,24 +15,65 @@ import java.util.List;
 import java.util.Spliterator;
 
 /**
- * * FIXME add direct getters and setters like in Raster
  */
 public class RasterArray<T extends Color> implements Image<T> {
-  private final List<Raster<T>> layers;
+  private final List<PixelArray> layers;
+  private final Class<T> colorType;
 
   public RasterArray(List<Raster<T>> layers) {
     Arguments.notEmpty("layers", layers);
-    ImageUtils.checkMultiImageCompatibility(layers);
+
+    colorType = layers.get(0).getColorType();
+    List<PixelArray> arrays = new ArrayList<>(layers.size());
+    for (Raster<T> l : layers) {
+      arrays.add(l.getPixelArray());
+    }
+
+    ImageUtils.checkArrayCompleteness(arrays);
+    this.layers = Collections.unmodifiableList(arrays);
+  }
+
+  public RasterArray(Class<T> colorType, List<PixelArray> layers) {
+    Arguments.notNull("colorType", colorType);
+    Arguments.notEmpty("layers", layers);
+
+    ImageUtils.checkArrayCompleteness(layers);
+    ImageUtils.checkImageCompatibility(colorType, layers);
 
     this.layers = Collections.unmodifiableList(new ArrayList<>(layers));
+    this.colorType = colorType;
+  }
+
+  public double get(int layer, int x, int y, T result) {
+    return getPixelArray(layer).get(x, y, result.getChannels());
+  }
+
+  public double getAlpha(int layer, int x, int y) {
+    return getPixelArray(layer).getAlpha(x, y);
+  }
+
+  public void set(int layer, int x, int y, T value) {
+    getPixelArray(layer).set(x, y, value.getChannels(), getPixelArray(layer).getAlpha(x, y));
+  }
+
+  public void set(int layer, int x, int y, T value, double alpha) {
+    getPixelArray(layer).set(x, y, value.getChannels(), alpha);
+  }
+
+  public void setAlpha(int layer, int x, int y, double alpha) {
+    getPixelArray(layer).setAlpha(x, y, alpha);
   }
 
   @Override
   public Class<T> getColorType() {
-    return layers.get(0).getColorType();
+    return colorType;
   }
 
-  public Raster<T> getLayer(int index) {
+  public Raster<T> getLayerAsRaster(int index) {
+    return new Raster<>(colorType, getPixelArray(index));
+  }
+
+  public PixelArray getPixelArray(int index) {
     return layers.get(index);
   }
 
@@ -45,49 +88,59 @@ public class RasterArray<T extends Color> implements Image<T> {
   }
 
   @Override
-  public Pixel<T> getPixel(int x, int y, int mipmapLevel, int layer) {
-    if (mipmapLevel != 0)
-      throw new IllegalArgumentException("Image is not mipmapped, expected mipmap level of 0, not: " + mipmapLevel);
-    return getPixel(x, y, layer);
+  public Pixel<T> getPixel(int layer, int mipmapLevel, int... coords) {
+    Arguments.equals("mipmapLevel", 0, mipmapLevel);
+    Arguments.equals("coords.length", 2, coords.length);
+    return getPixel(layer, coords[0], coords[1]);
   }
 
-  public List<Raster<T>> getLayers() {
+  public List<PixelArray> getPixelArrays() {
     return layers;
   }
 
   @Override
   public boolean hasAlphaChannel() {
-    return layers.get(0).hasAlphaChannel();
+    return layers.get(0).getFormat().hasAlphaChannel();
   }
 
   @Override
-  public int getWidth() {
-    return layers.get(0).getWidth();
+  public int getDimensionality() {
+    return 2;
   }
 
   @Override
-  public int getHeight() {
-    return layers.get(0).getHeight();
+  public int getDimension(int dim) {
+    if (dim == 0) {
+      return getPixelArray(0).getLayout().getWidth();
+    } else if (dim == 1) {
+      return getPixelArray(0).getLayout().getHeight();
+    } else {
+      return 1;
+    }
   }
 
-  public Pixel<T> getPixel(int x, int y, int layer) {
-    return layers.get(layer).getPixelForMipmapArray(x, y, 0, layer);
+  public Pixel<T> getPixel(int layer, int x, int y) {
+    ArrayBackedPixel<T> p = new ArrayBackedPixel<>(colorType, getPixelArray(layer), layer, 0);
+    p.refreshAt(x, y);
+    return p;
   }
 
   @Override
   public Iterator<Pixel<T>> iterator() {
-    List<Iterator<Pixel<T>>> wrappedLayers = new ArrayList<>(layers.size());
-    for (int i = 0; i < layers.size(); i++) {
-      wrappedLayers.add(layers.get(i).iteratorForMipmapArray(0, i));
+    // FIXME should these aggregate iterators here and in Mipmap, MipmapArray, Volume, and MipmapVolume
+    // be sorted by data offset to improve cache performance?
+    List<Iterator<Pixel<T>>> wrappedLayers = new ArrayList<>(getLayerCount());
+    for (int i = 0; i < getLayerCount(); i++) {
+      wrappedLayers.add(ArrayBackedPixel.iterator(colorType, getPixelArray(i), i, 0));
     }
     return new IteratorChain<>(wrappedLayers);
   }
 
   @Override
   public Spliterator<Pixel<T>> spliterator() {
-    List<Spliterator<Pixel<T>>> wrappedLayers = new ArrayList<>(layers.size());
-    for (int i = 0; i < layers.size(); i++) {
-      wrappedLayers.add(layers.get(i).spliteratorForMipmapArray(0, i));
+    List<Spliterator<Pixel<T>>> wrappedLayers = new ArrayList<>(getLayerCount());
+    for (int i = 0; i < getLayerCount(); i++) {
+      wrappedLayers.add(ArrayBackedPixel.spliterator(colorType, getPixelArray(i), i, 0));
     }
     return new SpliteratorChain<>(wrappedLayers);
   }

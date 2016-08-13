@@ -10,13 +10,33 @@ public interface Pixel<T extends Color> {
 
   double getAlpha();
 
-  int getLayer();
+  int getLayerIndex();
 
-  int getLevel();
+  int getMipmapLevel();
 
-  int getX();
+  default int getX() {
+    return getCoordinate(0);
+  }
 
-  int getY();
+  default int getY() {
+    if (getDimensionality() > 1) {
+      return getCoordinate(1);
+    } else {
+      return 0;
+    }
+  }
+
+  default int getZ() {
+    if (getDimensionality() > 2) {
+      return getCoordinate(2);
+    } else {
+      return 0;
+    }
+  }
+
+  int getDimensionality();
+
+  int getCoordinate(int dim);
 
   void setColor(T value);
 
