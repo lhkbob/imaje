@@ -1,7 +1,8 @@
 package com.lhkbob.imaje.util;
 
-import com.lhkbob.imaje.Image;
 import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.layout.PixelArray;
+import com.lhkbob.imaje.layout.PixelFormat;
 
 import java.util.Collection;
 import java.util.List;
@@ -14,29 +15,32 @@ public final class ImageUtils {
 
   }
 
-  public static long getImageSize(int width, int height, int channels) {
-    return getImageSize(width, height, channels, false, 1);
-  }
-
-  public static long getMipmapImageSize(int width, int height, int channels) {
-    return getImageSize(width, height, channels, true, 1);
-  }
-
-  public static long getImageArraySize(int width, int height, int channels, int layers) {
-    return getImageSize(width, height, channels, false, layers);
-  }
-
-  public static long getImageSize(int width, int height, int channels, boolean mipmapped, int layers) {
+  public static long getUncompressedImageSize(int[] dimensions, boolean mipmapped) {
     long size = 0;
-    int mipmaps = mipmapped ? getMipmapCount(width, height) : 1;
+    int mipmaps = mipmapped ? getMipmapCount(dimensions) : 1;
     for (int i = 0; i < mipmaps; i++) {
-      size += getMipmapDimension(width, i) * getMipmapDimension(height, i);
+      int forLevel = 1;
+      for (int j = 0; j < dimensions.length; j++) {
+        forLevel *= getMipmapDimension(dimensions[j], i);
+      }
+      size += forLevel;
     }
-    return size * channels * layers;
+    return size;
   }
 
   public static int getMipmapCount(int maxDimension) {
     return (int) Math.floor(Math.log(maxDimension) / Math.log(2.0)) + 1;
+  }
+
+  public static int getMipmapCount(int... dimensions) {
+    int max = 0;
+    for (int i = 0; i < dimensions.length; i++) {
+      if (dimensions[i] > max) {
+        max = dimensions[i];
+      }
+    }
+
+    return getMipmapCount(max);
   }
 
   public static int getMipmapCount(int width, int height) {
@@ -47,45 +51,50 @@ public final class ImageUtils {
     return Math.max(topLevelDimension >> level, 1);
   }
 
-  public static void checkMultiImageCompatibility(Collection<? extends Image<?>> images) {
-    Class<? extends Color> colorType = null;
-    boolean hasAlpha = false;
+  public static int[] getMipmapDimensions(int[] topLevelDimensions, int level) {
+    int[] mip = new int[topLevelDimensions.length];
+    for (int i = 0; i < mip.length; i++) {
+      mip[i] = getMipmapDimension(topLevelDimensions[i], level);
+    }
+    return mip;
+  }
+
+  public static void checkArrayCompleteness(Collection<PixelArray> images) {
     int width = 0;
     int height = 0;
-    int layers = 0;
-    int levels = 0;
+    PixelFormat format = null;
 
-    for (Image<?> img : images) {
-      if (colorType == null) {
-        colorType = img.getColorType();
-        width = img.getWidth();
-        height = img.getHeight();
-        hasAlpha = img.hasAlphaChannel();
-        layers = img.getLayerCount();
-        levels = img.getMipmapCount();
+    for (PixelArray img : images) {
+      if (format == null) {
+        format = img.getFormat();
+        width = img.getLayout().getWidth();
+        height = img.getLayout().getHeight();
       } else {
-        if (!colorType.equals(img.getColorType())) {
-          throw new IllegalArgumentException("Images differ in color type, expected " + colorType + " but was " + img.getColorType());
+        if (!format.equals(img.getFormat())) {
+          throw new IllegalArgumentException("Images differ in format, expected " + format+ " but was " + img.getFormat());
         }
-        if (width != img.getWidth() || height != img.getHeight()) {
-          throw new IllegalArgumentException("Image dimensions differ, expected (" + width + ", " + height + ") but was (" + img.getWidth() + ", " + img.getHeight() + ")");
-        }
-        if (hasAlpha != img.hasAlphaChannel()) {
-          throw new IllegalArgumentException("Images have alpha channel mismatch, expected " + hasAlpha + " but was " + img.hasAlphaChannel());
-        }
-        if (layers != img.getLayerCount()) {
-          throw new IllegalArgumentException("Images have different layer counts, expected " + layers + " but was " + img.getLayerCount());
-        }
-        if (levels != img.getMipmapCount()) {
-          throw new IllegalArgumentException("Images have different mipmap counts, expected " + levels + " but was " + img.getMipmapCount());
+        if (width != img.getLayout().getWidth() || height != img.getLayout().getHeight()) {
+          throw new IllegalArgumentException("Image dimensions differ, expected (" + width + ", " + height + ") but was (" + img.getLayout().getWidth() + ", " + img.getLayout().getHeight() + ")");
         }
       }
     }
   }
 
-  public static void checkMipmapCompleteness(List<? extends Image<?>> levels) {
-    int baseWidth = levels.get(0).getWidth();
-    int baseHeight = levels.get(0).getHeight();
+  public static void checkImageCompatibility(Class<? extends Color> colorType, Collection<PixelArray> images) {
+    for (PixelArray p : images) {
+      checkImageCompatibility(colorType, p);
+    }
+  }
+
+  public static void checkImageCompatibility(Class<? extends Color> colorType, PixelArray data) {
+    Arguments.equals("channel count", Color.getChannelCount(colorType),
+        data.getFormat().getColorChannelCount());
+  }
+
+  public static void checkMipmapCompleteness(List<PixelArray> levels) {
+    int baseWidth = levels.get(0).getLayout().getWidth();
+    int baseHeight = levels.get(0).getLayout().getHeight();
+    PixelFormat baseFormat = levels.get(0).getFormat();
 
     int mipmapCount = getMipmapCount(baseWidth, baseHeight);
     if (levels.size() != mipmapCount) {
@@ -94,8 +103,11 @@ public final class ImageUtils {
     for (int i = 0; i < mipmapCount; i++) {
       int w = getMipmapDimension(baseWidth, i);
       int h = getMipmapDimension(baseHeight, i);
-      if (w != levels.get(i).getWidth() || h != levels.get(i).getHeight()) {
-        throw new IllegalArgumentException("Mipmap level " + i + " image has incorrect dimensions, expected (" + w + ", " + h + ") but was (" + levels.get(i).getWidth() + ", " + levels.get(i).getHeight() + ")");
+      if (w != levels.get(i).getLayout().getWidth() || h != levels.get(i).getLayout().getHeight()) {
+        throw new IllegalArgumentException("Mipmap level " + i + " image has incorrect dimensions, expected (" + w + ", " + h + ") but was (" + levels.get(i).getLayout().getWidth() + ", " + levels.get(i).getLayout().getHeight() + ")");
+      }
+      if (levels.get(i).getFormat().equals(baseFormat)) {
+        throw new IllegalArgumentException("Mipmap level " + i + " image has different format, expected " + baseFormat + ", but was " + levels.get(i).getFormat());
       }
     }
   }

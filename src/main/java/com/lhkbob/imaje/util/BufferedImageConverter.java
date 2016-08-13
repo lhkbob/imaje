@@ -27,13 +27,13 @@ import com.lhkbob.imaje.data.array.FloatArrayData;
 import com.lhkbob.imaje.data.array.IntArrayData;
 import com.lhkbob.imaje.data.array.ShortArrayData;
 import com.lhkbob.imaje.data.types.CustomBinaryData;
-import com.lhkbob.imaje.layout.GeneralPixelLayout;
+import com.lhkbob.imaje.layout.GeneralLayout;
 import com.lhkbob.imaje.layout.InvertedLayout;
 import com.lhkbob.imaje.layout.PackedPixelArray;
 import com.lhkbob.imaje.layout.PixelArray;
 import com.lhkbob.imaje.layout.PixelFormat;
-import com.lhkbob.imaje.layout.PixelLayout;
-import com.lhkbob.imaje.layout.RasterLayout;
+import com.lhkbob.imaje.layout.DataLayout;
+import com.lhkbob.imaje.layout.SimpleLayout;
 import com.lhkbob.imaje.layout.UnpackedPixelArray;
 
 import java.awt.color.ColorSpace;
@@ -106,7 +106,7 @@ public final class BufferedImageConverter {
     return copy;
   }
 
-  private static void configureBuilderType(ImageBuilder<?, ?> builder, int transferType) {
+  private static void configureBuilderType(ImageBuilder<?, ?, ?> builder, int transferType) {
     switch (transferType) {
     case java.awt.image.DataBuffer.TYPE_BYTE:
       builder.unorm8();
@@ -146,7 +146,7 @@ public final class BufferedImageConverter {
 
   private static Raster<Luminance> convertToLuminance(BufferedImage image, Data.Factory factory) {
     ImageBuilder.OfRaster<Luminance> builder = Image.newRaster(Luminance.class)
-        .sized(image.getWidth(), image.getHeight()).backedByNewData(factory);
+        .width(image.getWidth()).height(image.getHeight()).backedByNewData(factory);
     // Builder is already configured for r(), which is the only option we have really
     configureBuilderType(builder, image.getSampleModel().getDataType());
     if (image.getColorModel().hasAlpha()) {
@@ -172,7 +172,7 @@ public final class BufferedImageConverter {
 
   private static Raster<SRGB> convertToSRGB(BufferedImage image, Data.Factory factory) {
     ImageBuilder.OfRaster<SRGB> builder = Image.newRaster(SRGB.class)
-        .sized(image.getWidth(), image.getHeight()).backedByNewData(factory);
+        .width(image.getWidth()).height(image.getHeight()).backedByNewData(factory);
 
     // Try and match channel arrangement and bit depths based on known types
     switch (image.getType()) {
@@ -293,27 +293,27 @@ public final class BufferedImageConverter {
       PixelFormat format = getFormatFromSinglePixelSampleModel(image, s);
 
       // This will use a conventional raster layout with a single data element
-      PixelLayout layout = new RasterLayout(image.getWidth(), image.getHeight(), 1);
+      DataLayout layout = new SimpleLayout(image.getWidth(), image.getHeight(), 1);
 
       // It will use a packed pixel array
       wrapper = new PackedPixelArray(
           format, new InvertedLayout(layout, false, true), (BitData) wrappedData, 0L);
     } else if (image.getSampleModel() instanceof ComponentSampleModel) {
       ComponentSampleModel s = (ComponentSampleModel) image.getSampleModel();
-      GeneralPixelLayout.InterleavingUnit interleave = getInterleaving(s);
+      GeneralLayout.InterleavingUnit interleave = getInterleaving(s);
       PixelFormat format = getFormatFromComponentSampleModel(image, s);
       if (interleave == null || format == null) {
         // Incompatible component model
         return null;
       }
 
-      PixelLayout layout;
-      if (interleave == GeneralPixelLayout.InterleavingUnit.PIXEL) {
-        layout = new RasterLayout(
+      DataLayout layout;
+      if (interleave == GeneralLayout.InterleavingUnit.PIXEL) {
+        layout = new SimpleLayout(
             image.getWidth(), image.getHeight(), format.getDataChannelCount());
       } else {
         // There is no supported way of having tiled interleaving, so make the tile size equal to the full image
-        layout = new GeneralPixelLayout(image.getWidth(), image.getHeight(), image.getWidth(),
+        layout = new GeneralLayout(image.getWidth(), image.getHeight(), image.getWidth(),
             image.getHeight(), format.getDataChannelCount(), interleave);
       }
 
@@ -355,7 +355,7 @@ public final class BufferedImageConverter {
       return null;
     }
 
-    PixelLayout layout = data.getLayout();
+    DataLayout layout = data.getLayout();
     if (!(layout instanceof InvertedLayout)) {
       // Must flip Y axis so that coordinate systems align
       return null;
@@ -388,8 +388,8 @@ public final class BufferedImageConverter {
         colorModel = new ComponentColorModel(colorSpace, data.getFormat().hasAlphaChannel(), false,
             ColorModel.TRANSLUCENT, wrappedData.getDataType());
       }
-    } else if (layout instanceof GeneralPixelLayout) {
-      GeneralPixelLayout l = (GeneralPixelLayout) layout;
+    } else if (layout instanceof GeneralLayout) {
+      GeneralLayout l = (GeneralLayout) layout;
       // Tiled images aren't supported, regardless of interleaving type
       if (l.getTileHeight() != l.getHeight() || l.getTileWidth() != l.getWidth()) {
         return null;
@@ -601,7 +601,7 @@ public final class BufferedImageConverter {
     // one of PIXEL, SCANLINE, or IMAGE. This means that there are three ways that the band offsets
     // could specify the data to color channel mapping.
 
-    GeneralPixelLayout.InterleavingUnit interleavingUnit = getInterleaving(s);
+    GeneralLayout.InterleavingUnit interleavingUnit = getInterleaving(s);
     if (interleavingUnit == null) {
       return null;
     }
@@ -723,7 +723,7 @@ public final class BufferedImageConverter {
     return new PixelFormat(dataArrayMap, typeArrayMap, bitSizeArrayMap);
   }
 
-  private static GeneralPixelLayout.InterleavingUnit getInterleaving(ComponentSampleModel s) {
+  private static GeneralLayout.InterleavingUnit getInterleaving(ComponentSampleModel s) {
     int pixelStride = s.getPixelStride(); // increment to get same band of next pixel in scanline
     int scanlineStride = s
         .getScanlineStride(); // increment to get same band of pixel in next scanline
@@ -737,19 +737,19 @@ public final class BufferedImageConverter {
     // and the stride for each pixel equal to # of bands, and offsets of bands are multiples of 1
     if (pixelStride == bands && scanlineStride == width * bands && isBandOffsetContiguous(
         offsets, 1)) {
-      return GeneralPixelLayout.InterleavingUnit.PIXEL;
+      return GeneralLayout.InterleavingUnit.PIXEL;
     }
     // Scanline interleaving has stride for each pixel equal to 1, and the stride of each scanline
     // is equal to # bands x width, and band offsets are multiples of image width
     if (pixelStride == 1 && scanlineStride == width * bands && isBandOffsetContiguous(
         offsets, width)) {
-      return GeneralPixelLayout.InterleavingUnit.SCANLINE;
+      return GeneralLayout.InterleavingUnit.SCANLINE;
     }
     // Image interleaving has stride for each pixel equal to 1, and the stride for each scanline
     // equal to width, and band offsets are multiples of image width x height
     if (pixelStride == 1 && scanlineStride == width && isBandOffsetContiguous(
         offsets, width * height)) {
-      return GeneralPixelLayout.InterleavingUnit.IMAGE;
+      return GeneralLayout.InterleavingUnit.IMAGE;
     }
 
     // Otherwise it's something else that is unsupported
@@ -777,13 +777,13 @@ public final class BufferedImageConverter {
     return true;
   }
 
-  private static boolean isPixelInterleaved(PixelLayout layout) {
-    if (layout instanceof GeneralPixelLayout) {
-      GeneralPixelLayout l = (GeneralPixelLayout) layout;
-      return l.getInterleavingUnit() == GeneralPixelLayout.InterleavingUnit.PIXEL
+  private static boolean isPixelInterleaved(DataLayout layout) {
+    if (layout instanceof GeneralLayout) {
+      GeneralLayout l = (GeneralLayout) layout;
+      return l.getInterleavingUnit() == GeneralLayout.InterleavingUnit.PIXEL
           && l.getWidth() == l.getTileWidth() && l.getHeight() == l.getTileHeight();
     } else {
-      return layout instanceof RasterLayout;
+      return layout instanceof SimpleLayout;
     }
   }
 }

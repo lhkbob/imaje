@@ -6,37 +6,49 @@ import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.layout.PixelFormat;
 
 import java.nio.Buffer;
+import java.util.EnumSet;
 
 /**
  */
-public interface ImageBuilder<I extends Image<?>, B extends ImageBuilder<I, B>> {
-  interface OfMipmapArray<T extends Color> extends ImageBuilder<MipmapArray<T>, OfMipmapArray<T>> {
-    OfMipmapArray<T> groupLayersByMipmap();
+public interface ImageBuilder<T extends Color, I extends Image<T>, B extends ImageBuilder<T, I, B>> {
+  enum DataOption {
+    PIXEL_LEFT_TO_RIGHT, PIXEL_RIGHT_TO_LEFT, PIXEL_BOTTOM_TO_TOP, PIXEL_TOP_TO_BOTTOM,
+    PIXEL_FRONT_TO_BACK, PIXEL_BACK_TO_FRONT,
+    PIXEL_ORIGIN_CLASSIC, PIXEL_ORIGIN_OPENGL,
 
-    OfMipmapArray<T> groupMipmapsByLayer();
+    MIPMAP_INDEX_LOW_TO_HIGH, MIPMAP_INDEX_HIGH_TO_LOW, MIPMAP_RES_LOW_TO_HIGH,
+    MIPMAP_RES_HIGH_TO_LOW,
 
+    GROUP_MIPMAP_BY_LAYER, GROUP_LAYER_BY_MIPMAP,
+
+    CHANNELS_BY_PIXEL, CHANNELS_BY_SCANLINE, CHANNELS_BY_TILE, CHANNELS_BY_IMAGE
+  }
+
+  interface OfMipmap<T extends Color> extends ImageBuilder<T, Mipmap<T>, OfMipmap<T>> {
+  }
+
+  interface OfMipmapArray<T extends Color> extends ImageBuilder<T, MipmapArray<T>, OfMipmapArray<T>> {
     OfMipmapArray<T> layers(int count);
-
-    OfMipmapArray<T> orderMipmapsHighToLow();
-
-    OfMipmapArray<T> orderMipmapsLowToHigh();
   }
 
-  interface OfMipmap<T extends Color> extends ImageBuilder<Mipmap<T>, OfMipmap<T>> {
-    OfMipmap<T> orderMipmapsHighToLow();
-
-    OfMipmap<T> orderMipmapsLowToHigh();
+  interface OfMipmapVolume<T extends Color> extends ImageBuilder<T, MipmapVolume<T>, OfMipmapVolume<T>> {
+    OfMipmapVolume<T> depth(int depth);
   }
 
-  interface OfRasterArray<T extends Color> extends ImageBuilder<RasterArray<T>, OfRasterArray<T>> {
+  interface OfRaster<T extends Color> extends ImageBuilder<T, Raster<T>, OfRaster<T>> {
+  }
+
+  interface OfRasterArray<T extends Color> extends ImageBuilder<T, RasterArray<T>, OfRasterArray<T>> {
     OfRasterArray<T> layers(int count);
   }
 
-  interface OfRaster<T extends Color> extends ImageBuilder<Raster<T>, OfRaster<T>> {
-    // No additional interface needed
+  interface OfVolume<T extends Color> extends ImageBuilder<T, Volume<T>, OfVolume<T>> {
+    OfVolume<T> depth(int depth);
   }
 
   B abgr();
+
+  B addDataOption(DataOption option);
 
   B argb();
 
@@ -72,27 +84,33 @@ public interface ImageBuilder<I extends Image<?>, B extends ImageBuilder<I, B>> 
 
   I build();
 
-  B channelsByImage();
-
-  B channelsByPixel();
-
-  B channelsByScanline();
-
-  B channelsByTile();
-
   B compatibleWith(Image<?> image);
 
-  B dataArrangedLeftToRight();
+  default B dataLayout(DataOption firstOption, DataOption... otherOptions) {
+    return dataLayout(EnumSet.of(firstOption, otherOptions));
+  }
 
-  B dataArrangedRightToLeft();
+  default B dataLayout(EnumSet<DataOption> options) {
+    B theBuilder = defaultDataLayout();
+    for (DataOption o: options) {
+      theBuilder = addDataOption(o);
+    }
+    return theBuilder;
+  }
 
-  B dataArrangedBottomUp();
-
-  B dataArrangedTopDown();
+  B defaultDataLayout();
 
   B defaultFormat();
 
-  B format(PixelFormat format);
+  B filledWith(T color);
+
+  default B format(PixelFormat format) {
+    return format(format, false);
+  }
+
+  B format(PixelFormat format, boolean packed);
+
+  B height(int height);
 
   B packedA1R5G5B5();
 
@@ -112,7 +130,9 @@ public interface ImageBuilder<I extends Image<?>, B extends ImageBuilder<I, B>> 
 
   B packedD24S8();
 
-  B packedFormat(PixelFormat format);
+  default B packedFormat(PixelFormat format) {
+    return format(format, true);
+  }
 
   B packedR4G4();
 
@@ -143,8 +163,6 @@ public interface ImageBuilder<I extends Image<?>, B extends ImageBuilder<I, B>> 
   B sint64();
 
   B sint8();
-
-  B sized(int width, int height);
 
   B snorm16();
 
@@ -189,6 +207,8 @@ public interface ImageBuilder<I extends Image<?>, B extends ImageBuilder<I, B>> 
   B uscaled64();
 
   B uscaled8();
+
+  B width(int width);
 
   B withAlpha();
 
