@@ -10,7 +10,7 @@ import java.util.Spliterator;
 /**
  *
  */
-public class GeneralPixelLayout implements DataLayout {
+public class GeneralLayout implements DataLayout {
   public enum InterleavingUnit {
     PIXEL, SCANLINE, TILE, IMAGE
   }
@@ -29,16 +29,16 @@ public class GeneralPixelLayout implements DataLayout {
   private final int channelCount;
   private final InterleavingUnit interleave;
 
-  public GeneralPixelLayout(int imageWidth, int imageHeight, int channelCount) {
+  public GeneralLayout(int imageWidth, int imageHeight, int channelCount) {
     this(imageWidth, imageHeight, imageWidth, imageHeight, channelCount);
   }
 
-  public GeneralPixelLayout(
+  public GeneralLayout(
       int imageWidth, int imageHeight, int tileWidth, int tileHeight, int channelCount) {
     this(imageWidth, imageHeight, tileWidth, tileHeight, channelCount, InterleavingUnit.PIXEL);
   }
 
-  public GeneralPixelLayout(
+  public GeneralLayout(
       int imageWidth, int imageHeight, int tileWidth, int tileHeight, int channelCount,
       InterleavingUnit interleave) {
     Arguments.isPositive("imageWidth", imageWidth);

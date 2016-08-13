@@ -10,13 +10,13 @@ import java.util.Spliterator;
 /**
  *
  */
-public class RasterLayout implements DataLayout {
+public class SimpleLayout implements DataLayout {
   private final int imageWidth; // width in pixels of the image
   private final int imageHeight; // height in pixels of the image
 
   private final int channelCount;
 
-  public RasterLayout(int imageWidth, int imageHeight, int channelCount) {
+  public SimpleLayout(int imageWidth, int imageHeight, int channelCount) {
     Arguments.isPositive("imageWidth", imageWidth);
     Arguments.isPositive("imageHeight", imageHeight);
     Arguments.isPositive("channelCount", channelCount);
