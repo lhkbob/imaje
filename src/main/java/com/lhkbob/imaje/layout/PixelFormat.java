@@ -1,9 +1,14 @@
 package com.lhkbob.imaje.layout;
 
+import com.lhkbob.imaje.util.Functions;
+
 import java.util.Arrays;
 
 /**
- *
+ * FIXME will we have to make this a pretty plain interface and then have uncompressed and compressed versions?
+ * Or does this go on top of that? I mean it kind of does, but it kind of doesn't. The logical color
+ * channel ordering is kind of irrelevant to bit layout and data channel layout and could be
+ * separated. But I'm not sure how much that buys us.
  */
 public class PixelFormat {
   public static final int ALPHA_CHANNEL = -1;
@@ -17,6 +22,79 @@ public class PixelFormat {
   private final Type[] channelType;
   private final int[] colorToDataChannel;
   private final int alphaDataChannel;
+
+  public static PixelFormat createFromMasks(long[] colorMasks, int channelCount, long alphaMask, Type type) {
+    // First filter masks equal to 0, which is a convenience for image loading code that frequently
+    // has a fixed number of channels specified but their presence in data is encoded as a 0'ed mask
+    int logicalChannelCount = 0;
+    for (int i = 0; i < colorMasks.length; i++) {
+      if (colorMasks[i] != 0) {
+        logicalChannelCount++;
+      }
+    }
+
+    // Before including a possible alpha channel, validate the maxChannels argument, which must be
+    // less than or equal to the number of non-zero masks.
+    if (channelCount > logicalChannelCount) {
+      throw new IllegalArgumentException("Insufficient non-zero color masks provided to meet requested channel count");
+    }
+    // Now compact the colorMasks array to exclude 0s so that indexing data to color channel is easier.
+    int filteredCount = 0;
+    long[] filteredColorMasks = new long[logicalChannelCount];
+    for (int i = 0; i < colorMasks.length; i++) {
+      if (colorMasks[i] == 0) {
+        continue;
+      }
+      filteredColorMasks[filteredCount++] = colorMasks[i];
+    }
+
+    if (alphaMask != 0) {
+      logicalChannelCount++;
+    }
+
+    int[] dataChannelMap = new int[logicalChannelCount];
+    Type[] dataType = new Type[logicalChannelCount];
+    int[] bitSize = new int[logicalChannelCount];
+
+    int expectedShift = 0;
+    for (int i = dataChannelMap.length - 1; i >= 0; i--) {
+      // Find the color or alpha channel that has a shift by the expected number of bits,
+      // which will be monotonically increasing, so as we move left through the channel map
+      // we insert the appropriately higher-order masks.
+      int size = 0;
+      int logicalChannel = 0;
+      if (alphaMask != 0 && Long.numberOfTrailingZeros(alphaMask) == expectedShift) {
+        logicalChannel = ALPHA_CHANNEL;
+        size = Long.bitCount(alphaMask);
+      } else {
+        // Search for a color mask
+        boolean found = false;
+        for (int j = 0; j < filteredColorMasks.length; j++) {
+          if (Long.numberOfTrailingZeros(filteredColorMasks[j]) == expectedShift) {
+            if (j >= channelCount) {
+              // Convert channel into a skipped channel
+              logicalChannel = SKIP_CHANNEL;
+            } else {
+              logicalChannel = j;
+            }
+            size = Long.bitCount(colorMasks[j]);
+            found = true;
+            break;
+          }
+        }
+
+        if (!found) {
+          throw new IllegalArgumentException("Provided color masks are not contiguous");
+        }
+      }
+
+      dataChannelMap[i] = logicalChannel;
+      bitSize[i] = size;
+      dataType[i] = type;
+    }
+
+    return new PixelFormat(dataChannelMap, dataType, bitSize);
+  }
 
   public PixelFormat(int[] dataChannelMap, Type[] dataType, int[] bitSize) {
     if (dataChannelMap.length != dataType.length || dataType.length != bitSize.length) {
@@ -128,6 +206,8 @@ public class PixelFormat {
     return total;
   }
 
+  // FIXME is the word channel redundant and of little value?
+
   public boolean isDataChannelSkipped(int dataIndex) {
     return channelType[dataIndex] == null;
   }
@@ -204,6 +284,19 @@ public class PixelFormat {
 
       return SKIP_CHANNEL;
     }
+  }
+
+  public long getColorChannelBitMask(int color) {
+    return getDataChannelBitMask(getColorChannelDataIndex(color));
+  }
+
+  public long getDataChannelBitMask(int dataIndex) {
+    long mask = Functions.maskLong(bitSize[dataIndex]);
+    long shift = 0;
+    for (int i = bitSize.length - 1; i > dataIndex; i--) {
+      shift += bitSize[i];
+    }
+    return mask << shift;
   }
 
   @Override
