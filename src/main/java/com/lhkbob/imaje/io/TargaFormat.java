@@ -19,6 +19,8 @@ import java.nio.channels.SeekableByteChannel;
 
 /**
  * See: http://www.paulbourke.net/dataformats/tga/
+ * http://www.fileformat.info/format/tga/egff.htm#TGA-DMYID.2
+ * http://www.dca.fee.unicamp.br/~martino/disciplinas/ea978/tgaffs.pdf
  */
 public class TargaFormat implements ImageFileFormat {
   private final Data.Factory dataFactory;
@@ -116,8 +118,9 @@ public class TargaFormat implements ImageFileFormat {
 
   @Override
   public void write(Image<?> image, SeekableByteChannel out) throws IOException {
-    if (!(image instanceof Raster))
+    if (!(image instanceof Raster)) {
       throw new UnsupportedImageFormatException("Can only write 2D Rasters");
+    }
 
     Raster<?> raster = (Raster<?>) image;
     ByteBuffer work = Data.getBufferFactory().newByteBuffer(WORK_BUFFER_LEN);
@@ -129,7 +132,8 @@ public class TargaFormat implements ImageFileFormat {
     writePixels(raster, out, work);
   }
 
-  private <T extends Color> void writePixels(Raster<T> image, SeekableByteChannel out, ByteBuffer work) throws IOException {
+  private <T extends Color> void writePixels(
+      Raster<T> image, SeekableByteChannel out, ByteBuffer work) throws IOException {
     ColorTransform<T, SRGB> toSRGB = Transforms.newTransform(image.getColorType(), SRGB.class);
 
     // A top-down left-to-right pixel loop
@@ -161,7 +165,8 @@ public class TargaFormat implements ImageFileFormat {
     }
   }
 
-  private void writeHeader(Raster<?> image, SeekableByteChannel out, ByteBuffer work) throws IOException {
+  private void writeHeader(Raster<?> image, SeekableByteChannel out, ByteBuffer work) throws
+      IOException {
     // Configure simple TGA header to specify a unmapped true-color image of 24 or 32 bits
     putUnsignedByte(work, 0); // No image ID
     putUnsignedByte(work, 0); // No color map
@@ -195,39 +200,31 @@ public class TargaFormat implements ImageFileFormat {
   }
 
   private Raster<SRGB> build16BitImage(Header h, ShortData imageData) {
-    ImageBuilder.OfRaster<SRGB> b = Image.newRaster(SRGB.class).sized(h.width, h.height)
+    ImageBuilder.OfRaster<SRGB> b = Image.newRaster(SRGB.class).width(h.width).height(h.height)
         .packedA1R5G5B5().backedBy(imageData);
     if (h.isTopToBottom()) {
-      b.dataArrangedTopDown();
-    } else {
-      b.dataArrangedBottomUp();
+      b.addDataOption(ImageBuilder.DataOption.PIXEL_TOP_TO_BOTTOM);
     }
     if (h.isRightToLeft()) {
-      b.dataArrangedRightToLeft();
-    } else {
-      b.dataArrangedLeftToRight();
+      b.addDataOption(ImageBuilder.DataOption.PIXEL_RIGHT_TO_LEFT);
     }
 
     return b.build();
   }
 
   private Raster<SRGB> buildMultiByteImage(Header h, int numChannels, ByteData imageData) {
-    ImageBuilder.OfRaster<SRGB> b = Image.newRaster(SRGB.class).sized(h.width, h.height).unorm8()
-        .backedBy(imageData);
+    ImageBuilder.OfRaster<SRGB> b = Image.newRaster(SRGB.class).width(h.width).height(h.height)
+        .unorm8().backedBy(imageData);
     if (numChannels == 4) {
       b.bgra();
     } else {
       b.bgr();
     }
     if (h.isTopToBottom()) {
-      b.dataArrangedTopDown();
-    } else {
-      b.dataArrangedBottomUp();
+      b.addDataOption(ImageBuilder.DataOption.PIXEL_TOP_TO_BOTTOM);
     }
     if (h.isRightToLeft()) {
-      b.dataArrangedRightToLeft();
-    } else {
-      b.dataArrangedLeftToRight();
+      b.addDataOption(ImageBuilder.DataOption.PIXEL_RIGHT_TO_LEFT);
     }
 
     return b.build();

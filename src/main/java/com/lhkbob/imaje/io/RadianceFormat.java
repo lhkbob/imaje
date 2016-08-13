@@ -12,8 +12,8 @@ import com.lhkbob.imaje.data.NumericData;
 import com.lhkbob.imaje.data.types.CustomBinaryData;
 import com.lhkbob.imaje.data.types.UnsignedSharedExponent;
 import com.lhkbob.imaje.layout.PixelFormat;
-import com.lhkbob.imaje.layout.PixelLayout;
-import com.lhkbob.imaje.layout.RasterLayout;
+import com.lhkbob.imaje.layout.DataLayout;
+import com.lhkbob.imaje.layout.SimpleLayout;
 import com.lhkbob.imaje.layout.UnpackedPixelArray;
 import com.lhkbob.imaje.util.ByteOrderUtils;
 import com.lhkbob.imaje.util.IOUtils;
@@ -117,7 +117,7 @@ public class RadianceFormat implements ImageFileFormat {
         Data.SFLOAT16, dataFactory.newShortData(width * height * 3));
     PixelFormat format = new PixelFormatBuilder().channels(0, 1, 2).types(PixelFormat.Type.SFLOAT)
         .bits(16).build();
-    PixelLayout layout = new RasterLayout(width, height, 3);
+    DataLayout layout = new SimpleLayout(width, height, 3);
 
     UnpackedPixelArray pixelArray = new UnpackedPixelArray(format, layout, data, 0L);
     // Read the remainder of the file into the pixel array
