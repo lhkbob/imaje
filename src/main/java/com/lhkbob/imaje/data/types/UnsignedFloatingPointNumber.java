@@ -48,7 +48,7 @@ public class UnsignedFloatingPointNumber implements BinaryRepresentation {
 
   @Override
   public long toBits(double value) {
-    // First clamp the double value to be positive or zero; then any conversion to the signed
+    // First wrap the double value to be positive or zero; then any conversion to the signed
     // floating point format with the extra sign bit is equivalent to the unsigned format by just
     // ignoring the sign bit
     value = Functions.clamp(value, 0.0, Double.POSITIVE_INFINITY);
