@@ -109,4 +109,20 @@ public final class Functions {
   public static long maskLong(int bits) {
     return (~0L) >>> (64 - bits);
   }
+
+  public static int floorInt(double v) {
+    return Math.toIntExact(floorLong(v));
+  }
+
+  public static long floorLong(double v) {
+    return (long) Math.floor(v);
+  }
+
+  public static double frac(double value) {
+    return value - (long) value;
+  }
+
+  public static int roundToInt(double value) {
+    return Math.toIntExact(Math.round(value));
+  }
 }
