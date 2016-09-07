@@ -77,6 +77,10 @@ public class RasterArray<T extends Color> implements Image<T> {
     return layers.get(index);
   }
 
+  public Volume<T> getAsVolume() {
+    return new Volume<>(colorType, getPixelArrays());
+  }
+
   @Override
   public int getLayerCount() {
     return layers.size();

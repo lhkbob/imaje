@@ -66,6 +66,10 @@ public class MipmapArray<T extends Color> implements Image<T> {
     layers = Collections.unmodifiableList(lockedCopy);
   }
 
+  public Volume<T> getMipmapAsVolume(int level) {
+    return new Volume<>(colorType, getPixelArraysForMipmap(level));
+  }
+
   public double get(int layer, int level, int x, int y, T result) {
     return getPixelArray(layer, level).get(x, y, result.getChannels());
   }

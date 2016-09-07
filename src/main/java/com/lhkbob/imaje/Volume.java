@@ -21,6 +21,19 @@ public class Volume<T extends Color> implements Image<T> {
   private final List<PixelArray> zData;
   private final Class<T> colorType;
 
+  public Volume(List<Raster<T>> zData) {
+    Arguments.notEmpty("zData", zData);
+
+    colorType = zData.get(0).getColorType();
+    List<PixelArray> arrays = new ArrayList<>(zData.size());
+    for (Raster<T> l : zData) {
+      arrays.add(l.getPixelArray());
+    }
+
+    ImageUtils.checkArrayCompleteness(arrays);
+    this.zData = Collections.unmodifiableList(arrays);
+  }
+
   public Volume(Class<T> colorType, List<PixelArray> zData) {
     Arguments.notNull("colorType", colorType);
     Arguments.notEmpty("zData", zData);
@@ -42,6 +55,10 @@ public class Volume<T extends Color> implements Image<T> {
 
   public Raster<T> getDepthSliceAsRaster(int z) {
     return new Raster<>(colorType, getPixelArray(z));
+  }
+
+  public RasterArray<T> getAsRasterArray() {
+    return new RasterArray<>(colorType, getPixelArrays());
   }
 
   public Pixel<T> getPixel(int x, int y, int z) {

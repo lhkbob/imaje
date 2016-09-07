@@ -52,7 +52,7 @@ public class MipmapVolume<T extends Color> implements Image<T> {
     int w = widths[0];
     int h = heights[0];
     int d = depths[0];
-    int mipmapCount = ImageUtils.getMipmapCount(w, h, d);
+    int mipmapCount = ImageUtils.getMaxMipmaps(w, h, d);
 
     if (widths.length != mipmapCount) {
       throw new IllegalArgumentException(
@@ -135,6 +135,10 @@ public class MipmapVolume<T extends Color> implements Image<T> {
 
   public Volume<T> getMipmapAsVolume(int mipmapLevel) {
     return new Volume<>(colorType, getPixelArraysForMipmap(mipmapLevel));
+  }
+
+  public RasterArray<T> getMipmapAsRasterArray(int mipmapLevel) {
+    return new RasterArray<>(colorType, getPixelArraysForMipmap(mipmapLevel));
   }
 
   public Pixel<T> getPixel(int mipmapLevel, int x, int y, int z) {
