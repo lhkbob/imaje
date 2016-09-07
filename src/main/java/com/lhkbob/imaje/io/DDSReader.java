@@ -527,7 +527,7 @@ public class DDSReader implements ImageFileReader {
       if (!isFlagSet(header.flags, DDSD_MIPMAPCOUNT)) {
         // Validate that provided count is complete mipmap set
         int expected = ImageUtils
-            .getMipmapCount(Math.max(desc.width, Math.max(desc.height, desc.depth)));
+            .getMaxMipmaps(Math.max(desc.width, Math.max(desc.height, desc.depth)));
         if (header.mipmapCount != expected) {
           throw new InvalidImageException(
               "Expected " + expected + " but got " + header.mipmapCount + " mipmaps instead");

@@ -625,7 +625,7 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     NumericData<?> data = buildDataSource(format, layout, true, 1, 1);
 
     // 2D mipmap only to worry about for count
-    int mipmapCount = ImageUtils.getMipmapCount(layout.getWidth(), layout.getHeight());
+    int mipmapCount = ImageUtils.getMaxMipmaps(layout.getWidth(), layout.getHeight());
     List<PixelArray> mipmaps = new ArrayList<>(mipmapCount);
     for (int i = 0; i < mipmapCount; i++) {
       // Specify current mipmap (i), but send -1s for layer and z to keep it as simple 2D mipmap
@@ -645,7 +645,7 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     NumericData<?> data = buildDataSource(format, layout, true, layers, 1);
 
     // 2D mipmap only to worry about for count
-    int mipmapCount = ImageUtils.getMipmapCount(layout.getWidth(), layout.getHeight());
+    int mipmapCount = ImageUtils.getMaxMipmaps(layout.getWidth(), layout.getHeight());
     List<List<PixelArray>> arrayOfMipmaps = new ArrayList<>(layers);
     for (int i = 0; i < layers; i++) {
       List<PixelArray> mipmaps = new ArrayList<>(mipmapCount);
@@ -669,7 +669,7 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
     NumericData<?> data = buildDataSource(format, layout, true, 1, depth);
 
     // Use all 3 dimensions for mipmap count
-    int mipmapCount = ImageUtils.getMipmapCount(layout.getWidth(), layout.getHeight(), depth);
+    int mipmapCount = ImageUtils.getMaxMipmaps(layout.getWidth(), layout.getHeight(), depth);
     List<List<PixelArray>> mipmappedZs = new ArrayList<>(mipmapCount);
     for (int i = 0; i < mipmapCount; i++) {
       int z = ImageUtils.getMipmapDimension(depth, i);
@@ -902,7 +902,7 @@ public abstract class DefaultImageBuilder<T extends Color, I extends Image<T>, B
 
     // Third accumulate mipmap offset based on layer scaling and direction through mipmap sequent
     if (mipmapLevel >= 0) {
-      int mipmapCount = ImageUtils.getMipmapCount(baseDims);
+      int mipmapCount = ImageUtils.getMaxMipmaps(baseDims);
       if (storeMipmapsHighToLow) {
         for (int i = mipmapCount - 1; i > mipmapLevel; i--) {
           int[] mipDims = ImageUtils.getMipmapDimensions(baseDims, i);

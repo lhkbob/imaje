@@ -17,7 +17,7 @@ public final class ImageUtils {
 
   public static long getUncompressedImageSize(int[] dimensions, boolean mipmapped) {
     long size = 0;
-    int mipmaps = mipmapped ? getMipmapCount(dimensions) : 1;
+    int mipmaps = mipmapped ? getMaxMipmaps(dimensions) : 1;
     for (int i = 0; i < mipmaps; i++) {
       int forLevel = 1;
       for (int j = 0; j < dimensions.length; j++) {
@@ -28,11 +28,11 @@ public final class ImageUtils {
     return size;
   }
 
-  public static int getMipmapCount(int maxDimension) {
-    return (int) Math.floor(Math.log(maxDimension) / Math.log(2.0)) + 1;
+  public static int getMaxMipmaps(int maxDimension) {
+    return Functions.floorInt(Functions.log2(maxDimension)) + 1;
   }
 
-  public static int getMipmapCount(int... dimensions) {
+  public static int getMaxMipmaps(int... dimensions) {
     int max = 0;
     for (int i = 0; i < dimensions.length; i++) {
       if (dimensions[i] > max) {
@@ -40,11 +40,11 @@ public final class ImageUtils {
       }
     }
 
-    return getMipmapCount(max);
+    return getMaxMipmaps(max);
   }
 
-  public static int getMipmapCount(int width, int height) {
-    return getMipmapCount(Math.max(width, height));
+  public static int getMaxMipmaps(int width, int height) {
+    return getMaxMipmaps(Math.max(width, height));
   }
 
   public static int getMipmapDimension(int topLevelDimension, int level) {
@@ -96,7 +96,7 @@ public final class ImageUtils {
     int baseHeight = levels.get(0).getLayout().getHeight();
     PixelFormat baseFormat = levels.get(0).getFormat();
 
-    int mipmapCount = getMipmapCount(baseWidth, baseHeight);
+    int mipmapCount = getMaxMipmaps(baseWidth, baseHeight);
     if (levels.size() != mipmapCount) {
       throw new IllegalArgumentException("Incorrect number of level images provided, expected " + mipmapCount + " but was " + levels.size());
     }
