@@ -29,7 +29,7 @@ public enum MeasurementUnit {
   // DIN 16536-2 narrow band densitometer response, with polarizing filter.
   DIN_I_POLARIZED("DNNP");
 
-  private Signature signature;
+  private final Signature signature;
 
   MeasurementUnit(String name) {
     signature = Signature.fromName(name);
