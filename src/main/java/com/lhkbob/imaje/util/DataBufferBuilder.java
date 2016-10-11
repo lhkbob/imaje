@@ -452,7 +452,7 @@ public class DataBufferBuilder implements Cloneable {
     return this;
   }
 
-  public DataBufferBuilder wrapDataSource(DataBuffer existing) {
+  public DataBufferBuilder wrapDataBuffer(DataBuffer existing) {
     existingData = existing;
     return this;
   }
