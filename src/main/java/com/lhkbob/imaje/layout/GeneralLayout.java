@@ -8,7 +8,7 @@ import java.util.Iterator;
 import java.util.Spliterator;
 
 /**
- *
+ * FIXME rename to TileInterleaveLayout
  */
 public class GeneralLayout implements DataLayout {
   public enum InterleavingUnit {

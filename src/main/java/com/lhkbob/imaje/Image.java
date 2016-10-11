@@ -1,7 +1,6 @@
 package com.lhkbob.imaje;
 
 import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.util.DefaultImageBuilder;
 
 import java.util.Iterator;
 import java.util.Spliterator;
@@ -10,30 +9,6 @@ import java.util.Spliterator;
  *
  */
 public interface Image<T extends Color> extends Iterable<Pixel<T>> {
-  static <T extends Color> ImageBuilder.OfRaster<T> newRaster(Class<T> colorType) {
-    return new DefaultImageBuilder.OfRaster<>(colorType);
-  }
-
-  static <T extends Color> ImageBuilder.OfMipmap<T> newMipmap(Class<T> colorType) {
-    return new DefaultImageBuilder.OfMipmap<>(colorType);
-  }
-
-  static <T extends Color> ImageBuilder.OfRasterArray<T> newRasterArray(Class<T> colorType) {
-    return new DefaultImageBuilder.OfRasterArray<>(colorType);
-  }
-
-  static <T extends Color> ImageBuilder.OfMipmapArray<T> newMipmapArray(Class<T> colorType) {
-    return new DefaultImageBuilder.OfMipmapArray<>(colorType);
-  }
-
-  static <T extends Color> ImageBuilder.OfVolume<T> newVolume(Class<T> colorType) {
-    return new DefaultImageBuilder.OfVolume<>(colorType);
-  }
-
-  static <T extends Color> ImageBuilder.OfMipmapVolume<T> newMipmapVolume(Class<T> colorType) {
-    return new DefaultImageBuilder.OfMipmapVolume<>(colorType);
-  }
-
   int getLayerCount();
 
   int getMipmapCount();

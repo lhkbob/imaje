@@ -17,7 +17,6 @@ public class PackedPixelArray implements PixelArray {
   private final DataLayout layout;
   private final PixelFormat format;
   private final BitData data;
-  private final long offset;
 
   private final BinaryRepresentation[] fields;
   private final long[] fieldMasks;
@@ -31,11 +30,10 @@ public class PackedPixelArray implements PixelArray {
     return bits == 8 || bits == 16 || bits == 32 || bits == 64;
   }
 
-  public PackedPixelArray(PixelFormat format, DataLayout layout, BitData data, long offset) {
-    Arguments.isGreaterThanOrEqualToZero("offset", offset);
+  public PackedPixelArray(PixelFormat format, DataLayout layout, BitData data) {
     Arguments.equals("layout.getChannelCount()", 1, layout.getChannelCount());
     Arguments.equals("bit size", format.getTotalBitSize(), data.getBitSize());
-    Arguments.checkArrayRange("data length", data.getLength(), offset, layout.getRequiredDataElements());
+    Arguments.checkArrayRange("data length", data.getLength(), 0, layout.getRequiredDataElements());
 
     fields = new BinaryRepresentation[format.getDataChannelCount()];
     fieldMasks = new long[fields.length];
@@ -53,7 +51,6 @@ public class PackedPixelArray implements PixelArray {
     this.layout = layout;
     this.format = format;
     this.data = data;
-    this.offset = offset;
   }
 
   private static BinaryRepresentation getRepresentation(PixelFormat.Type type, int size) {
@@ -85,11 +82,6 @@ public class PackedPixelArray implements PixelArray {
   }
 
   @Override
-  public long getDataOffset() {
-    return offset;
-  }
-
-  @Override
   public DataLayout getLayout() {
     return layout;
   }
@@ -106,20 +98,20 @@ public class PackedPixelArray implements PixelArray {
 
   @Override
   public double get(int x, int y, double[] channelValues) {
-    long index = offset + layout.getChannelIndex(x, y, 0);
+    long index = layout.getChannelIndex(x, y, 0);
     return unpack(data.getBits(index), channelValues);
   }
 
   @Override
   public double get(int x, int y, double[] channelValues, long[] channels) {
     layout.getChannelIndices(x, y, channels);
-    return unpack(data.getBits(offset + channels[0]), channelValues);
+    return unpack(data.getBits(channels[0]), channelValues);
   }
 
   @Override
   public double getAlpha(int x, int y) {
     if (format.hasAlphaChannel()) {
-      long index = offset + layout.getChannelIndex(x, y, 0);
+      long index = layout.getChannelIndex(x, y, 0);
       return bitFieldToDouble(data.getBits(index), format.getAlphaChannelDataIndex());
     } else {
       return 1.0;
@@ -128,20 +120,20 @@ public class PackedPixelArray implements PixelArray {
 
   @Override
   public void set(int x, int y, double[] channelValues, double a) {
-    long index = offset + layout.getChannelIndex(x, y, 0);
+    long index = layout.getChannelIndex(x, y, 0);
     data.setBits(index, pack(channelValues, a));
   }
 
   @Override
   public void set(int x, int y, double[] channelValues, double a, long[] channels) {
     layout.getChannelIndices(x, y, channels);
-    data.setBits(offset + channels[0], pack(channelValues, a));
+    data.setBits(channels[0], pack(channelValues, a));
   }
 
   @Override
   public void setAlpha(int x, int y, double alpha) {
     if (format.hasAlphaChannel()) {
-      long index = offset + layout.getChannelIndex(x, y, 0);
+      long index = layout.getChannelIndex(x, y, 0);
       long bits = data.getBits(index);
 
       // Zero out original bit field
@@ -152,6 +144,11 @@ public class PackedPixelArray implements PixelArray {
       // Calculate new alpha bit field and or it into the remaining value, store into data source
       data.setBits(index, bits | doubleToBitField(alpha, alphaDataChannelIndex));
     } // else ignore set request
+  }
+
+  @Override
+  public boolean isReadOnly() {
+    return false;
   }
 
   private long pack(double[] values, double a) {

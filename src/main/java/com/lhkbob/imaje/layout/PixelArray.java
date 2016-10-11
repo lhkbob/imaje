@@ -3,8 +3,6 @@ package com.lhkbob.imaje.layout;
 import com.lhkbob.imaje.data.DataBuffer;
 
 /**
- * FIXME add an isReadOnly method or maybe isCompressed to indicate that storing values can't
- * happen on a per-pixel basis
  */
 public interface PixelArray {
   DataLayout getLayout();
@@ -12,8 +10,6 @@ public interface PixelArray {
   DataBuffer getData();
 
   PixelFormat getFormat();
-
-  long getDataOffset();
 
   double get(int x, int y, double[] channelValues);
 
@@ -26,4 +22,14 @@ public interface PixelArray {
   void set(int x, int y, double[] channelValues, double a, long[] channels);
 
   void setAlpha(int x, int y, double alpha);
+
+  boolean isReadOnly();
+
+  default PixelArray getParent() { return null; }
+
+  default int getWidth() { return getLayout().getWidth(); }
+
+  default int getHeight() { return getLayout().getHeight(); }
+
+  default int getColorChannelCount() { return getFormat().getColorChannelCount(); }
 }

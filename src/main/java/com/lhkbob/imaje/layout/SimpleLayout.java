@@ -8,7 +8,7 @@ import java.util.Iterator;
 import java.util.Spliterator;
 
 /**
- *
+ * FIXME rename to ScanlineLayout
  */
 public class SimpleLayout implements DataLayout {
   private final int imageWidth; // width in pixels of the image

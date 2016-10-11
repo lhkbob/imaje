@@ -21,7 +21,6 @@ public class UnpackedPixelArray implements PixelArray {
   private final DataLayout layout;
   private final PixelFormat format;
   private final NumericData<?> data;
-  private final long offset;
 
   // Returns true if all data bit sizes are the same size, all bit sizes equal 8, 16, 32, or 64.
   // And all types are the same.
@@ -54,10 +53,9 @@ public class UnpackedPixelArray implements PixelArray {
     return true;
   }
 
-  public UnpackedPixelArray(PixelFormat format, DataLayout layout, NumericData<?> data, long offset) {
-    Arguments.isGreaterThanOrEqualToZero("offset", offset);
+  public UnpackedPixelArray(PixelFormat format, DataLayout layout, NumericData<?> data) {
     Arguments.equals("channel count", format.getDataChannelCount(), layout.getChannelCount());
-    Arguments.checkArrayRange("data length", data.getLength(), offset, layout.getRequiredDataElements());
+    Arguments.checkArrayRange("data length", data.getLength(), 0, layout.getRequiredDataElements());
 
     // Now verify that the format fits the mold expected of unpacked types
     // i.e. bit size for each channel is the same and type of each channel is the same.
@@ -159,12 +157,6 @@ public class UnpackedPixelArray implements PixelArray {
     this.data = data;
     this.format = format;
     this.layout = layout;
-    this.offset = offset;
-  }
-
-  @Override
-  public long getDataOffset() {
-    return offset;
   }
 
   @Override
@@ -186,11 +178,11 @@ public class UnpackedPixelArray implements PixelArray {
   public double get(int x, int y, double[] channelValues) {
     for (int i = 0; i < format.getColorChannelCount(); i++) {
       int dataChannel = format.getColorChannelDataIndex(i);
-      channelValues[i] = data.getValue(offset + layout.getChannelIndex(x, y, dataChannel));
+      channelValues[i] = data.getValue(layout.getChannelIndex(x, y, dataChannel));
     }
 
     if (format.hasAlphaChannel()) {
-      return data.getValue(offset + layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()));
+      return data.getValue(layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()));
     } else {
       return 1.0;
     }
@@ -201,11 +193,11 @@ public class UnpackedPixelArray implements PixelArray {
     layout.getChannelIndices(x, y, channels);
     for (int i = 0; i < format.getColorChannelCount(); i++) {
       int dataChannel = format.getColorChannelDataIndex(i);
-      channelValues[i] = data.getValue(offset + channels[dataChannel]);
+      channelValues[i] = data.getValue(channels[dataChannel]);
     }
 
     if (format.hasAlphaChannel()) {
-      return data.getValue(offset + channels[format.getAlphaChannelDataIndex()]);
+      return data.getValue(channels[format.getAlphaChannelDataIndex()]);
     } else {
       return 1.0;
     }
@@ -214,7 +206,7 @@ public class UnpackedPixelArray implements PixelArray {
   @Override
   public double getAlpha(int x, int y) {
     if (format.hasAlphaChannel()) {
-      return data.getValue(offset + layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()));
+      return data.getValue(layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()));
     } else {
       // No alpha channel
       return 1.0;
@@ -225,11 +217,11 @@ public class UnpackedPixelArray implements PixelArray {
   public void set(int x, int y, double[] channelValues, double a) {
     for (int i = 0; i < format.getColorChannelCount(); i++) {
       int dataChannel = format.getColorChannelDataIndex(i);
-      data.setValue(offset + layout.getChannelIndex(x, y, dataChannel), channelValues[i]);
+      data.setValue(layout.getChannelIndex(x, y, dataChannel), channelValues[i]);
     }
 
     if (format.hasAlphaChannel()) {
-      data.setValue(offset + layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()), a);
+      data.setValue(layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()), a);
     } // otherwise no alpha channel so ignore the set request
   }
 
@@ -238,18 +230,23 @@ public class UnpackedPixelArray implements PixelArray {
     layout.getChannelIndices(x, y, channels);
     for (int i = 0; i < format.getColorChannelCount(); i++) {
       int dataChannel = format.getColorChannelDataIndex(i);
-      data.setValue(offset + channels[dataChannel], channelValues[i]);
+      data.setValue(channels[dataChannel], channelValues[i]);
     }
 
     if (format.hasAlphaChannel()) {
-      data.setValue(offset + channels[format.getAlphaChannelDataIndex()], a);
+      data.setValue(channels[format.getAlphaChannelDataIndex()], a);
     } // otherwise no alpha channel so ignore the set request
   }
 
   @Override
   public void setAlpha(int x, int y, double alpha) {
     if (format.hasAlphaChannel()) {
-      data.setValue(offset + layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()), alpha);
+      data.setValue(layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()), alpha);
     } // otherwise no alpha channel so ignore the set request
+  }
+
+  @Override
+  public boolean isReadOnly() {
+    return false;
   }
 }

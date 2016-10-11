@@ -1,15 +1,9 @@
-package com.lhkbob.imaje.util;
-
-import com.lhkbob.imaje.layout.GeneralLayout;
-import com.lhkbob.imaje.layout.InvertedLayout;
-import com.lhkbob.imaje.layout.DataLayout;
-import com.lhkbob.imaje.layout.SimpleLayout;
-import com.lhkbob.imaje.layout.SubImageLayout;
+package com.lhkbob.imaje.layout;
 
 /**
  *
  */
-public class PixelLayoutBuilder implements Cloneable {
+public class DataLayoutBuilder implements Cloneable {
   private int width;
   private int height;
   private int tileWidth;
@@ -19,7 +13,7 @@ public class PixelLayoutBuilder implements Cloneable {
   private boolean flipY;
   private boolean flipX;
 
-  public PixelLayoutBuilder() {
+  public DataLayoutBuilder() {
     // Defaults
     width = 1;
     height = 1;
@@ -32,23 +26,16 @@ public class PixelLayoutBuilder implements Cloneable {
   }
 
   @Override
-  public PixelLayoutBuilder clone() {
+  public DataLayoutBuilder clone() {
     try {
       // All fields are primitives or immutable so there is no further action required
-      return (PixelLayoutBuilder) super.clone();
+      return (DataLayoutBuilder) super.clone();
     } catch (CloneNotSupportedException e) {
       throw new RuntimeException("Should not happen", e);
     }
   }
 
-  public PixelLayoutBuilder compatibleWith(DataLayout layout) {
-    // Specify false as the default value for 'flip', which will be correct if there is no inversion
-    // wrapper, and will be negated to true when there is an inversion wrapper.
-    setCompatible(layout, false);
-    return this;
-  }
-
-  private void setCompatible(DataLayout layout, boolean flip) {
+  public DataLayoutBuilder compatibleWith(DataLayout layout) {
     // Set properties that don't depend on the nesting/wrapping of layouts
     width = layout.getWidth();
     height = layout.getHeight();
@@ -57,12 +44,8 @@ public class PixelLayoutBuilder implements Cloneable {
     flipY = !layout.isDataBottomToTop();
 
     // Extract base layout to determine pixel interleaving and tiling properties
-    while(layout instanceof SubImageLayout || layout instanceof InvertedLayout) {
-      if (layout instanceof SubImageLayout) {
-        layout = ((SubImageLayout) layout).getOriginalLayout();
-      } else {
+    while(layout instanceof InvertedLayout) {
         layout = ((InvertedLayout) layout).getOriginalLayout();
-      }
     }
 
     if (layout instanceof SimpleLayout) {
@@ -78,54 +61,56 @@ public class PixelLayoutBuilder implements Cloneable {
       throw new UnsupportedOperationException(
           "Unsupported pixel layout class: " + layout.getClass());
     }
+
+    return this;
   }
 
-  public PixelLayoutBuilder topToBottom() {
+  public DataLayoutBuilder topToBottom() {
     flipY = true;
     return this;
   }
 
-  public PixelLayoutBuilder bottomToTop() {
+  public DataLayoutBuilder bottomToTop() {
     flipY = false;
     return this;
   }
 
-  public PixelLayoutBuilder leftToRight() {
+  public DataLayoutBuilder leftToRight() {
     flipX = false;
     return this;
   }
 
-  public PixelLayoutBuilder rightToLeft() {
+  public DataLayoutBuilder rightToLeft() {
     flipX = true;
     return this;
   }
 
-  public PixelLayoutBuilder width(int width) {
+  public DataLayoutBuilder width(int width) {
     this.width = width;
     return this;
   }
 
-  public PixelLayoutBuilder height(int height) {
+  public DataLayoutBuilder height(int height) {
     this.height = height;
     return this;
   }
 
-  public PixelLayoutBuilder tileWidth(int tileWidth) {
+  public DataLayoutBuilder tileWidth(int tileWidth) {
     this.tileWidth = tileWidth;
     return this;
   }
 
-  public PixelLayoutBuilder tileHeight(int tileHeight) {
+  public DataLayoutBuilder tileHeight(int tileHeight) {
     this.tileHeight = tileHeight;
     return this;
   }
 
-  public PixelLayoutBuilder channels(int channels) {
+  public DataLayoutBuilder channels(int channels) {
     this.channels = channels;
     return this;
   }
 
-  public PixelLayoutBuilder interleave(GeneralLayout.InterleavingUnit interleavingUnit) {
+  public DataLayoutBuilder interleave(GeneralLayout.InterleavingUnit interleavingUnit) {
     this.interleavingUnit = interleavingUnit;
     return this;
   }

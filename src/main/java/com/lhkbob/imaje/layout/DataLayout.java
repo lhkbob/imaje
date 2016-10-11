@@ -1,7 +1,5 @@
 package com.lhkbob.imaje.layout;
 
-import com.lhkbob.imaje.util.PixelLayoutBuilder;
-
 /**
  *
  */
@@ -22,8 +20,8 @@ public interface DataLayout extends Iterable<ImageCoordinate> {
 
   int getWidth();
 
-  static PixelLayoutBuilder newBuilder() {
-    return new PixelLayoutBuilder();
+  static DataLayoutBuilder newBuilder() {
+    return new DataLayoutBuilder();
   }
 
   boolean isDataBottomToTop();

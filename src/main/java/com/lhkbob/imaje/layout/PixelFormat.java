@@ -23,7 +23,8 @@ public class PixelFormat {
   private final int[] colorToDataChannel;
   private final int alphaDataChannel;
 
-  public static PixelFormat createFromMasks(long[] colorMasks, int channelCount, long alphaMask, Type type) {
+  public static PixelFormat createFromMasks(
+      long[] colorMasks, int channelCount, long alphaMask, Type type) {
     // First filter masks equal to 0, which is a convenience for image loading code that frequently
     // has a fixed number of channels specified but their presence in data is encoded as a 0'ed mask
     int logicalChannelCount = 0;
@@ -36,9 +37,11 @@ public class PixelFormat {
     // Before including a possible alpha channel, validate the maxChannels argument, which must be
     // less than or equal to the number of non-zero masks.
     if (channelCount > logicalChannelCount) {
-      throw new IllegalArgumentException("Insufficient non-zero color masks provided to meet requested channel count");
+      throw new IllegalArgumentException(
+          "Insufficient non-zero color masks provided to meet requested channel count");
     }
-    // Now compact the colorMasks array to exclude 0s so that indexing data to color channel is easier.
+    // Now compact the colorMasks array to exclude 0s so that indexing data to color channel is
+    // easier.
     int filteredCount = 0;
     long[] filteredColorMasks = new long[logicalChannelCount];
     for (int i = 0; i < colorMasks.length; i++) {
@@ -117,9 +120,10 @@ public class PixelFormat {
       }
     }
 
-    // Make sure that all referenced logical channels are specified from 0 to N, where N is < data channel count
-    // and there are no duplicates (ALPHA cannot be duplicated but SKIP can be).
-    // N is the highest value in dataChannelMap and (N+1) is the logical channel count of the pixel format.
+    // Make sure that all referenced logical channels are specified from 0 to N, where N is < data
+    // channel count and there are no duplicates (ALPHA cannot be duplicated but SKIP can be). N is
+    // the highest value in dataChannelMap and (N+1) is the logical channel count of the pixel
+    // format.
     int alphaIndex = -1;
     for (int i = 0; i < dataChannelMap.length; i++) {
       if (dataChannelMap[i] == ALPHA_CHANNEL) {
@@ -190,6 +194,39 @@ public class PixelFormat {
 
     colorToDataChannel = logicalToData;
     alphaDataChannel = alphaIndex;
+  }
+
+  public boolean isLogicallyCompatible(PixelFormat format) {
+    // Two pixel formats are compatible if they can store the same color channels and alpha channel,
+    // but it is permissible for there to be type changes in the data, making them compatible with
+    // the same color types, but potentially lossy. All equivalent formats are compatible.
+    if (format == null) {
+      return false;
+    }
+    if (format.getColorChannelCount() != getColorChannelCount()) {
+      return false;
+    }
+    if (format.hasAlphaChannel() != hasAlphaChannel()) {
+      return false;
+    }
+    return true;
+  }
+
+  public boolean isLogicallyEquivalent(PixelFormat format) {
+    // Two pixel formats are equivalent if they can represent the same logical data (i.e. they
+    // have the same number and type of color channels and an alpha channel; the order of the color
+    // channels in data does not matter nor if there are skipped data channels in one or the other)
+    if (!isLogicallyCompatible(format)) {
+      return false;
+    }
+
+    for (int i = 0; i < getColorChannelCount(); i++) {
+      if (getColorChannelType(i) != format.getColorChannelType(i)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   public int getElementCount() {

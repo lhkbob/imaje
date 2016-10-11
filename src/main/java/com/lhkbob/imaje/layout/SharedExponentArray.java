@@ -12,16 +12,14 @@ public class SharedExponentArray implements PixelArray {
   private final PixelFormat format;
   private final DataLayout layout;
   private final BitData data;
-  private final long offset;
 
   private final UnsignedSharedExponent exp;
 
-  public SharedExponentArray(PixelFormat format, DataLayout layout, BitData data, long offset) {
-    Arguments.isGreaterThanOrEqualToZero("offset", offset);
+  public SharedExponentArray(PixelFormat format, DataLayout layout, BitData data) {
     Arguments.equals("layout.getChannelCount()", 1, layout.getChannelCount());
     Arguments.equals("bit size", format.getTotalBitSize(), data.getBitSize());
     Arguments
-        .checkArrayRange("data length", data.getLength(), offset, layout.getRequiredDataElements());
+        .checkArrayRange("data length", data.getLength(), 0, layout.getRequiredDataElements());
 
     if (format.hasAlphaChannel()) {
       throw new IllegalArgumentException(
@@ -34,10 +32,10 @@ public class SharedExponentArray implements PixelArray {
 
     long exponentMask = 0L;
     long[] mantissaMasks = new long[format.getColorChannelCount() - 1];
+
     // Count from the back so we can track total shift from right to left
     int shift = 0;
     for (int i = format.getDataChannelCount() - 1; i >= 0; i--) {
-
       if (!format.isDataChannelSkipped(i)) {
         long mask = Functions.maskLong(format.getDataChannelBitSize(i)) << shift;
         int channel = format.getDataChannelColorIndex(i);
@@ -56,7 +54,6 @@ public class SharedExponentArray implements PixelArray {
     this.format = format;
     this.layout = layout;
     this.data = data;
-    this.offset = offset;
   }
 
   @Override
@@ -79,13 +76,8 @@ public class SharedExponentArray implements PixelArray {
   }
 
   @Override
-  public long getDataOffset() {
-    return offset;
-  }
-
-  @Override
   public double get(int x, int y, double[] channelValues) {
-    long bits = data.getBits(offset + layout.getChannelIndex(x, y, 0));
+    long bits = data.getBits(layout.getChannelIndex(x, y, 0));
     // Expand all floating point values from bits into the given channel array
     exp.toNumericValues(bits, channelValues);
 
@@ -97,7 +89,7 @@ public class SharedExponentArray implements PixelArray {
   public double get(int x, int y, double[] channelValues, long[] channels) {
     layout.getChannelIndices(x, y, channels);
     // Expand all floating point values from bits into the given channel array
-    exp.toNumericValues(data.getBits(offset + channels[0]), channelValues);
+    exp.toNumericValues(data.getBits(channels[0]), channelValues);
 
     // Always return 1.0 since there is never an alpha channel
     return 1.0;
@@ -113,7 +105,7 @@ public class SharedExponentArray implements PixelArray {
   public void set(int x, int y, double[] channelValues, double a) {
     // Ignore alpha value
     long encodedBits = exp.toBits(channelValues);
-    data.setBits(offset + layout.getChannelIndex(x, y, 0), encodedBits);
+    data.setBits(layout.getChannelIndex(x, y, 0), encodedBits);
   }
 
   @Override
@@ -121,11 +113,16 @@ public class SharedExponentArray implements PixelArray {
     // Ignore alpha value
     long encodedBits = exp.toBits(channelValues);
     layout.getChannelIndices(x, y, channels);
-    data.setBits(offset + channels[0], encodedBits);
+    data.setBits(channels[0], encodedBits);
   }
 
   @Override
   public void setAlpha(int x, int y, double alpha) {
     // Do nothing, there is never an alpha channel
+  }
+
+  @Override
+  public boolean isReadOnly() {
+    return false;
   }
 }

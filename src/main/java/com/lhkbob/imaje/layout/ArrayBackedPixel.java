@@ -1,5 +1,6 @@
 package com.lhkbob.imaje.layout;
 
+import com.lhkbob.imaje.Images;
 import com.lhkbob.imaje.Pixel;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.util.Arguments;
@@ -38,8 +39,7 @@ public class ArrayBackedPixel<T extends Color> implements Pixel<T> {
     this.layer = layer;
 
     // Final validation to make sure channel counts are compatible
-    Arguments.equals("channel count", cachedColor.getChannelCount(),
-        data.getFormat().getColorChannelCount());
+    Images.checkImageCompatibility(colorType, data);
   }
 
   @Override
@@ -91,8 +91,8 @@ public class ArrayBackedPixel<T extends Color> implements Pixel<T> {
     Arguments.notNull("value", value);
 
     if (value != cachedColor) {
-      // Copy the state of value into the internal cachedColor instance so that future calls to getColor
-      // are accurate
+      // Copy the state of value into the internal cachedColor instance so that future calls to
+      // getColor are accurate
       cachedColor.set(value.getChannels());
     }
 
