@@ -4,7 +4,7 @@ import com.lhkbob.imaje.MipmapArray;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.op.ColorOps;
 import com.lhkbob.imaje.util.Arguments;
-import com.lhkbob.imaje.util.ImageUtils;
+import com.lhkbob.imaje.Images;
 
 /**
  *
@@ -80,8 +80,8 @@ public class MipmapBilinearIndexedSampler2D<T extends Color> implements IndexedS
 
   private double sampleLevel(double u, double v, int index, int mipmap, double weight, T result) {
     // Get dimensions for specific mipmap
-    int w = ImageUtils.getMipmapDimension(image.getWidth(), mipmap);
-    int h = ImageUtils.getMipmapDimension(image.getHeight(), mipmap);
+    int w = Images.getMipmapDimension(image.getWidth(), mipmap);
+    int h = Images.getMipmapDimension(image.getHeight(), mipmap);
 
     // Get sample coordinates for 4 corners being sampled
     int i0 = Samplers.sampleToTexel(u, w);

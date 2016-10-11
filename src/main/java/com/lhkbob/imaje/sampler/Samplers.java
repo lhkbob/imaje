@@ -11,7 +11,7 @@ import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.layout.PixelArray;
 import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.Functions;
-import com.lhkbob.imaje.util.ImageUtils;
+import com.lhkbob.imaje.Images;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,7 +19,6 @@ import java.util.List;
 
 
 /**
- *
  */
 public final class Samplers {
   private Samplers() {}
@@ -260,7 +259,7 @@ public final class Samplers {
         Mipmap<T> img = (Mipmap<T>) image;
         int mmax = mipmapMax;
         if (mipmapMax < 0) {
-          mmax = ImageUtils.getMaxMipmaps(img.getWidth(), img.getHeight());
+          mmax = Images.getMaxMipmaps(img.getWidth(), img.getHeight());
         }
         if (filterLinear) {
           return new MipmapBilinearSampler2D<>(img, u, v, mipmapBase, mmax);
@@ -339,7 +338,7 @@ public final class Samplers {
         MipmapVolume<T> img = (MipmapVolume<T>) image;
         int mmax = mipmapMax;
         if (mipmapMax < 0) {
-          mmax = ImageUtils.getMaxMipmaps(img.getWidth(), img.getHeight(), img.getDepth());
+          mmax = Images.getMaxMipmaps(img.getWidth(), img.getHeight(), img.getDepth());
         }
         if (filterLinear) {
           return new MipmapBilinearSampler3D<>(img, u, v, w, mipmapBase, mmax);
@@ -383,7 +382,7 @@ public final class Samplers {
         MipmapArray<T> img = (MipmapArray<T>) image;
         int mmax = mipmapMax;
         if (mipmapMax < 0) {
-          mmax = ImageUtils.getMaxMipmaps(img.getWidth(), img.getHeight());
+          mmax = Images.getMaxMipmaps(img.getWidth(), img.getHeight());
         }
         if (filterLinear) {
           return new MipmapBilinearIndexedSampler2D<>(img, u, v, mipmapBase, mmax);

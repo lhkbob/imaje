@@ -4,7 +4,7 @@ import com.lhkbob.imaje.MipmapVolume;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.op.ColorOps;
 import com.lhkbob.imaje.util.Arguments;
-import com.lhkbob.imaje.util.ImageUtils;
+import com.lhkbob.imaje.Images;
 
 /**
  *
@@ -87,9 +87,9 @@ public class MipmapBilinearSampler3D<T extends Color> implements Sampler3D<T> {
 
   private double sampleLevel(double u, double v, double w, int mipmap, double weight, T result) {
     // Get the dimensions for the current mipmap level
-    int width = ImageUtils.getMipmapDimension(image.getWidth(), mipmap);
-    int height = ImageUtils.getMipmapDimension(image.getHeight(), mipmap);
-    int depth = ImageUtils.getMipmapDimension(image.getDepth(), mipmap);
+    int width = Images.getMipmapDimension(image.getWidth(), mipmap);
+    int height = Images.getMipmapDimension(image.getHeight(), mipmap);
+    int depth = Images.getMipmapDimension(image.getDepth(), mipmap);
 
     // Lookup coordinates of 8 corners that are to be sampled
     int i0 = Samplers.sampleToTexel(u, width);

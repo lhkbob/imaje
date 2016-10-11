@@ -3,7 +3,7 @@ package com.lhkbob.imaje.sampler;
 import com.lhkbob.imaje.MipmapVolume;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.util.Arguments;
-import com.lhkbob.imaje.util.ImageUtils;
+import com.lhkbob.imaje.Images;
 
 /**
  *
@@ -46,9 +46,9 @@ public class MipmapNearestSampler3D<T extends Color> implements Sampler3D<T> {
     int mipmap = Samplers.lodToMipmap(lod, levelBase, levelMax);
 
     // Get dimensions for the selected mipmap
-    int width = ImageUtils.getMipmapDimension(image.getWidth(), mipmap);
-    int height = ImageUtils.getMipmapDimension(image.getHeight(), mipmap);
-    int depth = ImageUtils.getMipmapDimension(image.getDepth(), mipmap);
+    int width = Images.getMipmapDimension(image.getWidth(), mipmap);
+    int height = Images.getMipmapDimension(image.getHeight(), mipmap);
+    int depth = Images.getMipmapDimension(image.getDepth(), mipmap);
 
     int i = Samplers.coordToTexel(u, width);
     int j = Samplers.coordToTexel(v, height);
