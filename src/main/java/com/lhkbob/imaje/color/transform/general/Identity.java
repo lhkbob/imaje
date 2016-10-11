@@ -34,8 +34,6 @@ public class Identity implements Transform {
   public void transform(double[] input, double[] output) {
     // Copy input to output
     Transform.validateDimensions(this, input, output);
-    for (int i = 0; i < channels; i++) {
-      output[i] = input[i];
-    }
+    System.arraycopy(input, 0, output, 0, channels);
   }
 }
