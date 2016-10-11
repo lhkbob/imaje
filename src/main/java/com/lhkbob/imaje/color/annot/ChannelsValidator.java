@@ -58,7 +58,7 @@ public class ChannelsValidator extends AbstractProcessor {
         if (!e.getModifiers().contains(Modifier.ABSTRACT)
             && annot == null) {
           processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
-              "Color subclass does not specify a @Channels annotation: " + e.toString(), e);
+              "Color subclass does not specify a @Channels annotation: " + e, e);
         } else if (annot != null) {
           // Validate definition of @Channels annotation
           if (annot.unnamedChannelCount() > 0) {
