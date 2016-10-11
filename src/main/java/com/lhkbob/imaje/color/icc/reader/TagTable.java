@@ -110,7 +110,7 @@ public final class TagTable {
   public String toString() {
     StringBuilder sb = new StringBuilder("Tags:\n");
     for (Tag<?> t : tags.values()) {
-      sb.append(t.toString()).append('\n');
+      sb.append(t).append('\n');
     }
     return sb.toString();
   }

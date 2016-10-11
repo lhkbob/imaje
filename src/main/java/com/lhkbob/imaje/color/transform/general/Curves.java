@@ -69,7 +69,7 @@ public class Curves implements Transform {
     StringBuilder sb = new StringBuilder("Curve Transform (dim: ").append(curves.size())
         .append("):");
     for (int i = 0; i < curves.size(); i++) {
-      sb.append("\n  channel ").append(i + 1).append(": ").append(curves.get(i).toString());
+      sb.append("\n  channel ").append(i + 1).append(": ").append(curves.get(i));
     }
     return sb.toString();
   }
