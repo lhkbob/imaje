@@ -1,7 +1,7 @@
-package com.lhkbob.imaje.util;
+package com.lhkbob.imaje.io.awt;
 
-import com.lhkbob.imaje.Image;
 import com.lhkbob.imaje.ImageBuilder;
+import com.lhkbob.imaje.Images;
 import com.lhkbob.imaje.Pixel;
 import com.lhkbob.imaje.Raster;
 import com.lhkbob.imaje.color.CMYK;
@@ -27,14 +27,16 @@ import com.lhkbob.imaje.data.array.FloatArrayData;
 import com.lhkbob.imaje.data.array.IntArrayData;
 import com.lhkbob.imaje.data.array.ShortArrayData;
 import com.lhkbob.imaje.data.types.CustomBinaryData;
+import com.lhkbob.imaje.layout.DataLayout;
 import com.lhkbob.imaje.layout.GeneralLayout;
 import com.lhkbob.imaje.layout.InvertedLayout;
 import com.lhkbob.imaje.layout.PackedPixelArray;
 import com.lhkbob.imaje.layout.PixelArray;
 import com.lhkbob.imaje.layout.PixelFormat;
-import com.lhkbob.imaje.layout.DataLayout;
+import com.lhkbob.imaje.layout.PixelFormatBuilder;
 import com.lhkbob.imaje.layout.SimpleLayout;
 import com.lhkbob.imaje.layout.UnpackedPixelArray;
+import com.lhkbob.imaje.util.Functions;
 
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
@@ -145,8 +147,8 @@ public final class BufferedImageConverter {
   }
 
   private static Raster<Luminance> convertToLuminance(BufferedImage image, Data.Factory factory) {
-    ImageBuilder.OfRaster<Luminance> builder = Image.newRaster(Luminance.class)
-        .width(image.getWidth()).height(image.getHeight()).backedByNewData(factory);
+    ImageBuilder.OfRaster<Luminance> builder = Images.newRaster(Luminance.class)
+        .width(image.getWidth()).height(image.getHeight()).newData(factory);
     // Builder is already configured for r(), which is the only option we have really
     configureBuilderType(builder, image.getSampleModel().getDataType());
     if (image.getColorModel().hasAlpha()) {
@@ -171,8 +173,8 @@ public final class BufferedImageConverter {
   }
 
   private static Raster<SRGB> convertToSRGB(BufferedImage image, Data.Factory factory) {
-    ImageBuilder.OfRaster<SRGB> builder = Image.newRaster(SRGB.class)
-        .width(image.getWidth()).height(image.getHeight()).backedByNewData(factory);
+    ImageBuilder.OfRaster<SRGB> builder = Images.newRaster(SRGB.class)
+        .width(image.getWidth()).height(image.getHeight()).newData(factory);
 
     // Try and match channel arrangement and bit depths based on known types
     switch (image.getType()) {
@@ -297,7 +299,7 @@ public final class BufferedImageConverter {
 
       // It will use a packed pixel array
       wrapper = new PackedPixelArray(
-          format, new InvertedLayout(layout, false, true), (BitData) wrappedData, 0L);
+          format, new InvertedLayout(layout, false, true), (BitData) wrappedData);
     } else if (image.getSampleModel() instanceof ComponentSampleModel) {
       ComponentSampleModel s = (ComponentSampleModel) image.getSampleModel();
       GeneralLayout.InterleavingUnit interleave = getInterleaving(s);
@@ -319,7 +321,7 @@ public final class BufferedImageConverter {
 
       // Unpacked pixel array
       wrapper = new UnpackedPixelArray(
-          format, new InvertedLayout(layout, false, true), (NumericData) wrappedData, 0L);
+          format, new InvertedLayout(layout, false, true), (NumericData) wrappedData);
     } else {
       // Unknown sample model, so data arrangement is unknown
       return null;
@@ -344,8 +346,7 @@ public final class BufferedImageConverter {
     }
 
     // Only wrap images that fill the data source completely
-    if (data.getData().getLength() != data.getLayout().getRequiredDataElements()
-        || data.getDataOffset() != 0) {
+    if (data.getData().getLength() != data.getLayout().getRequiredDataElements()) {
       return null;
     }
 

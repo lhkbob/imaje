@@ -1,8 +1,10 @@
-package com.lhkbob.imaje.io;
+package com.lhkbob.imaje.io.awt;
 
 import com.lhkbob.imaje.Image;
 import com.lhkbob.imaje.Raster;
 import com.lhkbob.imaje.data.Data;
+import com.lhkbob.imaje.io.ImageFileFormat;
+import com.lhkbob.imaje.io.ImageStream;
 
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;

@@ -1,4 +1,4 @@
-package com.lhkbob.imaje.io;
+package com.lhkbob.imaje.io.awt;
 
 import com.lhkbob.imaje.data.Data;
 

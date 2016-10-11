@@ -1,8 +1,10 @@
-package com.lhkbob.imaje.io;
+package com.lhkbob.imaje.io.awt;
 
 import com.lhkbob.imaje.Raster;
 import com.lhkbob.imaje.data.Data;
-import com.lhkbob.imaje.util.BufferedImageConverter;
+import com.lhkbob.imaje.io.ImageFileReader;
+import com.lhkbob.imaje.io.InvalidImageException;
+import com.lhkbob.imaje.io.UnsupportedImageFormatException;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
