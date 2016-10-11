@@ -1,4 +1,4 @@
-package com.lhkbob.imaje.util;
+package com.lhkbob.imaje.gpu;
 
 import com.lhkbob.imaje.layout.PixelFormat;
 import com.lhkbob.imaje.layout.PixelFormat.Type;

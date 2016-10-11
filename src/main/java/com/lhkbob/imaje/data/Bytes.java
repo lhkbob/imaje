@@ -1,4 +1,6 @@
-package com.lhkbob.imaje.util;
+package com.lhkbob.imaje.data;
+
+import com.lhkbob.imaje.util.Arguments;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -7,7 +9,9 @@ import java.nio.ByteOrder;
 /**
  *
  */
-public class ByteOrderUtils {
+public final class Bytes {
+  private Bytes() {}
+
   public static double bytesToDoubleBE(byte[] data, int offset) {
     return bytesToDoubleBE(data[offset], data[offset + 1], data[offset + 2], data[offset + 3],
         data[offset + 4], data[offset + 5], data[offset + 6], data[offset + 7]);

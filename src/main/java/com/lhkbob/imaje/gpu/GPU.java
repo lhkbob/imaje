@@ -1,6 +1,5 @@
-package com.lhkbob.imaje.util;
+package com.lhkbob.imaje.gpu;
 
-import com.lhkbob.imaje.Image;
 import com.lhkbob.imaje.Raster;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.Depth;
@@ -15,7 +14,7 @@ import java.util.stream.Stream;
 /**
  *
  */
-public class GPUUtils {
+public class GPU {
   // FIXME we need a nice way of determining if an image is a Texture1D, Texture2D, Texture3D, Texture2DArray, Texture1DArray, TextureCubeMap, or TextureCubeMapArray
   // and if it has mipmaps, what its GPU format is, and if the data is accessible to the GPU
   // Could define a simple interface here for texture data transfer to/from the GPU and just not
@@ -24,7 +23,7 @@ public class GPUUtils {
   // The interface would avoid all the impl specific guts of pulling out buffers, etc. from sources
   // that this utility can do for it and then just call the appropriate simpler function.
 
-  public static boolean isTexture1D(Image<?> image) {
+  /*public static boolean isTexture1D(Image<?> image) {
 
   }
 
@@ -54,8 +53,9 @@ public class GPUUtils {
 
   public static GPUFormat getFormat(Image<?> image) {
 
-  }
+  }*/
 
+  // FIXME this must take into account the SharedExponent layout
   private static GPUFormat getFormat(Raster<?> image) {
     Class<? extends Color> type = image.getColorType();
     PixelFormat pf = image.getPixelArray().getFormat();
