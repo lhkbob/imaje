@@ -1,6 +1,7 @@
 package com.lhkbob.imaje.io.awt;
 
 import com.lhkbob.imaje.data.Data;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
@@ -12,6 +13,6 @@ public class PNGFormat extends ImageIOFormat {
     this(null);
   }
 
-  public PNGFormat(Data.Factory factory) {
+  public PNGFormat(@Arguments.Nullable Data.Factory factory) {
     super(FILE_SUFFIX, factory);
   }}

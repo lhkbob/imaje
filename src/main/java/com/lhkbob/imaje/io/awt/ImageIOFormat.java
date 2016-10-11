@@ -5,6 +5,7 @@ import com.lhkbob.imaje.Raster;
 import com.lhkbob.imaje.data.Data;
 import com.lhkbob.imaje.io.ImageFileFormat;
 import com.lhkbob.imaje.io.ImageStream;
+import com.lhkbob.imaje.util.Arguments;
 
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
@@ -16,7 +17,7 @@ public abstract class ImageIOFormat implements ImageFileFormat {
   private final ImageIOReader reader;
   private final ImageIOWriter writer;
 
-  public ImageIOFormat(String formatSuffix, Data.Factory factory) {
+  public ImageIOFormat(String formatSuffix, @Arguments.Nullable Data.Factory factory) {
     reader = new ImageIOReader(formatSuffix, factory);
     writer = new ImageIOWriter(formatSuffix);
   }

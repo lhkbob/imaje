@@ -15,6 +15,7 @@ import com.lhkbob.imaje.io.ImageFileReader;
 import com.lhkbob.imaje.io.InvalidImageException;
 import com.lhkbob.imaje.io.UnsupportedImageFormatException;
 import com.lhkbob.imaje.layout.PixelFormat;
+import com.lhkbob.imaje.util.Arguments;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -34,7 +35,7 @@ public class DDSReader implements ImageFileReader {
     this(null);
   }
 
-  public DDSReader(Data.Factory factory) {
+  public DDSReader(@Arguments.Nullable Data.Factory factory) {
     if (factory == null) {
       factory = Data.getDefaultDataFactory();
     }

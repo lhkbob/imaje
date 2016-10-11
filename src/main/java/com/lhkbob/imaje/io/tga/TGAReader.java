@@ -12,6 +12,7 @@ import com.lhkbob.imaje.io.IO;
 import com.lhkbob.imaje.io.ImageFileReader;
 import com.lhkbob.imaje.io.InvalidImageException;
 import com.lhkbob.imaje.io.UnsupportedImageFormatException;
+import com.lhkbob.imaje.util.Arguments;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -23,7 +24,7 @@ import java.nio.channels.SeekableByteChannel;
 public class TGAReader implements ImageFileReader {
   private final Data.Factory dataFactory;
 
-  public TGAReader(Data.Factory factory) {
+  public TGAReader(@Arguments.Nullable Data.Factory factory) {
     if (factory == null) {
       dataFactory = Data.getDefaultDataFactory();
     } else {

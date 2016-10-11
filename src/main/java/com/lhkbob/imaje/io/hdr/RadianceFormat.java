@@ -4,6 +4,7 @@ import com.lhkbob.imaje.Image;
 import com.lhkbob.imaje.data.Data;
 import com.lhkbob.imaje.data.types.UnsignedSharedExponent;
 import com.lhkbob.imaje.io.ImageFileFormat;
+import com.lhkbob.imaje.util.Arguments;
 
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
@@ -21,7 +22,7 @@ public class RadianceFormat implements ImageFileFormat {
     this(null);
   }
 
-  public RadianceFormat(Data.Factory factory) {
+  public RadianceFormat(@Arguments.Nullable Data.Factory factory) {
     reader = new RadianceReader(factory);
     writer = new RadianceWriter();
   }

@@ -5,6 +5,7 @@ import com.lhkbob.imaje.data.Data;
 import com.lhkbob.imaje.io.ImageFileReader;
 import com.lhkbob.imaje.io.InvalidImageException;
 import com.lhkbob.imaje.io.UnsupportedImageFormatException;
+import com.lhkbob.imaje.util.Arguments;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -27,7 +28,7 @@ public class ImageIOReader implements ImageFileReader {
     this(formatSuffix, null);
   }
 
-  public ImageIOReader(String formatSuffix, Data.Factory factory) {
+  public ImageIOReader(String formatSuffix, @Arguments.Nullable Data.Factory factory) {
     if (factory == null) {
       factory = Data.getDefaultDataFactory();
     }

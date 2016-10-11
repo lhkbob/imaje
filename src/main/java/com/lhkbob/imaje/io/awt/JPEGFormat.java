@@ -1,6 +1,7 @@
 package com.lhkbob.imaje.io.awt;
 
 import com.lhkbob.imaje.data.Data;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
@@ -12,6 +13,6 @@ public class JPEGFormat extends ImageIOFormat {
     this(null);
   }
 
-  public JPEGFormat(Data.Factory factory) {
+  public JPEGFormat(@Arguments.Nullable Data.Factory factory) {
     super(FILE_SUFFIX, factory);
   }}

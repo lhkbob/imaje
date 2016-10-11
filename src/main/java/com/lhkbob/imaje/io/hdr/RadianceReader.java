@@ -16,6 +16,7 @@ import com.lhkbob.imaje.layout.PixelFormat;
 import com.lhkbob.imaje.layout.PixelFormatBuilder;
 import com.lhkbob.imaje.layout.SimpleLayout;
 import com.lhkbob.imaje.layout.UnpackedPixelArray;
+import com.lhkbob.imaje.util.Arguments;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -33,7 +34,7 @@ public class RadianceReader implements ImageFileReader {
     this(null);
   }
 
-  public RadianceReader(Data.Factory factory) {
+  public RadianceReader(@Arguments.Nullable Data.Factory factory) {
     if (factory == null) {
       factory = Data.getDefaultDataFactory();
     }

@@ -213,7 +213,7 @@ public class DDSHeader {
     setCapabilitiesBitField(1, setFlag(DDSCAPS2_CUBEMAP, getCapabilitiesBitField(1), isCubeMap));
   }
 
-  public void setDX10Header(DX10Header h) {
+  public void setDX10Header(@Arguments.Nullable DX10Header h) {
     headerDX10 = h;
   }
 

@@ -4,6 +4,7 @@ import com.lhkbob.imaje.Image;
 import com.lhkbob.imaje.data.Bytes;
 import com.lhkbob.imaje.data.Data;
 import com.lhkbob.imaje.io.ImageFileFormat;
+import com.lhkbob.imaje.util.Arguments;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -22,7 +23,7 @@ public class TGAFormat implements ImageFileFormat {
     this(null);
   }
 
-  public TGAFormat(Data.Factory factory) {
+  public TGAFormat(@Arguments.Nullable Data.Factory factory) {
     reader = new TGAReader(factory);
     writer = new TGAWriter();
   }
