@@ -15,6 +15,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface SpectrumRange {
-  double lowWavelength() default 390.0;
-  double highWavelength() default 700.0;
+  // FIXME use Mitsuba's
+  double DEFAULT_LOW_WAVELENGTH = 360.0;
+  double DEFAULT_HIGH_WAVELENGTH = 830.0;
+
+  double lowWavelength() default DEFAULT_LOW_WAVELENGTH;
+  double highWavelength() default DEFAULT_HIGH_WAVELENGTH;
 }

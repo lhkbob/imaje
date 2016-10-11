@@ -6,12 +6,8 @@ import com.lhkbob.imaje.color.annot.SpectrumRange;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- *
  */
 public abstract class Spectrum extends Color {
-  private static final double DEFAULT_LOW_BOUNDARY = 390.0;
-  private static final double DEFAULT_HIGH_BOUNDARY = 700.0;
-
   private static final ConcurrentHashMap<Class<? extends Spectrum>, double[]> wavelengthCache = new ConcurrentHashMap<>();
 
   private transient double lowBound;
@@ -112,7 +108,7 @@ public abstract class Spectrum extends Color {
         range = new double[] { sr.lowWavelength(), sr.highWavelength() };
       } else {
         // Use default
-        range = new double[] { DEFAULT_LOW_BOUNDARY, DEFAULT_HIGH_BOUNDARY };
+        range = new double[] { SpectrumRange.DEFAULT_LOW_WAVELENGTH, SpectrumRange.DEFAULT_HIGH_WAVELENGTH };
       }
 
       // Cache so we don't have to lookup annotations with every object creation
