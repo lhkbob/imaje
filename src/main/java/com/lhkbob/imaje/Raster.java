@@ -3,8 +3,8 @@ package com.lhkbob.imaje;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.layout.ArrayBackedPixel;
 import com.lhkbob.imaje.layout.PixelArray;
+import com.lhkbob.imaje.layout.SubImagePixelArray;
 import com.lhkbob.imaje.util.Arguments;
-import com.lhkbob.imaje.util.ImageUtils;
 
 import java.util.Iterator;
 import java.util.Spliterator;
@@ -17,7 +17,7 @@ public class Raster<T extends Color> implements Image<T> {
   private final Class<T> colorType;
 
   public Raster(Class<T> colorType, PixelArray data) {
-    ImageUtils.checkImageCompatibility(colorType, data);
+    Images.checkImageCompatibility(colorType, data);
 
     this.colorType = colorType;
     this.data = data;
@@ -29,6 +29,10 @@ public class Raster<T extends Color> implements Image<T> {
 
   public double getAlpha(int x, int y) {
     return data.getAlpha(x, y);
+  }
+
+  public Raster<T> getSubImage(int x, int y, int w, int h) {
+    return new Raster<>(colorType, SubImagePixelArray.createSubImageForRaster(data, x, y, w, h));
   }
 
   @Override

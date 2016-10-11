@@ -3,8 +3,8 @@ package com.lhkbob.imaje;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.layout.ArrayBackedPixel;
 import com.lhkbob.imaje.layout.PixelArray;
+import com.lhkbob.imaje.layout.SubImagePixelArray;
 import com.lhkbob.imaje.util.Arguments;
-import com.lhkbob.imaje.util.ImageUtils;
 import com.lhkbob.imaje.util.IteratorChain;
 import com.lhkbob.imaje.util.SpliteratorChain;
 
@@ -30,7 +30,7 @@ public class Mipmap<T extends Color> implements Image<T> {
     }
 
     // Verify that dimensions and properties are as expected
-    ImageUtils.checkMipmapCompleteness(arrays);
+    Images.checkMipmapCompleteness(arrays);
     this.mipmaps = Collections.unmodifiableList(arrays);
   }
 
@@ -38,11 +38,16 @@ public class Mipmap<T extends Color> implements Image<T> {
     Arguments.notNull("colorType", colorType);
     Arguments.notEmpty("mipmaps", mipmaps);
 
-    ImageUtils.checkMipmapCompleteness(mipmaps);
-    ImageUtils.checkImageCompatibility(colorType, mipmaps);
+    Images.checkMipmapCompleteness(mipmaps);
+    Images.checkImageCompatibility(colorType, mipmaps);
 
     this.colorType = colorType;
     this.mipmaps = Collections.unmodifiableList(new ArrayList<>(mipmaps));
+  }
+
+  public Mipmap<T> getSubImage(int x, int y, int w, int h) {
+    return new Mipmap<>(
+        colorType, SubImagePixelArray.createSubImagesForMipmap(mipmaps, x, y, w, h));
   }
 
   public double get(int level, int x, int y, T result) {

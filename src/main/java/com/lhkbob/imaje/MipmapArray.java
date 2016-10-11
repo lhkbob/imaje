@@ -3,8 +3,8 @@ package com.lhkbob.imaje;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.layout.ArrayBackedPixel;
 import com.lhkbob.imaje.layout.PixelArray;
+import com.lhkbob.imaje.layout.SubImagePixelArray;
 import com.lhkbob.imaje.util.Arguments;
-import com.lhkbob.imaje.util.ImageUtils;
 import com.lhkbob.imaje.util.IteratorChain;
 import com.lhkbob.imaje.util.SpliteratorChain;
 
@@ -35,7 +35,7 @@ public class MipmapArray<T extends Color> implements Image<T> {
       allData.add(m.getPixelArrays());
     }
 
-    ImageUtils.checkArrayCompleteness(topLevelImages);
+    Images.checkArrayCompleteness(topLevelImages);
 
     colorType = layers.get(0).getColorType();
     this.layers = Collections.unmodifiableList(allData);
@@ -51,7 +51,7 @@ public class MipmapArray<T extends Color> implements Image<T> {
     List<List<PixelArray>> lockedCopy = new ArrayList<>(layersOfMipmaps.size());
     for (List<PixelArray> mipSet : layersOfMipmaps) {
       Arguments.notEmpty("layer", mipSet);
-      ImageUtils.checkMipmapCompleteness(mipSet);
+      Images.checkMipmapCompleteness(mipSet);
       topLevelImages.add(mipSet.get(0));
 
       lockedCopy.add(Collections.unmodifiableList(new ArrayList<>(mipSet)));
@@ -59,11 +59,16 @@ public class MipmapArray<T extends Color> implements Image<T> {
 
     // Check that all top level images are array complete, and since every mipmap set was also
     // complete, that means all lower level images will also be array complete for the mip level.
-    ImageUtils.checkArrayCompleteness(topLevelImages);
-    ImageUtils.checkImageCompatibility(colorType, topLevelImages);
+    Images.checkArrayCompleteness(topLevelImages);
+    Images.checkImageCompatibility(colorType, topLevelImages);
 
     this.colorType = colorType;
     layers = Collections.unmodifiableList(lockedCopy);
+  }
+
+  public MipmapArray<T> getSubImage(int x, int y, int w, int h) {
+    return new MipmapArray<>(
+        colorType, SubImagePixelArray.createSubImagesForMipmapArray(layers, x, y, w, h));
   }
 
   public Volume<T> getMipmapAsVolume(int level) {

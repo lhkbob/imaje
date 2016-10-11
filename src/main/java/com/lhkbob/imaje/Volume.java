@@ -3,8 +3,8 @@ package com.lhkbob.imaje;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.layout.ArrayBackedPixel;
 import com.lhkbob.imaje.layout.PixelArray;
+import com.lhkbob.imaje.layout.SubImagePixelArray;
 import com.lhkbob.imaje.util.Arguments;
-import com.lhkbob.imaje.util.ImageUtils;
 import com.lhkbob.imaje.util.IteratorChain;
 import com.lhkbob.imaje.util.SpliteratorChain;
 
@@ -30,7 +30,7 @@ public class Volume<T extends Color> implements Image<T> {
       arrays.add(l.getPixelArray());
     }
 
-    ImageUtils.checkArrayCompleteness(arrays);
+    Images.checkArrayCompleteness(arrays);
     this.zData = Collections.unmodifiableList(arrays);
   }
 
@@ -38,11 +38,16 @@ public class Volume<T extends Color> implements Image<T> {
     Arguments.notNull("colorType", colorType);
     Arguments.notEmpty("zData", zData);
 
-    ImageUtils.checkArrayCompleteness(zData);
-    ImageUtils.checkImageCompatibility(colorType, zData);
+    Images.checkArrayCompleteness(zData);
+    Images.checkImageCompatibility(colorType, zData);
 
     this.colorType = colorType;
     this.zData = Collections.unmodifiableList(new ArrayList<>(zData));
+  }
+
+  public Volume<T> getSubImage(int x, int y, int z, int w, int h, int d) {
+    return new Volume<>(
+        colorType, SubImagePixelArray.createSubImagesForVolume(zData, x, y, z, w, h, d));
   }
 
   public PixelArray getPixelArray(int z) {

@@ -3,8 +3,8 @@ package com.lhkbob.imaje;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.layout.ArrayBackedPixel;
 import com.lhkbob.imaje.layout.PixelArray;
+import com.lhkbob.imaje.layout.SubImagePixelArray;
 import com.lhkbob.imaje.util.Arguments;
-import com.lhkbob.imaje.util.ImageUtils;
 import com.lhkbob.imaje.util.IteratorChain;
 import com.lhkbob.imaje.util.SpliteratorChain;
 
@@ -29,7 +29,7 @@ public class RasterArray<T extends Color> implements Image<T> {
       arrays.add(l.getPixelArray());
     }
 
-    ImageUtils.checkArrayCompleteness(arrays);
+    Images.checkArrayCompleteness(arrays);
     this.layers = Collections.unmodifiableList(arrays);
   }
 
@@ -37,11 +37,16 @@ public class RasterArray<T extends Color> implements Image<T> {
     Arguments.notNull("colorType", colorType);
     Arguments.notEmpty("layers", layers);
 
-    ImageUtils.checkArrayCompleteness(layers);
-    ImageUtils.checkImageCompatibility(colorType, layers);
+    Images.checkArrayCompleteness(layers);
+    Images.checkImageCompatibility(colorType, layers);
 
     this.layers = Collections.unmodifiableList(new ArrayList<>(layers));
     this.colorType = colorType;
+  }
+
+  public RasterArray<T> getSubImage(int x, int y, int w, int h) {
+    return new RasterArray<>(
+        colorType, SubImagePixelArray.createSubImagesForArray(layers, x, y, w, h));
   }
 
   public double get(int layer, int x, int y, T result) {

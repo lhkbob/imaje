@@ -3,8 +3,8 @@ package com.lhkbob.imaje;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.layout.ArrayBackedPixel;
 import com.lhkbob.imaje.layout.PixelArray;
+import com.lhkbob.imaje.layout.SubImagePixelArray;
 import com.lhkbob.imaje.util.Arguments;
-import com.lhkbob.imaje.util.ImageUtils;
 import com.lhkbob.imaje.util.IteratorChain;
 import com.lhkbob.imaje.util.SpliteratorChain;
 
@@ -52,7 +52,7 @@ public class MipmapVolume<T extends Color> implements Image<T> {
     int w = widths[0];
     int h = heights[0];
     int d = depths[0];
-    int mipmapCount = ImageUtils.getMaxMipmaps(w, h, d);
+    int mipmapCount = Images.getMaxMipmaps(w, h, d);
 
     if (widths.length != mipmapCount) {
       throw new IllegalArgumentException(
@@ -62,13 +62,13 @@ public class MipmapVolume<T extends Color> implements Image<T> {
 
     for (int i = 0; i < mipmapCount; i++) {
       // Make sure width, height, and depth of each volume mipmap level are as expected
-      if (ImageUtils.getMipmapDimension(w, i) != widths[i]
-          || ImageUtils.getMipmapDimension(h, i) != heights[i]
-          || ImageUtils.getMipmapDimension(d, i) != depths[i]) {
+      if (Images.getMipmapDimension(w, i) != widths[i]
+          || Images.getMipmapDimension(h, i) != heights[i]
+          || Images.getMipmapDimension(d, i) != depths[i]) {
         throw new IllegalArgumentException(String.format(
             "Dimension mismatch for mipmap level %d, expected volume to be [%d, %d, %d] but was [%d, %d, %d]",
-            i, ImageUtils.getMipmapDimension(w, i), ImageUtils.getMipmapDimension(h, i),
-            ImageUtils.getMipmapDimension(d, i), widths[i], heights[i], depths[i]));
+            i, Images.getMipmapDimension(w, i), Images.getMipmapDimension(h, i),
+            Images.getMipmapDimension(d, i), widths[i], heights[i], depths[i]));
       }
     }
   }
@@ -87,8 +87,8 @@ public class MipmapVolume<T extends Color> implements Image<T> {
     List<List<PixelArray>> lockedCopy = new ArrayList<>(mipmappedZData.size());
     for (List<PixelArray> volume : mipmappedZData) {
       Arguments.notEmpty("zData", volume);
-      ImageUtils.checkImageCompatibility(colorType, volume);
-      ImageUtils.checkArrayCompleteness(volume);
+      Images.checkImageCompatibility(colorType, volume);
+      Images.checkArrayCompleteness(volume);
 
       // Since the volume is array complete, any slice will have the same width and height
       widths[i] = volume.get(0).getLayout().getWidth();
@@ -106,6 +106,12 @@ public class MipmapVolume<T extends Color> implements Image<T> {
     this.mipmappedZData = Collections.unmodifiableList(lockedCopy);
   }
 
+  public MipmapVolume<T> getSubImage(int x, int y, int z, int w, int h, int d) {
+    return new MipmapVolume<>(
+        colorType,
+        SubImagePixelArray.createSubImagesForMipmapVolume(mipmappedZData, x, y, z, w, h, d));
+  }
+
   public PixelArray getPixelArray(int mipmapLevel, int z) {
     return mipmappedZData.get(mipmapLevel).get(z);
   }
@@ -118,8 +124,9 @@ public class MipmapVolume<T extends Color> implements Image<T> {
     List<PixelArray> zs = new ArrayList<>(mipmappedZData.size());
     for (List<PixelArray> mipmap : mipmappedZData) {
       // As mipmaps progress, the depth of each volume decreases, so terminate once z is exceeded
-      if (z >= mipmap.size())
+      if (z >= mipmap.size()) {
         break;
+      }
       zs.add(mipmap.get(z));
     }
     return zs;
