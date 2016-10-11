@@ -9,7 +9,7 @@ import java.util.function.LongConsumer;
  */
 public class IndexSpliterator implements Spliterator.OfLong {
   private final long minimumSplit;
-  private long indexFence;
+  private final long indexFence;
   private long nextIndex;
 
   public IndexSpliterator(long size, long minimumSplit) {
