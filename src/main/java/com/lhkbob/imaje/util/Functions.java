@@ -114,6 +114,14 @@ public final class Functions {
     return Math.toIntExact(floorLong(v));
   }
 
+  public static int ceilInt(double v) {
+    return Math.toIntExact(ceilLong(v));
+  }
+
+  public static long ceilLong(double v) {
+    return (long) Math.ceil(v);
+  }
+
   public static long floorLong(double v) {
     return (long) Math.floor(v);
   }

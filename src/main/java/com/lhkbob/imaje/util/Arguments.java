@@ -17,8 +17,8 @@ public final class Arguments {
 
   public static void checkIndex(String name, long arrayLength, long index) {
     if (index < 0L || index >= arrayLength) {
-      throw new IndexOutOfBoundsException(String
-          .format("%s must be in range [0, %d], not: %d", name, arrayLength - 1, index));
+      throw new IndexOutOfBoundsException(
+          String.format("%s must be in range [0, %d], not: %d", name, arrayLength - 1, index));
     }
   }
 
@@ -59,16 +59,20 @@ public final class Arguments {
   }
 
   public static void equals(String name, double expected, double actual) {
-    if (Math.abs(expected - actual) < 1e-23) {
-      throw new IllegalArgumentException(
-          String.format("%s (%.4f) must equal %.4f", name, actual, expected));
-    }
+    equals(name, expected, actual, 1e-23);
   }
 
   public static void equals(String name, long expected, long actual) {
     if (expected != actual) {
       throw new IllegalArgumentException(
           String.format("%s (%d) must equal %d", name, actual, expected));
+    }
+  }
+
+  public static void equals(String name, double expected, double value, double precision) {
+    if (Math.abs(expected - value) > precision) {
+      throw new IllegalArgumentException(String
+          .format("%s must equal (up to %g) %g, but was: %g", name, precision, expected, value));
     }
   }
 
