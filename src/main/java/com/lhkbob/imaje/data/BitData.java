@@ -32,10 +32,43 @@
 package com.lhkbob.imaje.data;
 
 /**
+ * BitData
+ * =======
  *
+ * BitData is a DataBuffer that stores bit fields in each primitive, e.g. the underlying elements
+ * will be `int`, `short`, `byte`, or `long`. However, the bit fields may be interpreted differently
+ * than the standard Java interpretation of those primitive types.
+ *
+ * As an interface, BitData exposes all of its values as `long`. However, only the least significant
+ * bits (determined by {@link #getBitSize()} are valid. When setting values, bits beyond that are
+ * discarded, and when getting values the high bits are set to 0.
+ *
+ * @author Michael Ludwig
  */
 public interface BitData extends DataBuffer {
+  /**
+   * Get the bit field at `index` in this buffer. The returned `long` will have valid bits stored
+   * in bits 0 to `getBitSize() - 1` and 0s in all higher bits.
+   *
+   * @param index
+   *     The primitive element to access, 0-based.
+   * @return The bit field at `index`
+   *
+   * @throws IndexOutOfBoundsException
+   *     if `index` is less than 0 or greater than or equal to {@link #getLength()}
+   */
   long getBits(long index);
 
+  /**
+   * Set the bit field at `index` in this buffer to the bits represented by `value`. Only the
+   * bits 0 to `getBitSize() - 1` of `value` will be stored, all other bits are ignored.
+   *
+   * @param index
+   *     The primitive element to modify, 0-based
+   * @param value
+   *     The new bit field value
+   * @throws IndexOutOfBoundsException
+   *     if `index` is less than 0 or greater than or equal to {@link #getLength()}
+   */
   void setBits(long index, long value);
 }
