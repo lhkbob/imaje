@@ -32,29 +32,89 @@
 package com.lhkbob.imaje.data;
 
 /**
- * How to add bulk operations and updates? What types of updates are necessary:
+ * DataBuffer
+ * ==========
  *
- * 1. Copy into the source from an array, buffer, stream, channel that are assumed to exactly match
- *    the expected bit pattern of the source
- * 2. Copy into the source from an array, buffer, stream, channel that are numeric and must be
- *    re-encoded into the source's format --> Unnecessary, just use the DataSource copy then
- * 3. Copy back and forth between two sources, either optimized if bit compatible or by decoding
- *    and recoding as necessary
- * 4. All of these copies should have source and dest offsets and length, for streams it should have length
- *    but no dest offset, and length can be implicit (e.g. read as much as possible, either until source
- *    is full or stream is empty)
+ * DataBuffer is the top-level interface to represent a one-dimensional array of primitive data. The
+ * data can be stored in many different ways, ranging from arrays to NIO buffers or custom
+ * implementations. The primary purpose of the DataBuffer and its primitive-specific subtypes is
+ * provide a unified way of accessing bulk data regardless of an application's needs, which may
+ * determine if arrays or buffers are more appropriate. To be future proof, DataBuffers use `long`
+ * to represent length and index access.
  *
- *    Other things to think about:
- *    The specific types that these things support require using the concrete type, or at least the
- *    more concrete interface like ByteSource. But this doesn't apply when you want to send values
- *    to
+ * DataBuffer has two primary subtypes: {@link BitData} and {@link NumericData} that denote
+ * different semantic interpretations of the data. BitData treats the primitives as a mean to store
+ * bit patterns, which may be interpreted as the standard 2's complement interpretation of integers,
+ * or IEEE floating point numbers. BitData is useful when operating at a low level for custom
+ * numeric representations, such as packing multiple values into a single primitive. NumericData
+ * maps underlying primitive data to the real numbers. The details of this mapping depends on the
+ * specific representation of the data but NumericData provides a clean interface to read and write
+ * `double` values regardless of underlying storage.
+ *
+ * @author Michael Ludwig
  */
 public interface DataBuffer {
+  /**
+   * @return The length of the data, must be at least 0.
+   */
   long getLength();
 
+  /**
+   * @return Whether or not underlying multi-byte data is stored as big Endian or little Endian.
+   */
   boolean isBigEndian();
 
+  /**
+   * Get whether or not the data can be accessed or transferred directly to the GPU. The
+   * requirements for this are open to change as GPU adapters for Java are developed further. The
+   * current requirements are:
+   *
+   * 1. Underlying data is stored in NIO buffers.
+   * 2. The NIO buffer is direct (e.g. continuous off-heap block of memory that can be referenced
+   * as a pointer in JNI code).
+   * 3. The byte order of the data must match the native system's byte order.
+   *
+   * @return The GPU accessibility of the underlying data
+   */
   boolean isGPUAccessible();
 
+  /**
+   * @return The number of bits per primitive of the underlying data
+   */
   int getBitSize();
+
+  /**
+   * Copy values from `data` into this buffer. Set the values of this data buffer, starting at
+   * `writeIndex`, to the those in `data` starting at `readIndex`. `length` values will be copied.
+   * An exception is thrown if there are not `length` primitives available in this buffer or `data`
+   * based on the appropriate write and read indices. Similarly, an exception is thrown if the index
+   * ranges would access any out-of-bounds index of the underlying data. These exceptions must be
+   * thrown before any modifications are made to this buffer.
+   *
+   * The `data` argument is of type DataBuffer but that does not mean that every type of input
+   * DataBuffer is supported for a given implementation. The following minimum support and behavior
+   * is required:
+   *
+   * 1. A BitData implementation must support BitData input buffers of the same primitive type,
+   * i.e. ByteData implementations must support all other ByteData implementations.
+   * 3. Copying between BitData with different bit counts is not supported.
+   * 4. A NumericData implementation must support copying values from any other NumericData
+   * implementation.
+   * 5. Copying between NumericData copies the effective numeric values (up to loss from
+   * representation changes).
+   * 6. Copying between a NumericData and a BitData (and vice versa) is not supported.
+   *
+   * @param writeIndex
+   *     The index of this buffer that receives the first copied value
+   * @param data
+   *     The data buffer being copied into this buffer
+   * @param readIndex
+   *     The index into `data` for the first value that is copied
+   * @param length
+   *     The number of primitives to copy from `data` to `this`
+   * @throws IndexOutOfBoundsException
+   *     if the range from `writeIndex` to `writeIndex +
+   *     length` or the range from `readIndex` to `readIndex + length` accesses bad data.
+   */
+  void set(long writeIndex, DataBuffer data, long readIndex, long length);
 }
