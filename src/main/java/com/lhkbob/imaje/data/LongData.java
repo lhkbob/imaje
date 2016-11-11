@@ -31,15 +31,35 @@
  */
 package com.lhkbob.imaje.data;
 
+import com.lhkbob.imaje.data.array.LongArrayData;
+import com.lhkbob.imaje.data.nio.LongBufferData;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.nio.LongBuffer;
 
 /**
+ * LongData
+ * ========
  *
+ * BitData implementation that stores 64-bit fields as `long` values. It adds individual element
+ * setters and getters that operate on `long` values. It adds bulk data read and write operations
+ * that operate on `long[]` and {@link LongBuffer}.
+ *
+ * @author Michael Ludwig
  */
-public interface LongData extends BitData {
-  class Numeric implements NumericData<LongData>, DataView<LongData> {
+public abstract class LongData implements BitData {
+  /**
+   * LongData.Numeric
+   * ================
+   *
+   * A NumericData implementation that wraps a LongData instance and interprets its data as 2's
+   * complement signed integers. The integer values are lifted to `double` the same way longs are
+   * normally widened to doubles in Java. Double values stored are clamped to the range of an 64-bit
+   * signed integer (i.e. Long.MIN_VALUE to Long.MAX_VALUE) and are rounded to the nearest integer.
+   *
+   * @author Michael Ludwig
+   */
+  public static class Numeric implements NumericData<LongData>, DataView<LongData> {
     private final LongData source;
 
     public Numeric(LongData source) {
@@ -90,13 +110,48 @@ public interface LongData extends BitData {
     }
   }
 
-  long get(long index);
+  /**
+   * @param index
+   *     The index to lookup
+   * @return Get the long value at `index`.
+   */
+  public abstract long get(long index);
 
-  default void get(long dataIndex, long[] values) {
+  /**
+   * Get the values of this LongData and store them into the given array `values`.
+   * Values are read starting at `dataIndex` from this buffer and will fill the entire array.
+   * This is equivalent to `get(dataIndex, values, 0, values.length)`.
+   *
+   * @param dataIndex
+   *     The data index into this buffer that values are read from
+   * @param values
+   *     The destination array that gets the values of this buffer
+   * @throws IndexOutOfBoundsException
+   *     if `dataIndex` and `length` would access bad elements of `this`, or if `length` would
+   *     access bad elements of `values`.
+   */
+  public void get(long dataIndex, long[] values) {
     get(dataIndex, values, 0, values.length);
   }
 
-  default void get(long dataIndex, long[] values, int offset, int length) {
+  /**
+   * Get the values of this LongData and store them into `values`. Data is read from this buffer
+   * starting at `dataIndex` and stored into `values` starting at `offset`. `length` longs are
+   * read into `values`.
+   *
+   * @param dataIndex
+   *     The index into this buffer for the start of the read
+   * @param values
+   *     The destination array receiving the longs from this buffer
+   * @param offset
+   *     The index into the destination array to start writing the longs
+   * @param length
+   *     The number of longs to copy
+   * @throws IndexOutOfBoundsException
+   *     if `dataIndex` and `length` would access bad elements of `this, or if `offset` and `length`
+   *     access bad elements of `values`.
+   */
+  public void get(long dataIndex, long[] values, int offset, int length) {
     Arguments.checkArrayRange("value array", values.length, offset, length);
     Arguments.checkArrayRange("LongData", getLength(), dataIndex, length);
 
@@ -105,7 +160,21 @@ public interface LongData extends BitData {
     }
   }
 
-  default void get(long dataIndex, LongBuffer values) {
+  /**
+   * Get the values of this LongData and store them into `values`. Data is read from this buffer
+   * starting at `dataIndex` and stored into the LongBuffer starting at the LongBuffer's position.
+   * Longs are read into the buffer up to its configured limit. After invoking this method, the
+   * buffer's position will be at its limit.
+   *
+   * @param dataIndex
+   *     The index into this buffer for the start of the read
+   * @param values
+   *     The LongBuffer destination that receives longs from this data source
+   * @throws IndexOutOfBoundsException
+   *     if `dataIndex` and the number of longs to read (based on the remaining longs in `values`)
+   *     would access bad elements
+   */
+  public void get(long dataIndex, LongBuffer values) {
     Arguments.checkArrayRange("LongData", getLength(), dataIndex, values.remaining());
 
     int rem = values.remaining();
@@ -118,22 +187,80 @@ public interface LongData extends BitData {
   }
 
   @Override
-  default int getBitSize() {
+  public final int getBitSize() {
     return Long.SIZE;
   }
 
   @Override
-  default long getBits(long index) {
+  public final long getBits(long index) {
     return get(index);
   }
 
-  void set(long index, long value);
+  @Override
+  public void set(long writeIndex, DataBuffer data, long readIndex, long length) {
+    if (data instanceof LongArrayData) {
+      set(writeIndex, ((LongArrayData) data).getSource(), Math.toIntExact(readIndex),
+          Math.toIntExact(length));
+    } else if (data instanceof LongBufferData) {
+      LongBuffer source = ((LongBufferData) data).getSource();
+      source.limit(Math.toIntExact(readIndex + length)).position(Math.toIntExact(readIndex));
+      set(writeIndex, source);
+    } else if (data instanceof LongData) {
+      LongData bd = (LongData) data;
+      for (long i = 0; i < length; i++) {
+        set(writeIndex + i, bd.get(readIndex + i));
+      }
+    } else {
+      throw new UnsupportedOperationException(
+          "Cannot copy values from unsupported buffer: " + data);
+    }
+  }
 
-  default void set(long dataIndex, long[] values) {
+  /**
+   * Set the long at `index` to `value`.
+   *
+   * @param index
+   *     The index to modify
+   * @param value
+   *     The new value
+   */
+  public abstract void set(long index, long value);
+
+  /**
+   * Set the values of this LongData to those in the given array `values`. Values are written
+   * starting at `dataIndex` into this buffer and will write the entire array. This is equivalent to
+   * `set(dataIndex, values, 0, values.length)`.
+   *
+   * @param dataIndex
+   *     The data index into this buffer that values are written to
+   * @param values
+   *     The source array that provides the new values of this buffer
+   * @throws IndexOutOfBoundsException
+   *     if `dataIndex` and `length` would access bad elements of `this`, or if `length` would
+   *     access bad elements of `values`.
+   */
+  public void set(long dataIndex, long[] values) {
     set(dataIndex, values, 0, values.length);
   }
 
-  default void set(long dataIndex, long[] values, int offset, int length) {
+  /**
+   * Set the values of this LongData to those in `values`. Values are written into this buffer
+   * starting at `dataIndex` and read from `values` starting at `offset`. `length` longs are
+   * taken from `values`.
+   *
+   * @param dataIndex
+   *     The index into this buffer for the start of the write
+   * @param values
+   *     The source array providing the longs to this buffer
+   * @param offset
+   *     The index into the source array to start reading the longs
+   * @param length
+   *     The number of longs to copy
+   * @throws IndexOutOfBoundsException
+   *     if `dataIndex` and `length` would access bad elements of `this, or if `offset` and `length`
+   *     access bad elements of `values`.
+   */
+  public void set(long dataIndex, long[] values, int offset, int length) {
     Arguments.checkArrayRange("value array", values.length, offset, length);
     Arguments.checkArrayRange("LongData", getLength(), dataIndex, length);
 
@@ -142,7 +269,21 @@ public interface LongData extends BitData {
     }
   }
 
-  default void set(long dataIndex, LongBuffer values) {
+  /**
+   * Set the values of this LongData to those into `values`. Data is written to this buffer starting
+   * at `dataIndex` and read from the LongBuffer starting at the LongBuffer's position. Longs are
+   * written from the buffer up to its configured limit. After invoking this method, the buffer's
+   * position will be at its limit.
+   *
+   * @param dataIndex
+   *     The index into this buffer for the start of the write
+   * @param values
+   *     The LongBuffer source that provides longs from this data source
+   * @throws IndexOutOfBoundsException
+   *     if `dataIndex` and the number of longs to read (based on the remaining longs in `values`)
+   *     would access bad elements
+   */
+  public void set(long dataIndex, LongBuffer values) {
     Arguments.checkArrayRange("LongData", getLength(), dataIndex, values.remaining());
 
     int rem = values.remaining();
@@ -155,7 +296,7 @@ public interface LongData extends BitData {
   }
 
   @Override
-  default void setBits(long index, long value) {
+  public final void setBits(long index, long value) {
     set(index, value);
   }
 }

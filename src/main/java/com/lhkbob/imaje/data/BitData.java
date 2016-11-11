@@ -41,7 +41,8 @@ package com.lhkbob.imaje.data;
  *
  * As an interface, BitData exposes all of its values as `long`. However, only the least significant
  * bits (determined by {@link #getBitSize()} are valid. When setting values, bits beyond that are
- * discarded, and when getting values the high bits are set to 0.
+ * discarded, and when getting values the high bits are set to 0. Regardless of the underyling
+ * byte ordering, the bit fields exposed will be in Java's default big endian.
  *
  * @author Michael Ludwig
  */

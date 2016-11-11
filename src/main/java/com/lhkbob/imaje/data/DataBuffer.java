@@ -115,6 +115,8 @@ public interface DataBuffer {
    * @throws IndexOutOfBoundsException
    *     if the range from `writeIndex` to `writeIndex +
    *     length` or the range from `readIndex` to `readIndex + length` accesses bad data.
+   * @throws UnsupportedOperationException
+   *     if `data` is incompatible with this DataBuffer
    */
   void set(long writeIndex, DataBuffer data, long readIndex, long length);
 }
