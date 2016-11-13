@@ -32,28 +32,64 @@
 package com.lhkbob.imaje.data;
 
 /**
+ * FloatData
+ * =========
  *
+ * FloatData is a specialization of NumericData that stores numeric values as Java `float`s. The
+ * actual type used for bulk storage is unspecified and can be a `float[]`, `FloatBuffer` or
+ * something else. However, the key point is that float values are natively represented and do not
+ * need to be further interpreted.
+ *
+ * This class provides a view of the float values by using {@link Float#floatToIntBits(float)}
+ * and its inverse operation, {@link Float#intBitsToFloat(int)}. It also adds direct getters
+ * and setters for `float`s that avoid casting and widening to `double`.
+ *
+ * @author Michael Ludwig
  */
-public interface FloatData extends NumericData<IntData> {
-  float get(long index);
+public abstract class FloatData extends NumericData<IntData> {
+  /**
+   * Get the `float` stored at `index` in this data buffer. This returns the directly
+   * represented floating-point value without any modifications.
+   *
+   * @param index
+   *     The index to access
+   * @return The value as a `float`
+   *
+   * @throws IndexOutOfBoundsException
+   *     if `index` is out of bounds
+   */
+  public abstract float get(long index);
 
-  void set(long index, float value);
+  /**
+   * Set the value at `index` in this buffer to the specified `float` value. This stores the
+   * floating-point value as-is without any other type conversions.
+   *
+   * @param index
+   *     The index to modify
+   * @param value
+   *     The new value
+   * @throws IndexOutOfBoundsException
+   *     if `index` is out of bounds
+   */
+  public abstract void set(long index, float value);
 
   @Override
-  default int getBitSize() {
+  public final int getBitSize() {
     return Float.SIZE;
   }
 
-  default double getValue(long index) {
+  @Override
+  public final double getValue(long index) {
     return get(index);
   }
 
-  default void setValue(long index, double value) {
+  @Override
+  public final void setValue(long index, double value) {
     set(index, (float) value);
   }
 
   @Override
-  default IntData asBitData() {
+  public IntData asBitData() {
     return new IntData() {
       @Override
       public int get(long index) {
