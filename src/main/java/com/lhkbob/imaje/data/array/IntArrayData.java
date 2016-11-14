@@ -38,15 +38,38 @@ import com.lhkbob.imaje.util.Arguments;
 import java.nio.IntBuffer;
 
 /**
+ * IntArrayData
+ * ==============
  *
+ * Concrete IntData implementation that stores primitive values in a `int[]`. Because Java arrays
+ * use integer indices, the maximum length of this type of DataBuffer is restricted by the integer
+ * max value even though the interface supports `long`.
+ *
+ * @author Michael Ludwig
  */
-public class IntArrayData implements IntData, DataView<int[]> {
+public class IntArrayData extends IntData implements DataView<int[]> {
   private final int[] array;
 
+  /**
+   * Create a new IntArrayData that allocates a new array of `length`.
+   *
+   * @param length
+   *     The length of the data buffer
+   */
   public IntArrayData(int length) {
     this(new int[length]);
   }
 
+  /**
+   * Create a new IntArrayData that wraps the provided `array`. Modifications to this DataBuffer
+   * are reflected in `array`'s state and modifications directly to the array are reflected by
+   * the buffer.
+   *
+   * @param array
+   *     The array to wrap
+   * @throws NullPointerException
+   *     if `array` is null
+   */
   public IntArrayData(int[] array) {
     Arguments.notNull("array", array);
     this.array = array;

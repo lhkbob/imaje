@@ -38,15 +38,38 @@ import com.lhkbob.imaje.util.Arguments;
 import java.nio.FloatBuffer;
 
 /**
+ * FloatArrayData
+ * ==============
  *
+ * Concrete FloatData implementation that stores primitive values in a `float[]`. Because Java
+ * arrays use integer indices, the maximum length of this type of DataBuffer is restricted by the
+ * integer max value even though the interface supports `long`.
+ *
+ * @author Michael Ludwig
  */
-public class FloatArrayData implements FloatData, DataView<float[]> {
+public class FloatArrayData extends FloatData implements DataView<float[]> {
   private final float[] array;
 
+  /**
+   * Create a new FloatArrayData that allocates a new array of `length`.
+   *
+   * @param length
+   *     The length of the data buffer
+   */
   public FloatArrayData(int length) {
     this(new float[length]);
   }
 
+  /**
+   * Create a new FloatArrayData that wraps the provided `array`. Modifications to this DataBuffer
+   * are reflected in `array`'s state and modifications directly to the array are reflected by
+   * the buffer.
+   *
+   * @param array
+   *     The array to wrap
+   * @throws NullPointerException
+   *     if `array` is null
+   */
   public FloatArrayData(float[] array) {
     Arguments.notNull("array", array);
     this.array = array;

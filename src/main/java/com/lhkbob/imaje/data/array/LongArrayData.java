@@ -38,15 +38,38 @@ import com.lhkbob.imaje.util.Arguments;
 import java.nio.LongBuffer;
 
 /**
+ * LongArrayData
+ * =============
  *
+ * Concrete LongData implementation that stores primitive values in a `long[]`. Because Java arrays
+ * use integer indices, the maximum length of this type of DataBuffer is restricted by the integer
+ * max value even though the interface supports `long`.
+ *
+ * @author Michael Ludwig
  */
-public class LongArrayData implements LongData, DataView<long[]> {
+public class LongArrayData extends LongData implements DataView<long[]> {
   private final long[] array;
 
+  /**
+   * Create a new LongArrayData that allocates a new array of `length`.
+   *
+   * @param length
+   *     The length of the data buffer
+   */
   public LongArrayData(int length) {
     this(new long[length]);
   }
 
+  /**
+   * Create a new LongArrayData that wraps the provided `array`. Modifications to this DataBuffer
+   * are reflected in `array`'s state and modifications directly to the array are reflected by
+   * the buffer.
+   *
+   * @param array
+   *     The array to wrap
+   * @throws NullPointerException
+   *     if `array` is null
+   */
   public LongArrayData(long[] array) {
     Arguments.notNull("array", array);
     this.array = array;

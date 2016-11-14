@@ -38,15 +38,38 @@ import com.lhkbob.imaje.util.Arguments;
 import java.nio.DoubleBuffer;
 
 /**
+ * DoubleArrayData
+ * ===============
  *
+ * Concrete DoubleData implementation that stores primitive values in a `double[]`. Because Java
+ * arrays use integer indices, the maximum length of this type of DataBuffer is restricted by the
+ * integer max value even though the interface supports `long`.
+ *
+ * @author Michael Ludwig
  */
-public class DoubleArrayData implements DoubleData, DataView<double[]> {
+public class DoubleArrayData extends DoubleData implements DataView<double[]> {
   private final double[] array;
 
+  /**
+   * Create a new DoubleArrayData that allocates a new array of `length`.
+   *
+   * @param length
+   *     The length of the data buffer
+   */
   public DoubleArrayData(int length) {
     this(new double[length]);
   }
 
+  /**
+   * Create a new DoubleArrayData that wraps the provided `array`. Modifications to this DataBuffer
+   * are reflected in `array`'s state and modifications directly to the array are reflected by
+   * the buffer.
+   *
+   * @param array
+   *     The array to wrap
+   * @throws NullPointerException
+   *     if `array` is null
+   */
   public DoubleArrayData(double[] array) {
     Arguments.notNull("array", array);
     this.array = array;

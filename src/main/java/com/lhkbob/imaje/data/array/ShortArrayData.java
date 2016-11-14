@@ -38,15 +38,38 @@ import com.lhkbob.imaje.util.Arguments;
 import java.nio.ShortBuffer;
 
 /**
+ * ShortArrayData
+ * ==============
  *
+ * Concrete ShortData implementation that stores primitive values in a `short[]`. Because Java
+ * arrays use integer indices, the maximum length of this type of DataBuffer is restricted by the
+ * integer max value even though the interface supports `long`.
+ *
+ * @author Michael Ludwig
  */
-public class ShortArrayData implements ShortData, DataView<short[]> {
+public class ShortArrayData extends ShortData implements DataView<short[]> {
   private final short[] array;
 
+  /**
+   * Create a new ShortArrayData that allocates a new array of `length`.
+   *
+   * @param length
+   *     The length of the data buffer
+   */
   public ShortArrayData(int length) {
     this(new short[length]);
   }
 
+  /**
+   * Create a new ShortArrayData that wraps the provided `array`. Modifications to this DataBuffer
+   * are reflected in `array`'s state and modifications directly to the array are reflected by
+   * the buffer.
+   *
+   * @param array
+   *     The array to wrap
+   * @throws NullPointerException
+   *     if `array` is null
+   */
   public ShortArrayData(short[] array) {
     Arguments.notNull("array", array);
     this.array = array;
