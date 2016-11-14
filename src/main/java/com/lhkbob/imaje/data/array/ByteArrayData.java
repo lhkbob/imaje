@@ -45,6 +45,9 @@ import java.nio.ByteBuffer;
  * arrays use integer indices, the maximum length of this type of DataBuffer is restricted by the
  * integer max value even though the interface supports `long`.
  *
+ * The array returned by {@link #getSource()} is the actual array instance used by by the
+ * DataBuffer.
+ *
  * @author Michael Ludwig
  */
 public class ByteArrayData extends ByteData implements DataView<byte[]> {
