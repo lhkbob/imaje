@@ -35,7 +35,18 @@ import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.Functions;
 
 /**
+ * UnsignedInteger
+ * =============
  *
+ * A 1's complement unsigned integer BinaryRepresentation. This has the same semantics as C++'s
+ * `unsigned int`, `unsigned long` primitive types, but can have an arbitrary number of bits
+ * (between 1 and 64). It has no sign bit so can represent an order of magnitude higher positive
+ * value compared to the equivalently sized SignedInteger (at the expensive of being able to store
+ * negative values). This is not a floating point representation. Non-integer values are rounded to
+ * the nearest integer. Values outside of representable range of integers are clamped. If it is `N`
+ * bits, it can represent values between `0` and `2^N-1`.
+ *
+ * @author Michael Ludwig
  */
 public class UnsignedInteger implements BinaryRepresentation {
   private static final long SIGN_MASK_64 = ~(1L << 63);
@@ -49,6 +60,14 @@ public class UnsignedInteger implements BinaryRepresentation {
   private final long mask;
   private final double maxValue;
 
+  /**
+   * Create a new UnsignedInteger with the given number of bits.
+   *
+   * @param bits
+   *     The bit size of the representation
+   * @throws IllegalArgumentException
+   *     if `bits` is less than 1 or greater than 64
+   */
   public UnsignedInteger(int bits) {
     Arguments.inRangeInclusive("bits", 1, 64, bits);
 

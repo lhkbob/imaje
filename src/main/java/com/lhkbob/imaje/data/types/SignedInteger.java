@@ -35,7 +35,18 @@ import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.Functions;
 
 /**
+ * SignedInteger
+ * =============
  *
+ * A 2's complement signed integer BinaryRepresentation. This has the same semantics as Java's
+ * `int`, `long` etc. but can have an arbitrary number of bits (between 1 and 64). Its most
+ * significant bit is the sign bit. This is not a floating point representation. Non-integer values
+ * are rounded to the nearest integer. Values outside of representable range of integers are
+ * clamped. If it is `N` bits, it can represent values between `-2^(N-1)` and `2^(N-1)-1`. An `N`
+ * value of 64 is equivalent to `long`, 32 is equivalent to `int`, 16 is `short`, and 8 is a `byte`,
+ * although these particular values should only be used when native types cannot be used directly.
+ *
+ * @author Michael Ludwig
  */
 public class SignedInteger implements BinaryRepresentation {
   private final int bits;
@@ -44,6 +55,14 @@ public class SignedInteger implements BinaryRepresentation {
   private final double minValue;
   private final double maxValue;
 
+  /**
+   * Create a new SignedInteger with the given number of bits.
+   *
+   * @param bits
+   *     The bit size of the representation
+   * @throws IllegalArgumentException
+   *     if `bits` is less than 1 or greater than 64
+   */
   public SignedInteger(int bits) {
     Arguments.inRangeInclusive("bits", 1, 64, bits);
 
@@ -73,8 +92,8 @@ public class SignedInteger implements BinaryRepresentation {
 
   @Override
   public double toNumericValue(long bits) {
-    // First lift the positive portion of the bits to a double, and since posMask will have at most 63
-    // bits in it, value will be correct
+    // First lift the positive portion of the bits to a double, and since posMask will have at most
+    // 63 bits in it, value will be correct
     double value = bits & posMask;
     if ((bits & negMask) != 0) {
       // Subtract off 2^(bits-1), which is equal to +minValue
@@ -86,8 +105,8 @@ public class SignedInteger implements BinaryRepresentation {
   @Override
   public long toBits(double value) {
     value = Functions.clamp(value, minValue, maxValue);
-    // In both of the following cases, since value is between the minimum and maximum,
-    // there is no need to apply the positive bit mask to the rounded long.
+    // In both of the following cases, since value is between the minimum and maximum, there is no
+    // need to apply the positive bit mask to the rounded long.
     if (value < 0.0) {
       // Round positive portion to a long and then OR in the sign bit
       value -= minValue;

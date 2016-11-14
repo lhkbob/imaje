@@ -34,11 +34,26 @@ package com.lhkbob.imaje.data.types;
 import com.lhkbob.imaje.util.Functions;
 
 /**
+ * UnsignedNormalizedInteger
+ * =======================
  *
+ * A fixed-point BinaryRepresentation that normalizes an unsigned integer to the real-value range
+ * `[0, 1]`. The normalization is based on the unsigned integer representation's maximum values. As
+ * an example, an 8-bit unsigned integer maps 0 to 0, 255 to 1.
+ *
+ * @author Michael Ludwig
  */
 public class UnsignedNormalizedInteger implements BinaryRepresentation {
   private final UnsignedInteger unnormalized;
 
+  /**
+   * Create an UnsignedNormalizedInteger with the given number of bits.
+   *
+   * @param bits
+   *     The bit size of the representation
+   * @throws IllegalArgumentException
+   *     if `bits` is less than 1 or greater than 64
+   */
   public UnsignedNormalizedInteger(int bits) {
     unnormalized = new UnsignedInteger(bits);
   }

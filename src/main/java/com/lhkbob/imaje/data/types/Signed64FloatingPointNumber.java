@@ -32,7 +32,19 @@
 package com.lhkbob.imaje.data.types;
 
 /**
+ * Signed64FloatingPointNumber
+ * ===========================
  *
+ * A BinaryRepresentation implementation for a 64-bit signed floating point number. This is the
+ * exact Java/IEEE representation, which has a sign bit, 11 exponent bits, and 52 mantissa bits.
+ * This is a separate implementation than {@link SignedFloatingPointNumber} because the logic of
+ * that class does not work correctly when at the limit of 64 bits.
+ *
+ * This class should rarely be used except when it is required to have a BinaryRepresentation for
+ * `double`. Otherwise the DataBuffer implementations that natively support `double` should be used
+ * instead.
+ *
+ * @author Michael Ludwig
  */
 public class Signed64FloatingPointNumber implements BinaryRepresentation {
   @Override

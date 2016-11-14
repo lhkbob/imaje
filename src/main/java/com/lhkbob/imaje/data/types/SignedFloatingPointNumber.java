@@ -37,7 +37,22 @@ import com.lhkbob.imaje.util.Functions;
 import static java.lang.Double.doubleToRawLongBits;
 
 /**
+ * SignedFloatingPointNumber
+ * =========================
  *
+ * SignedFloatingPointNumber is a flexible BinaryRepresentation for encoding signed floating point
+ * numbers with a sign bit and configurable exponent and mantissa bit counts. The representation
+ * stores the sign bit in the most significant bit, followed by the exponent and then the mantissa.
+ * The mantissa has an implicit leading 1 bit.
+ *
+ * This has identical representation as a `float` when a exponent of 8 bits and a mantissa of 23
+ * bits is used, although performance will be less compared to native primitive handling. The logic
+ * of this representation does not support 64-bit floating point numbers (it would except that
+ * it relies internally on converting to a `double`).
+ *
+ * This representation has no minimum or maximum value, it can represent the whole number line.
+ *
+ * @author Michael Ludwig
  */
 public class SignedFloatingPointNumber implements BinaryRepresentation {
   // Will be null if getBitSize() > 16
@@ -48,7 +63,8 @@ public class SignedFloatingPointNumber implements BinaryRepresentation {
   // bias.  Adding it to custom exponent converts it to a 64-bit biased exponent; subtracting it
   // converts a 64-bit exponent to a biased custom exponent.
   private final long exponentBiasConversion;
-  // Number of bits in the exponent field, which is just to the right of the most significant sign bit.
+  // Number of bits in the exponent field, which is just to the right of the most significant sign
+  // bit.
   private final int exponentBits;
   // A mask of exponentBits 1s in the LSBs.
   private final long exponentMask;
@@ -71,19 +87,72 @@ public class SignedFloatingPointNumber implements BinaryRepresentation {
   // How much to shift the bit field to the right to extract the sign with SIGN_MASK, or to shift
   // to the left to place in the appropriate field of the custom float type.
   private final int signShift;
-  // This LUT is keyed by the combined sign and exponent bits of a 64-bit double, which is only
-  // 4096 values and thus reasonable. A 0 denotes the fast-path relying on the returned sign+exponent
-  // is invalid and the general function must be used.
+  // This LUT is keyed by the combined sign and exponent bits of a 64-bit double, which is only 4096
+  // values and thus reasonable. A 0 denotes the fast-path relying on the returned sign+exponent is
+  // invalid and the general function must be used.
   private final long[] signedExponentLUT;
 
+  /**
+   * Create a new SignedFloatingPointNumber representation that has the given `exponentBits` and
+   * `mantissaBits` count configuration. This will use a lookup table if the total number of bits
+   * of the representation is less than or equal to 16.
+   *
+   * @param exponentBits
+   *     The number of exponent bits to allocate
+   * @param mantissaBits
+   *     The number of mantissa bits to allocate
+   * @throws UnsupportedOperationException
+   *     if `exponentBits` is greater than or equal to 11, or if `mantissaBits` is greater than or
+   *     equal to 52
+   * @throws IllegalArgumentException
+   *     if `exponentBits` or `mantissaBits` is not positive
+   */
   public SignedFloatingPointNumber(int exponentBits, int mantissaBits) {
     this(exponentBits, mantissaBits, (1 + exponentBits + mantissaBits) <= 16);
   }
 
+  /**
+   * Create a new SignedFloatingPointNumber representation that has the given `exponentBits` and
+   * `mantissaBits` count configuration. If `useLUT` this will calculate lookup tables for
+   * the exponent conversion and binary to `double` conversion processes.
+   *
+   * @param exponentBits
+   *     The number of exponent bits to allocate
+   * @param mantissaBits
+   *     The number of mantissa bits to allocate
+   * @param useLUT
+   *     Whether or not to create exponent and to-double look-up-tables
+   * @throws UnsupportedOperationException
+   *     if `exponentBits` is greater than or equal to 11, or if `mantissaBits` is greater than or
+   *     equal to 52
+   * @throws IllegalArgumentException
+   *     if `exponentBits` or `mantissaBits` is not positive
+   */
   public SignedFloatingPointNumber(int exponentBits, int mantissaBits, boolean useLUT) {
     this(exponentBits, mantissaBits, useLUT, useLUT);
   }
 
+  /**
+   * Create a new SignedFloatingPointNumber representation that has the given `exponentBits` and
+   * `mantissaBits` count configuration. If `useExponentLUT` this will calculate lookup tables from
+   * the standard `double` exponent to the custom exponent. If `useToDoubleLUT`, every single custom
+   * binary value will be pre-computed and stored in a look-up-table to its corresponding `double`.
+   * This makes bit to double conversions constant time but at the cost of increased data storage.
+   *
+   * @param exponentBits
+   *     The number of exponent bits to allocate
+   * @param mantissaBits
+   *     The number of mantissa bits to allocate
+   * @param useExponentLUT
+   *     True if the exponent conversion table (double -> bit) should be created
+   * @param useToDoubleLUT
+   *     True if the bit -> double look-up-table should be created
+   * @throws UnsupportedOperationException
+   *     if `exponentBits` is greater than or equal to 11, or if `mantissaBits` is greater than or
+   *     equal to 52
+   * @throws IllegalArgumentException
+   *     if `exponentBits` or `mantissaBits` is not positive
+   */
   public SignedFloatingPointNumber(
       int exponentBits, int mantissaBits, boolean useExponentLUT, boolean useToDoubleLUT) {
     // These restrictions are in place because the conversion logic assumes that a Java double

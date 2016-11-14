@@ -34,11 +34,27 @@ package com.lhkbob.imaje.data.types;
 import com.lhkbob.imaje.util.Functions;
 
 /**
+ * SignedNormalizedInteger
+ * =======================
  *
+ * A fixed-point BinaryRepresentation that normalizes a signed integer to the real-value range `[-1,
+ * 1]`. The normalization is based on the signed integer representation's maximum values. As an
+ * example, an 8-bit signed integer maps -127 to -1, 127 to 1 (a -128 value is clamped to -1 as
+ * well). This is done so that the representation is balanced around 0.
+ *
+ * @author Michael Ludwig
  */
 public class SignedNormalizedInteger implements BinaryRepresentation {
   private final SignedInteger unnormalized;
 
+  /**
+   * Create a SignedNormalizedInteger with the given number of bits.
+   *
+   * @param bits
+   *     The bit size of the representation
+   * @throws IllegalArgumentException
+   *     if `bits` is less than 1 or greater than 64
+   */
   public SignedNormalizedInteger(int bits) {
     unnormalized = new SignedInteger(bits);
   }
@@ -52,7 +68,8 @@ public class SignedNormalizedInteger implements BinaryRepresentation {
   public double toNumericValue(long bits) {
     // Clamp the scaled values since the distribution about 0 is uneven between positive
     // and negative axis.
-    return Functions.clamp(unnormalized.toNumericValue(bits) / unnormalized.getMaxValue(), -1.0, 1.0);
+    return Functions
+        .clamp(unnormalized.toNumericValue(bits) / unnormalized.getMaxValue(), -1.0, 1.0);
   }
 
   @Override
