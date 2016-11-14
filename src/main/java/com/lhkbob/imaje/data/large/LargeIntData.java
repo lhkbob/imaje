@@ -31,22 +31,39 @@
  */
 package com.lhkbob.imaje.data.large;
 
+import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.data.IntData;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.nio.IntBuffer;
 
 /**
+ * LargeIntData
+ * ============
  *
+ * IntData implementation that concatenates multiple IntData instances into a single data buffer
+ * that can have more elements than representable with an `int`.
+ *
+ * @author Michael Ludwig
  */
-public class LargeIntData extends AbstractLargeDataSource<IntData> implements IntData {
+public class LargeIntData extends IntData {
+  private final BufferConcatentation<IntData> data;
+
+  /**
+   * Create a new LargeIntBuffer that wraps the given IntData sources. See {@link
+   * BufferConcatentation#BufferConcatentation(DataBuffer[])} for requirements of the source
+   * buffers.
+   *
+   * @param sources
+   *     The source buffers to concatenate and wrap
+   */
   public LargeIntData(IntData[] sources) {
-    super(sources);
+    this.data = new BufferConcatentation<>(sources);
   }
 
   @Override
   public int get(long index) {
-    return getSource(index).get(getIndexInSource(index));
+    return data.getSource(index).get(data.getIndexInSource(index));
   }
 
   @Override
@@ -55,7 +72,7 @@ public class LargeIntData extends AbstractLargeDataSource<IntData> implements In
     Arguments.checkArrayRange("values array", values.length, offset, length);
     Arguments.checkArrayRange("LargeIntData", getLength(), dataIndex, length);
 
-    bulkOperation(IntData::get, dataIndex, values, offset, length);
+    data.bulkOperation(IntData::get, dataIndex, values, offset, length);
   }
 
   @Override
@@ -64,13 +81,34 @@ public class LargeIntData extends AbstractLargeDataSource<IntData> implements In
     Arguments.checkArrayRange("LargeIntData", getLength(), dataIndex, values.remaining());
 
     int limit = values.limit();
-    bulkOperation(this::getSubSource, dataIndex, values, values.position(), values.remaining());
+    data.bulkOperation(
+        this::getSubSource, dataIndex, values, values.position(), values.remaining());
     // Make sure the entire buffer looks consumed
-    values.limit(limit).position(limit);  }
+    values.limit(limit).position(limit);
+  }
+
+  @Override
+  public long getLength() {
+    return data.getLength();
+  }
+
+  @Override
+  public boolean isBigEndian() {
+    return data.isBigEndian();
+  }
+
+  @Override
+  public boolean isGPUAccessible() {
+    // Although the GPU might be able to support data sets that have more than a 32 bit index,
+    // because Java can't allocate a contiguous array that long there is no way to have such a long
+    // data source represented by a single pointer; thus this form of large data source cannot be
+    // GPU accessible
+    return false;
+  }
 
   @Override
   public void set(long index, int value) {
-    getSource(index).set(getIndexInSource(index), value);
+    data.getSource(index).set(data.getIndexInSource(index), value);
   }
 
   @Override
@@ -79,7 +117,8 @@ public class LargeIntData extends AbstractLargeDataSource<IntData> implements In
     Arguments.checkArrayRange("LargeIntData", getLength(), dataIndex, values.remaining());
 
     int limit = values.limit();
-    bulkOperation(this::setSubSource, dataIndex, values, values.position(), values.remaining());
+    data.bulkOperation(
+        this::setSubSource, dataIndex, values, values.position(), values.remaining());
     // Make sure the entire buffer looks consumed
     values.limit(limit).position(limit);
   }
@@ -90,7 +129,7 @@ public class LargeIntData extends AbstractLargeDataSource<IntData> implements In
     Arguments.checkArrayRange("values array", values.length, offset, length);
     Arguments.checkArrayRange("LargeIntData", getLength(), dataIndex, length);
 
-    bulkOperation(IntData::set, dataIndex, values, offset, length);
+    data.bulkOperation(IntData::set, dataIndex, values, offset, length);
   }
 
   private void getSubSource(

@@ -31,6 +31,7 @@
  */
 package com.lhkbob.imaje.data.large;
 
+import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.data.DoubleData;
 import com.lhkbob.imaje.data.LongData;
 import com.lhkbob.imaje.util.Arguments;
@@ -39,26 +40,61 @@ import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 
 /**
+ * LargeDoubleData
+ * =============
  *
+ * DoubleData implementation that concatenates multiple DoubleData instances into a single data
+ * buffer that can have more elements than representable with an `int`.
+ *
+ * @author Michael Ludwig
  */
-public class LargeDoubleData extends AbstractLargeDataSource<DoubleData> implements DoubleData {
+public class LargeDoubleData extends DoubleData {
+  private final BufferConcatentation<DoubleData> data;
+
+  /**
+   * Create a new LargeDoubleBuffer that wraps the given DoubleData sources. See {@link
+   * BufferConcatentation#BufferConcatentation(DataBuffer[])} for requirements of the source
+   * buffers.
+   *
+   * @param sources
+   *     The source buffers to concatenate and wrap
+   */
   public LargeDoubleData(DoubleData[] sources) {
-    super(sources);
+    data = new BufferConcatentation<>(sources);
   }
 
   @Override
   public double get(long index) {
-    return getSource(index).get(getIndexInSource(index));
+    return data.getSource(index).get(data.getIndexInSource(index));
+  }
+
+  @Override
+  public long getLength() {
+    return data.getLength();
+  }
+
+  @Override
+  public boolean isBigEndian() {
+    return data.isBigEndian();
+  }
+
+  @Override
+  public boolean isGPUAccessible() {
+    // Although the GPU might be able to support data sets that have more than a 32 bit index,
+    // because Java can't allocate a contiguous array that long there is no way to have such a long
+    // data source represented by a single pointer; thus this form of large data source cannot be
+    // GPU accessible
+    return false;
   }
 
   @Override
   public void set(long index, double value) {
-    getSource(index).set(getIndexInSource(index), value);
+    data.getSource(index).set(data.getIndexInSource(index), value);
   }
 
   @Override
   public LongData asBitData() {
-    DoubleData[] sources = getSources();
+    DoubleData[] sources = data.getSources();
     LongData[] bits = new LongData[sources.length];
     for (int i = 0; i < sources.length; i++) {
       bits[i] = sources[i].asBitData();
@@ -73,7 +109,7 @@ public class LargeDoubleData extends AbstractLargeDataSource<DoubleData> impleme
     Arguments.checkArrayRange("values array", values.length, offset, length);
     Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, length);
 
-    bulkOperation(DoubleData::setValues, dataIndex, values, offset, length);
+    data.bulkOperation(DoubleData::setValues, dataIndex, values, offset, length);
   }
 
   @Override
@@ -82,7 +118,7 @@ public class LargeDoubleData extends AbstractLargeDataSource<DoubleData> impleme
     Arguments.checkArrayRange("values array", values.length, offset, length);
     Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, length);
 
-    bulkOperation(DoubleData::getValues, dataIndex, values, offset, length);
+    data.bulkOperation(DoubleData::getValues, dataIndex, values, offset, length);
   }
 
   @Override
@@ -91,7 +127,7 @@ public class LargeDoubleData extends AbstractLargeDataSource<DoubleData> impleme
     Arguments.checkArrayRange("values array", values.length, offset, length);
     Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, length);
 
-    bulkOperation(DoubleData::setValues, dataIndex, values, offset, length);
+    data.bulkOperation(DoubleData::setValues, dataIndex, values, offset, length);
   }
 
   @Override
@@ -100,7 +136,7 @@ public class LargeDoubleData extends AbstractLargeDataSource<DoubleData> impleme
     Arguments.checkArrayRange("values array", values.length, offset, length);
     Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, length);
 
-    bulkOperation(DoubleData::getValues, dataIndex, values, offset, length);
+    data.bulkOperation(DoubleData::getValues, dataIndex, values, offset, length);
   }
 
   @Override
@@ -109,7 +145,8 @@ public class LargeDoubleData extends AbstractLargeDataSource<DoubleData> impleme
     Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, values.remaining());
 
     int limit = values.limit();
-    bulkOperation(this::setSubSource, dataIndex, values, values.position(), values.remaining());
+    data.bulkOperation(
+        this::setSubSource, dataIndex, values, values.position(), values.remaining());
     // Make sure the entire buffer looks consumed
     values.limit(limit).position(limit);
   }
@@ -120,7 +157,8 @@ public class LargeDoubleData extends AbstractLargeDataSource<DoubleData> impleme
     Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, values.remaining());
 
     int limit = values.limit();
-    bulkOperation(this::setSubSource, dataIndex, values, values.position(), values.remaining());
+    data.bulkOperation(
+        this::setSubSource, dataIndex, values, values.position(), values.remaining());
     // Make sure the entire buffer looks consumed
     values.limit(limit).position(limit);
   }
@@ -131,7 +169,8 @@ public class LargeDoubleData extends AbstractLargeDataSource<DoubleData> impleme
     Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, values.remaining());
 
     int limit = values.limit();
-    bulkOperation(this::getSubSource, dataIndex, values, values.position(), values.remaining());
+    data.bulkOperation(
+        this::getSubSource, dataIndex, values, values.position(), values.remaining());
     // Make sure the entire buffer looks consumed
     values.limit(limit).position(limit);
   }
@@ -142,7 +181,8 @@ public class LargeDoubleData extends AbstractLargeDataSource<DoubleData> impleme
     Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, values.remaining());
 
     int limit = values.limit();
-    bulkOperation(this::getSubSource, dataIndex, values, values.position(), values.remaining());
+    data.bulkOperation(
+        this::getSubSource, dataIndex, values, values.position(), values.remaining());
     // Make sure the entire buffer looks consumed
     values.limit(limit).position(limit);
   }
