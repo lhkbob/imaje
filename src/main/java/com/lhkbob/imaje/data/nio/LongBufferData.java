@@ -40,19 +40,49 @@ import java.nio.ByteOrder;
 import java.nio.LongBuffer;
 
 /**
+ * LongBufferData
+ * ==============
  *
+ * Concrete LongData implementation that stores primitive values in a {@link LongBuffer}. Because
+ * Java NIO buffers use integer indices, the maximum length of this type of DataBuffer is restricted
+ * by the integer max value even though the interface supports `long`.
+ *
+ * The buffer returned by {@link #getSource()} is a new instance formed by {@link
+ * LongBuffer#duplicate()} so that modifications to element values are mirrored but changes to the
+ * returned instance's limit and position do not effect this DataBuffer's state.
+ *
+ * @author Michael Ludwig
  */
-public class LongBufferData implements LongData, DataView<LongBuffer> {
+public class LongBufferData extends LongData implements DataView<LongBuffer> {
   private final LongBuffer buffer;
 
+  /**
+   * Creates a new LongBufferData that allocates a LongBuffer of `length` with the currently
+   * configured buffer factory.
+   *
+   * @param length
+   *     The length of the data buffer
+   * @see Data#getBufferFactory()
+   */
   public LongBufferData(int length) {
     this(Data.getBufferFactory().newLongBuffer(length));
   }
 
+  /**
+   * Creates a new LongBufferData that wraps the given LongBuffer. The data buffer creates a safe
+   * duplicate using {@link LongBuffer#duplicate()} and uses the entire capacity of the buffer,
+   * ignoring the state of position or limit at the time of this constructor call.
+   *
+   * @param buffer
+   *     The buffer to wrap
+   * @throws NullPointerException
+   *     if `buffer` is null
+   */
   public LongBufferData(LongBuffer buffer) {
     Arguments.notNull("buffer", buffer);
     this.buffer = buffer.duplicate();
-    // Preserve the 0 -> capacity() rule for stored buffer without modifying original buffer's position and limit
+    // Preserve the 0 -> capacity() rule for stored buffer without modifying original buffer's
+    // position and limit
     this.buffer.clear();
   }
 
@@ -125,7 +155,8 @@ public class LongBufferData implements LongData, DataView<LongBuffer> {
 
     setBufferRange(dataIndex, values.remaining());
     values.put(buffer);
-    buffer.clear();  }
+    buffer.clear();
+  }
 
   private void setBufferRange(long dataIndex, int length) {
     int bufferOffset = Math.toIntExact(dataIndex);

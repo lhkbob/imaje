@@ -40,19 +40,49 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
+ * ByteBufferData
+ * ===============
  *
+ * Concrete ByteData implementation that stores primitive values in a {@link ByteBuffer}. Because
+ * Java NIO buffers use integer indices, the maximum length of this type of DataBuffer is restricted
+ * by the integer max value even though the interface supports `long`.
+ *
+ * The buffer returned by {@link #getSource()} is a new instance formed by {@link
+ * ByteBuffer#duplicate()} so that modifications to element values are mirrored but changes to the
+ * returned instance's limit and position do not effect this DataBuffer's state.
+ *
+ * @author Michael Ludwig
  */
-public class ByteBufferData implements ByteData, DataView<ByteBuffer> {
+public class ByteBufferData extends ByteData implements DataView<ByteBuffer> {
   private final ByteBuffer buffer;
 
+  /**
+   * Creates a new ByteBufferData that allocates a ByteBuffer of `length` with the currently
+   * configured buffer factory.
+   *
+   * @param length
+   *     The length of the data buffer
+   * @see Data#getBufferFactory()
+   */
   public ByteBufferData(int length) {
     this(Data.getBufferFactory().newByteBuffer(length));
   }
 
+  /**
+   * Creates a new ByteBufferData that wraps the given ByteBuffer. The data buffer creates a safe
+   * duplicate using {@link ByteBuffer#duplicate()} and uses the entire capacity of the buffer,
+   * ignoring the state of position or limit at the time of this constructor call.
+   *
+   * @param buffer
+   *     The buffer to wrap
+   * @throws NullPointerException
+   *     if `buffer` is null
+   */
   public ByteBufferData(ByteBuffer buffer) {
     Arguments.notNull("buffer", buffer);
     this.buffer = buffer.duplicate();
-    // Preserve the 0 -> capacity() rule for stored buffer without modifying original buffer's position and limit
+    // Preserve the 0 -> capacity() rule for stored buffer without modifying original buffer's
+    // position and limit
     this.buffer.clear();
   }
 
