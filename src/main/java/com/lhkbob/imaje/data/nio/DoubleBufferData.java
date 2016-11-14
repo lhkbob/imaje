@@ -92,49 +92,13 @@ public class DoubleBufferData extends DoubleData implements DataView<DoubleBuffe
   }
 
   @Override
-  public DoubleBuffer getSource() {
-    return buffer.duplicate();
-  }
-
-  @Override
   public long getLength() {
     return buffer.capacity();
   }
 
   @Override
-  public boolean isBigEndian() {
-    return buffer.order().equals(ByteOrder.BIG_ENDIAN);
-  }
-
-  @Override
-  public void set(long index, double value) {
-    buffer.put(Math.toIntExact(index), value);
-  }
-
-  @Override
-  public boolean isGPUAccessible() {
-    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
-  }
-
-  @Override
-  public void setValues(long dataIndex, double[] values, int offset, int length) {
-    // Optimize with bulk put in DoubleBuffer
-    Arguments.checkArrayRange("values array", values.length, offset, length);
-    Arguments.checkArrayRange("DoubleBufferData", getLength(), dataIndex, length);
-
-    setBufferRange(dataIndex, length);
-    buffer.put(values, offset, length);
-    buffer.clear();
-  }
-
-  @Override
-  public void setValues(long dataIndex, DoubleBuffer values) {
-    // Optimize with DoubleBuffer put
-    Arguments.checkArrayRange("DoubleBufferData", getLength(), dataIndex, values.remaining());
-
-    setBufferRange(dataIndex, values.remaining());
-    buffer.put(values);
-    buffer.clear();
+  public DoubleBuffer getSource() {
+    return buffer.duplicate();
   }
 
   @Override
@@ -155,6 +119,42 @@ public class DoubleBufferData extends DoubleData implements DataView<DoubleBuffe
 
     setBufferRange(dataIndex, values.remaining());
     values.put(buffer);
+    buffer.clear();
+  }
+
+  @Override
+  public boolean isBigEndian() {
+    return buffer.order().equals(ByteOrder.BIG_ENDIAN);
+  }
+
+  @Override
+  public boolean isGPUAccessible() {
+    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
+  }
+
+  @Override
+  public void set(long index, double value) {
+    buffer.put(Math.toIntExact(index), value);
+  }
+
+  @Override
+  public void setValues(long dataIndex, double[] values, int offset, int length) {
+    // Optimize with bulk put in DoubleBuffer
+    Arguments.checkArrayRange("values array", values.length, offset, length);
+    Arguments.checkArrayRange("DoubleBufferData", getLength(), dataIndex, length);
+
+    setBufferRange(dataIndex, length);
+    buffer.put(values, offset, length);
+    buffer.clear();
+  }
+
+  @Override
+  public void setValues(long dataIndex, DoubleBuffer values) {
+    // Optimize with DoubleBuffer put
+    Arguments.checkArrayRange("DoubleBufferData", getLength(), dataIndex, values.remaining());
+
+    setBufferRange(dataIndex, values.remaining());
+    buffer.put(values);
     buffer.clear();
   }
 

@@ -55,6 +55,11 @@ package com.lhkbob.imaje.data;
  */
 public interface DataBuffer {
   /**
+   * @return The number of bits per primitive of the underlying data
+   */
+  int getBitSize();
+
+  /**
    * @return The length of the data, must be at least 0.
    */
   long getLength();
@@ -77,11 +82,6 @@ public interface DataBuffer {
    * @return The GPU accessibility of the underlying data
    */
   boolean isGPUAccessible();
-
-  /**
-   * @return The number of bits per primitive of the underlying data
-   */
-  int getBitSize();
 
   /**
    * Copy values from `data` into this buffer. Set the values of this data buffer, starting at

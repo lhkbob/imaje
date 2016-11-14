@@ -84,13 +84,29 @@ public class DoubleArrayData extends DoubleData implements DataView<double[]> {
   }
 
   @Override
+  public long getLength() {
+    return array.length;
+  }
+
+  @Override
   public double[] getSource() {
     return array;
   }
 
   @Override
-  public long getLength() {
-    return array.length;
+  public void getValues(long dataIndex, double[] values, int offset, int length) {
+    // Optimize with System.arraycopy
+    Arguments.checkArrayRange("values array", values.length, offset, length);
+    Arguments.checkArrayRange("DoubleArrayData", getLength(), dataIndex, length);
+
+    System.arraycopy(array, Math.toIntExact(dataIndex), values, offset, length);
+  }
+
+  @Override
+  public void getValues(long dataIndex, DoubleBuffer values) {
+    // Optimize with bulk put defined in DoubleBuffer
+    Arguments.checkArrayRange("DoubleArrayData", getLength(), dataIndex, values.remaining());
+    values.put(array, Math.toIntExact(dataIndex), values.remaining());
   }
 
   @Override
@@ -123,21 +139,5 @@ public class DoubleArrayData extends DoubleData implements DataView<double[]> {
     // Optimize with bulk get defined in DoubleBuffer
     Arguments.checkArrayRange("DoubleArrayData", getLength(), dataIndex, values.remaining());
     values.get(array, Math.toIntExact(dataIndex), values.remaining());
-  }
-
-  @Override
-  public void getValues(long dataIndex, double[] values, int offset, int length) {
-    // Optimize with System.arraycopy
-    Arguments.checkArrayRange("values array", values.length, offset, length);
-    Arguments.checkArrayRange("DoubleArrayData", getLength(), dataIndex, length);
-
-    System.arraycopy(array, Math.toIntExact(dataIndex), values, offset, length);
-  }
-
-  @Override
-  public void getValues(long dataIndex, DoubleBuffer values) {
-    // Optimize with bulk put defined in DoubleBuffer
-    Arguments.checkArrayRange("DoubleArrayData", getLength(), dataIndex, values.remaining());
-    values.put(array, Math.toIntExact(dataIndex), values.remaining());
   }
 }

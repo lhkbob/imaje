@@ -92,49 +92,13 @@ public class FloatBufferData extends FloatData implements DataView<FloatBuffer> 
   }
 
   @Override
-  public FloatBuffer getSource() {
-    return buffer.duplicate();
-  }
-
-  @Override
   public long getLength() {
     return buffer.capacity();
   }
 
   @Override
-  public boolean isBigEndian() {
-    return buffer.order().equals(ByteOrder.BIG_ENDIAN);
-  }
-
-  @Override
-  public void set(long index, float value) {
-    buffer.put(Math.toIntExact(index), value);
-  }
-
-  @Override
-  public boolean isGPUAccessible() {
-    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
-  }
-
-  @Override
-  public void setValues(long dataIndex, float[] values, int offset, int length) {
-    // Optimize with bulk put in FloatBuffer
-    Arguments.checkArrayRange("values array", values.length, offset, length);
-    Arguments.checkArrayRange("FloatBufferData", getLength(), dataIndex, length);
-
-    setBufferRange(dataIndex, length);
-    buffer.put(values, offset, length);
-    buffer.clear();
-  }
-
-  @Override
-  public void setValues(long dataIndex, FloatBuffer values) {
-    // Optimize with FloatBuffer put
-    Arguments.checkArrayRange("FloatBufferData", getLength(), dataIndex, values.remaining());
-
-    setBufferRange(dataIndex, values.remaining());
-    buffer.put(values);
-    buffer.clear();
+  public FloatBuffer getSource() {
+    return buffer.duplicate();
   }
 
   @Override
@@ -155,6 +119,42 @@ public class FloatBufferData extends FloatData implements DataView<FloatBuffer> 
 
     setBufferRange(dataIndex, values.remaining());
     values.put(buffer);
+    buffer.clear();
+  }
+
+  @Override
+  public boolean isBigEndian() {
+    return buffer.order().equals(ByteOrder.BIG_ENDIAN);
+  }
+
+  @Override
+  public boolean isGPUAccessible() {
+    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
+  }
+
+  @Override
+  public void set(long index, float value) {
+    buffer.put(Math.toIntExact(index), value);
+  }
+
+  @Override
+  public void setValues(long dataIndex, float[] values, int offset, int length) {
+    // Optimize with bulk put in FloatBuffer
+    Arguments.checkArrayRange("values array", values.length, offset, length);
+    Arguments.checkArrayRange("FloatBufferData", getLength(), dataIndex, length);
+
+    setBufferRange(dataIndex, length);
+    buffer.put(values, offset, length);
+    buffer.clear();
+  }
+
+  @Override
+  public void setValues(long dataIndex, FloatBuffer values) {
+    // Optimize with FloatBuffer put
+    Arguments.checkArrayRange("FloatBufferData", getLength(), dataIndex, values.remaining());
+
+    setBufferRange(dataIndex, values.remaining());
+    buffer.put(values);
     buffer.clear();
   }
 

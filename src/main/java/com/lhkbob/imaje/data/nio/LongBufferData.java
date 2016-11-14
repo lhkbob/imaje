@@ -92,8 +92,24 @@ public class LongBufferData extends LongData implements DataView<LongBuffer> {
   }
 
   @Override
-  public LongBuffer getSource() {
-    return buffer.duplicate();
+  public void get(long dataIndex, long[] values, int offset, int length) {
+    // Optimize with bulk get in LongBuffer
+    Arguments.checkArrayRange("values array", values.length, offset, length);
+    Arguments.checkArrayRange("LongBufferData", getLength(), dataIndex, length);
+
+    setBufferRange(dataIndex, length);
+    buffer.get(values, offset, length);
+    buffer.clear();
+  }
+
+  @Override
+  public void get(long dataIndex, LongBuffer values) {
+    // Optimize with LongBuffer put
+    Arguments.checkArrayRange("LongBufferData", getLength(), dataIndex, values.remaining());
+
+    setBufferRange(dataIndex, values.remaining());
+    values.put(buffer);
+    buffer.clear();
   }
 
   @Override
@@ -102,18 +118,23 @@ public class LongBufferData extends LongData implements DataView<LongBuffer> {
   }
 
   @Override
+  public LongBuffer getSource() {
+    return buffer.duplicate();
+  }
+
+  @Override
   public boolean isBigEndian() {
     return buffer.order().equals(ByteOrder.BIG_ENDIAN);
   }
 
   @Override
-  public void set(long index, long value) {
-    buffer.put(Math.toIntExact(index), value);
+  public boolean isGPUAccessible() {
+    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
   }
 
   @Override
-  public boolean isGPUAccessible() {
-    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
+  public void set(long index, long value) {
+    buffer.put(Math.toIntExact(index), value);
   }
 
   @Override
@@ -134,27 +155,6 @@ public class LongBufferData extends LongData implements DataView<LongBuffer> {
 
     setBufferRange(dataIndex, values.remaining());
     buffer.put(values);
-    buffer.clear();
-  }
-
-  @Override
-  public void get(long dataIndex, long[] values, int offset, int length) {
-    // Optimize with bulk get in LongBuffer
-    Arguments.checkArrayRange("values array", values.length, offset, length);
-    Arguments.checkArrayRange("LongBufferData", getLength(), dataIndex, length);
-
-    setBufferRange(dataIndex, length);
-    buffer.get(values, offset, length);
-    buffer.clear();
-  }
-
-  @Override
-  public void get(long dataIndex, LongBuffer values) {
-    // Optimize with LongBuffer put
-    Arguments.checkArrayRange("LongBufferData", getLength(), dataIndex, values.remaining());
-
-    setBufferRange(dataIndex, values.remaining());
-    values.put(buffer);
     buffer.clear();
   }
 

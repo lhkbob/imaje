@@ -47,58 +47,12 @@ package com.lhkbob.imaje.data;
  * @author Michael Ludwig
  */
 public abstract class DoubleData extends NumericData<LongData> {
-  /**
-   * Get the `double` stored at `index` in this data buffer. This returns the directly
-   * represented floating-point value without any modifications.
-   *
-   * @param index
-   *     The index to access
-   * @return The value as a `double`
-   *
-   * @throws IndexOutOfBoundsException
-   *     if `index` is out of bounds
-   */
-  public abstract double get(long index);
-
-  /**
-   * Set the value at `index` in this buffer to the specified `double` value. This stores the
-   * floating-point value as-is without any other type conversions.
-   *
-   * @param index
-   *     The index to modify
-   * @param value
-   *     The new value
-   * @throws IndexOutOfBoundsException
-   *     if `index` is out of bounds
-   */
-  public abstract void set(long index, double value);
-
-  @Override
-  public final int getBitSize() {
-    return Double.SIZE;
-  }
-
-  @Override
-  public final double getValue(long index) {
-    return get(index);
-  }
-
-  @Override
-  public final void setValue(long index, double value) {
-    set(index, value);
-  }
-
   @Override
   public LongData asBitData() {
     return new LongData() {
       @Override
       public long get(long index) {
         return Double.doubleToLongBits(DoubleData.this.get(index));
-      }
-
-      @Override
-      public void set(long index, long value) {
-        DoubleData.this.set(index, Double.longBitsToDouble(value));
       }
 
       @Override
@@ -115,6 +69,52 @@ public abstract class DoubleData extends NumericData<LongData> {
       public boolean isGPUAccessible() {
         return DoubleData.this.isGPUAccessible();
       }
+
+      @Override
+      public void set(long index, long value) {
+        DoubleData.this.set(index, Double.longBitsToDouble(value));
+      }
     };
+  }
+
+  /**
+   * Get the `double` stored at `index` in this data buffer. This returns the directly
+   * represented floating-point value without any modifications.
+   *
+   * @param index
+   *     The index to access
+   * @return The value as a `double`
+   *
+   * @throws IndexOutOfBoundsException
+   *     if `index` is out of bounds
+   */
+  public abstract double get(long index);
+
+  @Override
+  public final int getBitSize() {
+    return Double.SIZE;
+  }
+
+  @Override
+  public final double getValue(long index) {
+    return get(index);
+  }
+
+  /**
+   * Set the value at `index` in this buffer to the specified `double` value. This stores the
+   * floating-point value as-is without any other type conversions.
+   *
+   * @param index
+   *     The index to modify
+   * @param value
+   *     The new value
+   * @throws IndexOutOfBoundsException
+   *     if `index` is out of bounds
+   */
+  public abstract void set(long index, double value);
+
+  @Override
+  public final void setValue(long index, double value) {
+    set(index, value);
   }
 }

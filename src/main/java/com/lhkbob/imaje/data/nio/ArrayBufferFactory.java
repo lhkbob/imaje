@@ -55,18 +55,8 @@ public class ArrayBufferFactory implements BufferFactory {
   }
 
   @Override
-  public IntBuffer newIntBuffer(int length) {
-    return IntBuffer.allocate(length);
-  }
-
-  @Override
-  public ShortBuffer newShortBuffer(int length) {
-    return ShortBuffer.allocate(length);
-  }
-
-  @Override
-  public LongBuffer newLongBuffer(int length) {
-    return LongBuffer.allocate(length);
+  public DoubleBuffer newDoubleBuffer(int length) {
+    return DoubleBuffer.allocate(length);
   }
 
   @Override
@@ -75,7 +65,17 @@ public class ArrayBufferFactory implements BufferFactory {
   }
 
   @Override
-  public DoubleBuffer newDoubleBuffer(int length) {
-    return DoubleBuffer.allocate(length);
+  public IntBuffer newIntBuffer(int length) {
+    return IntBuffer.allocate(length);
+  }
+
+  @Override
+  public LongBuffer newLongBuffer(int length) {
+    return LongBuffer.allocate(length);
+  }
+
+  @Override
+  public ShortBuffer newShortBuffer(int length) {
+    return ShortBuffer.allocate(length);
   }
 }

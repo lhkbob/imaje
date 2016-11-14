@@ -92,13 +92,34 @@ public class ByteBufferData extends ByteData implements DataView<ByteBuffer> {
   }
 
   @Override
-  public ByteBuffer getSource() {
-    return buffer.duplicate();
+  public void get(long dataIndex, byte[] values, int offset, int length) {
+    // Optimize with bulk get in ByteBuffer
+    Arguments.checkArrayRange("values array", values.length, offset, length);
+    Arguments.checkArrayRange("ByteBufferData", getLength(), dataIndex, length);
+
+    setBufferRange(dataIndex, length);
+    buffer.get(values, offset, length);
+    buffer.clear();
+  }
+
+  @Override
+  public void get(long dataIndex, ByteBuffer values) {
+    // Optimize with ByteBuffer put
+    Arguments.checkArrayRange("ByteBufferData", getLength(), dataIndex, values.remaining());
+
+    setBufferRange(dataIndex, values.remaining());
+    values.put(buffer);
+    buffer.clear();
   }
 
   @Override
   public long getLength() {
     return buffer.capacity();
+  }
+
+  @Override
+  public ByteBuffer getSource() {
+    return buffer.duplicate();
   }
 
   @Override
@@ -134,27 +155,6 @@ public class ByteBufferData extends ByteData implements DataView<ByteBuffer> {
 
     setBufferRange(dataIndex, values.remaining());
     buffer.put(values);
-    buffer.clear();
-  }
-
-  @Override
-  public void get(long dataIndex, byte[] values, int offset, int length) {
-    // Optimize with bulk get in ByteBuffer
-    Arguments.checkArrayRange("values array", values.length, offset, length);
-    Arguments.checkArrayRange("ByteBufferData", getLength(), dataIndex, length);
-
-    setBufferRange(dataIndex, length);
-    buffer.get(values, offset, length);
-    buffer.clear();
-  }
-
-  @Override
-  public void get(long dataIndex, ByteBuffer values) {
-    // Optimize with ByteBuffer put
-    Arguments.checkArrayRange("ByteBufferData", getLength(), dataIndex, values.remaining());
-
-    setBufferRange(dataIndex, values.remaining());
-    values.put(buffer);
     buffer.clear();
   }
 

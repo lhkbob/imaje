@@ -84,13 +84,29 @@ public class IntArrayData extends IntData implements DataView<int[]> {
   }
 
   @Override
-  public int[] getSource() {
-    return array;
+  public void get(long dataIndex, int[] values, int offset, int length) {
+    // Optimize with System.arraycopy
+    Arguments.checkArrayRange("values array", values.length, offset, length);
+    Arguments.checkArrayRange("IntArrayData", getLength(), dataIndex, length);
+
+    System.arraycopy(array, Math.toIntExact(dataIndex), values, offset, length);
+  }
+
+  @Override
+  public void get(long dataIndex, IntBuffer values) {
+    // Optimize with bulk put defined in IntBuffer
+    Arguments.checkArrayRange("IntArrayData", getLength(), dataIndex, values.remaining());
+    values.put(array, Math.toIntExact(dataIndex), values.remaining());
   }
 
   @Override
   public long getLength() {
     return array.length;
+  }
+
+  @Override
+  public int[] getSource() {
+    return array;
   }
 
   @Override
@@ -123,21 +139,5 @@ public class IntArrayData extends IntData implements DataView<int[]> {
     // Optimize with bulk get defined in IntBuffer
     Arguments.checkArrayRange("IntArrayData", getLength(), dataIndex, values.remaining());
     values.get(array, Math.toIntExact(dataIndex), values.remaining());
-  }
-
-  @Override
-  public void get(long dataIndex, int[] values, int offset, int length) {
-    // Optimize with System.arraycopy
-    Arguments.checkArrayRange("values array", values.length, offset, length);
-    Arguments.checkArrayRange("IntArrayData", getLength(), dataIndex, length);
-
-    System.arraycopy(array, Math.toIntExact(dataIndex), values, offset, length);
-  }
-
-  @Override
-  public void get(long dataIndex, IntBuffer values) {
-    // Optimize with bulk put defined in IntBuffer
-    Arguments.checkArrayRange("IntArrayData", getLength(), dataIndex, values.remaining());
-    values.put(array, Math.toIntExact(dataIndex), values.remaining());
   }
 }

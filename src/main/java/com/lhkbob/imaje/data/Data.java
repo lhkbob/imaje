@@ -209,51 +209,6 @@ public final class Data {
     ByteData newByteData(long length);
 
     /**
-     * Create a new DoubleData that will have the given length.
-     *
-     * @param length
-     *     The length of the new data
-     * @return A new DoubleData
-     */
-    DoubleData newDoubleData(long length);
-
-    /**
-     * Create a new FloatData that will have the given length.
-     *
-     * @param length
-     *     The length of the new data
-     * @return A new FloatData
-     */
-    FloatData newFloatData(long length);
-
-    /**
-     * Create a new IntData that will have the given length.
-     *
-     * @param length
-     *     The length of the new data
-     * @return A new IntData
-     */
-    IntData newIntData(long length);
-
-    /**
-     * Create a new LongData that will have the given length.
-     *
-     * @param length
-     *     The length of the new data
-     * @return A new LongData
-     */
-    LongData newLongData(long length);
-
-    /**
-     * Create a new ShortData that will have the given length.
-     *
-     * @param length
-     *     The length of the new data
-     * @return A new ShortData
-     */
-    ShortData newShortData(long length);
-
-    /**
      * Create a new NumericData source based on the given binary representation, `format`. If
      * `format` is equivalent to a Java primitive, the appropriate `newXData()` function is invoked
      * instead. Otherwise {@link CustomBinaryData} wraps a BitData source of `length`; however, only
@@ -297,6 +252,51 @@ public final class Data {
                 + format.getBitSize());
       }
     }
+
+    /**
+     * Create a new DoubleData that will have the given length.
+     *
+     * @param length
+     *     The length of the new data
+     * @return A new DoubleData
+     */
+    DoubleData newDoubleData(long length);
+
+    /**
+     * Create a new FloatData that will have the given length.
+     *
+     * @param length
+     *     The length of the new data
+     * @return A new FloatData
+     */
+    FloatData newFloatData(long length);
+
+    /**
+     * Create a new IntData that will have the given length.
+     *
+     * @param length
+     *     The length of the new data
+     * @return A new IntData
+     */
+    IntData newIntData(long length);
+
+    /**
+     * Create a new LongData that will have the given length.
+     *
+     * @param length
+     *     The length of the new data
+     * @return A new LongData
+     */
+    LongData newLongData(long length);
+
+    /**
+     * Create a new ShortData that will have the given length.
+     *
+     * @param length
+     *     The length of the new data
+     * @return A new ShortData
+     */
+    ShortData newShortData(long length);
   }
 
   private static volatile BufferFactory bufferFactory = DirectBufferFactory.nativeFactory();
@@ -313,22 +313,6 @@ public final class Data {
    */
   public static Factory arrayDataFactory() {
     return ARRAY_DATA_FACTORY;
-  }
-
-  /**
-   * Get the DataBuffer factory that uses the array-backed implementations defined in the {@link
-   * com.lhkbob.imaje.data.nio} package. This returns an internal singleton, so there is no
-   * allocation cost associated with this function. The returned factory can be used even if it is
-   * not assigned as the default data factory.
-   *
-   * The underlying NIO buffer instances the factory creates are instantiated by the {@link
-   * #getBufferFactory() buffer factory} that is configured at the time of each DataBuffer creation.
-   * This means this data factory always respects the up-to-date buffer creation policy.
-   *
-   * @return The NIO-buffer based data buffer factory
-   */
-  public static Factory nioDataFactory() {
-    return BUFFER_DATA_FACTORY;
   }
 
   /**
@@ -391,6 +375,22 @@ public final class Data {
    */
   public static boolean isNativeEndian(DataBuffer source) {
     return isNativeBigEndian() == source.isBigEndian();
+  }
+
+  /**
+   * Get the DataBuffer factory that uses the array-backed implementations defined in the {@link
+   * com.lhkbob.imaje.data.nio} package. This returns an internal singleton, so there is no
+   * allocation cost associated with this function. The returned factory can be used even if it is
+   * not assigned as the default data factory.
+   *
+   * The underlying NIO buffer instances the factory creates are instantiated by the {@link
+   * #getBufferFactory() buffer factory} that is configured at the time of each DataBuffer creation.
+   * This means this data factory always respects the up-to-date buffer creation policy.
+   *
+   * @return The NIO-buffer based data buffer factory
+   */
+  public static Factory nioDataFactory() {
+    return BUFFER_DATA_FACTORY;
   }
 
   /**

@@ -87,6 +87,28 @@ public class LargeShortData extends ShortData {
     values.limit(limit).position(limit);
   }
 
+  /**
+   * Get the values of this large short data and store them into `dst`. Values are read from this
+   * data starting at `getIndex`, and stored starting at `dstIndex` in `dst`. `length` values are
+   * copied. This works efficiently by invoking {@link DataBuffer#set(long, DataBuffer, long, long)}
+   * multiple times for the buffer sources of this large data set that intersect with the range to
+   * copy.
+   *
+   * @param getIndex
+   *     The index into this data buffer to start copying from
+   * @param dst
+   *     The data buffer that receives the short values from this source
+   * @param dstIndex
+   *     The index in `dst` for the first copied short
+   * @param length
+   *     The number of values to copy
+   * @throws IndexOutOfBoundsException
+   *     if bad indices would be accessed based on index and length
+   */
+  public void get(long getIndex, ShortData dst, long dstIndex, long length) {
+    data.copyToDataBuffer(getIndex, dst, dstIndex, length);
+  }
+
   @Override
   public long getLength() {
     return data.getLength();
@@ -130,28 +152,6 @@ public class LargeShortData extends ShortData {
     Arguments.checkArrayRange("LargeShortData", getLength(), dataIndex, length);
 
     data.bulkOperation(ShortData::set, dataIndex, values, offset, length);
-  }
-
-  /**
-   * Get the values of this large short data and store them into `dst`. Values are read from this
-   * data starting at `getIndex`, and stored starting at `dstIndex` in `dst`. `length` values are
-   * copied. This works efficiently by invoking {@link DataBuffer#set(long, DataBuffer, long, long)}
-   * multiple times for the buffer sources of this large data set that intersect with the range to
-   * copy.
-   *
-   * @param getIndex
-   *     The index into this data buffer to start copying from
-   * @param dst
-   *     The data buffer that receives the short values from this source
-   * @param dstIndex
-   *     The index in `dst` for the first copied short
-   * @param length
-   *     The number of values to copy
-   * @throws IndexOutOfBoundsException
-   *     if bad indices would be accessed based on index and length
-   */
-  public void get(long getIndex, ShortData dst, long dstIndex, long length) {
-    data.copyToDataBuffer(getIndex, dst, dstIndex, length);
   }
 
   private static void getSubSource(

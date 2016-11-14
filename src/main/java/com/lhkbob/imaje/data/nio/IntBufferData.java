@@ -92,8 +92,25 @@ public class IntBufferData extends IntData implements DataView<IntBuffer> {
   }
 
   @Override
-  public IntBuffer getSource() {
-    return buffer.duplicate();
+  public void get(long dataIndex, int[] values, int offset, int length) {
+    // Optimize with bulk get in IntBuffer
+    Arguments.checkArrayRange("values array", values.length, offset, length);
+    Arguments.checkArrayRange("IntBufferData", getLength(), dataIndex, length);
+
+    int bufferOffset = Math.toIntExact(dataIndex);
+    buffer.limit(bufferOffset + length).position(bufferOffset);
+    buffer.get(values, offset, length);
+    buffer.clear();
+  }
+
+  @Override
+  public void get(long dataIndex, IntBuffer values) {
+    // Optimize with IntBuffer put
+    Arguments.checkArrayRange("IntBufferData", getLength(), dataIndex, values.remaining());
+
+    setBufferRange(dataIndex, values.remaining());
+    values.put(buffer);
+    buffer.clear();
   }
 
   @Override
@@ -102,18 +119,23 @@ public class IntBufferData extends IntData implements DataView<IntBuffer> {
   }
 
   @Override
+  public IntBuffer getSource() {
+    return buffer.duplicate();
+  }
+
+  @Override
   public boolean isBigEndian() {
     return buffer.order().equals(ByteOrder.BIG_ENDIAN);
   }
 
   @Override
-  public void set(long index, int value) {
-    buffer.put(Math.toIntExact(index), value);
+  public boolean isGPUAccessible() {
+    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
   }
 
   @Override
-  public boolean isGPUAccessible() {
-    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
+  public void set(long index, int value) {
+    buffer.put(Math.toIntExact(index), value);
   }
 
   @Override
@@ -134,28 +156,6 @@ public class IntBufferData extends IntData implements DataView<IntBuffer> {
 
     setBufferRange(dataIndex, values.remaining());
     buffer.put(values);
-    buffer.clear();
-  }
-
-  @Override
-  public void get(long dataIndex, int[] values, int offset, int length) {
-    // Optimize with bulk get in IntBuffer
-    Arguments.checkArrayRange("values array", values.length, offset, length);
-    Arguments.checkArrayRange("IntBufferData", getLength(), dataIndex, length);
-
-    int bufferOffset = Math.toIntExact(dataIndex);
-    buffer.limit(bufferOffset + length).position(bufferOffset);
-    buffer.get(values, offset, length);
-    buffer.clear();
-  }
-
-  @Override
-  public void get(long dataIndex, IntBuffer values) {
-    // Optimize with IntBuffer put
-    Arguments.checkArrayRange("IntBufferData", getLength(), dataIndex, values.remaining());
-
-    setBufferRange(dataIndex, values.remaining());
-    values.put(buffer);
     buffer.clear();
   }
 

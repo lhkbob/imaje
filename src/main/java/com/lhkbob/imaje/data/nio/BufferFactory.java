@@ -51,8 +51,9 @@ import java.nio.ShortBuffer;
  * code (and ideally application code) should go through the BufferFactory configured in {@link
  * Data}.
  *
- * Implementations are provided for array-based NIO buffers and direct buffers.
- * Additional implementations can be created and set as the active buffer factory as needed.
+ * Implementations are provided for array-based NIO buffers and direct buffers. Additional
+ * implementations can be created and set as the active buffer factory as needed. Implementations
+ * must be thread safe and immutable.
  *
  * @author Michael Ludwig
  * @see Data#getBufferFactory()
@@ -68,15 +69,27 @@ public interface BufferFactory {
   ByteBuffer newByteBuffer(int length);
 
   /**
-   * Create a new ShortBuffer of `length` shorts. By default calls `newByteBuffer(2 * length)` and
-   * then relies on that instances {@link ByteBuffer#asShortBuffer()}.
+   * Create a new DoubleBuffer of `length` shorts. By default calls `newByteBuffer(8 * length)` and
+   * then relies on that instances {@link ByteBuffer#asDoubleBuffer()}.
    *
    * @param length
    *     The capacity of the new buffer
    * @return The new short buffer
    */
-  default ShortBuffer newShortBuffer(int length) {
-    return newByteBuffer(2 * length).asShortBuffer();
+  default DoubleBuffer newDoubleBuffer(int length) {
+    return newByteBuffer(8 * length).asDoubleBuffer();
+  }
+
+  /**
+   * Create a new FloatBuffer of `length` shorts. By default calls `newByteBuffer(4 * length)` and
+   * then relies on that instances {@link ByteBuffer#asFloatBuffer()}.
+   *
+   * @param length
+   *     The capacity of the new buffer
+   * @return The new short buffer
+   */
+  default FloatBuffer newFloatBuffer(int length) {
+    return newByteBuffer(4 * length).asFloatBuffer();
   }
 
   /**
@@ -104,26 +117,14 @@ public interface BufferFactory {
   }
 
   /**
-   * Create a new FloatBuffer of `length` shorts. By default calls `newByteBuffer(4 * length)` and
-   * then relies on that instances {@link ByteBuffer#asFloatBuffer()}.
+   * Create a new ShortBuffer of `length` shorts. By default calls `newByteBuffer(2 * length)` and
+   * then relies on that instances {@link ByteBuffer#asShortBuffer()}.
    *
    * @param length
    *     The capacity of the new buffer
    * @return The new short buffer
    */
-  default FloatBuffer newFloatBuffer(int length) {
-    return newByteBuffer(4 * length).asFloatBuffer();
-  }
-
-  /**
-   * Create a new DoubleBuffer of `length` shorts. By default calls `newByteBuffer(8 * length)` and
-   * then relies on that instances {@link ByteBuffer#asDoubleBuffer()}.
-   *
-   * @param length
-   *     The capacity of the new buffer
-   * @return The new short buffer
-   */
-  default DoubleBuffer newDoubleBuffer(int length) {
-    return newByteBuffer(8 * length).asDoubleBuffer();
+  default ShortBuffer newShortBuffer(int length) {
+    return newByteBuffer(2 * length).asShortBuffer();
   }
 }

@@ -84,13 +84,29 @@ public class ShortArrayData extends ShortData implements DataView<short[]> {
   }
 
   @Override
-  public short[] getSource() {
-    return array;
+  public void get(long dataIndex, short[] values, int offset, int length) {
+    // Optimize with System.arraycopy
+    Arguments.checkArrayRange("values array", values.length, offset, length);
+    Arguments.checkArrayRange("ShortArrayData", getLength(), dataIndex, length);
+
+    System.arraycopy(array, Math.toIntExact(dataIndex), values, offset, length);
+  }
+
+  @Override
+  public void get(long dataIndex, ShortBuffer values) {
+    // Optimize with bulk put defined in ShortBuffer
+    Arguments.checkArrayRange("ShortArrayData", getLength(), dataIndex, values.remaining());
+    values.put(array, Math.toIntExact(dataIndex), values.remaining());
   }
 
   @Override
   public long getLength() {
     return array.length;
+  }
+
+  @Override
+  public short[] getSource() {
+    return array;
   }
 
   @Override
@@ -123,21 +139,5 @@ public class ShortArrayData extends ShortData implements DataView<short[]> {
     // Optimize with bulk get defined in ShortBuffer
     Arguments.checkArrayRange("ShortArrayData", getLength(), dataIndex, values.remaining());
     values.get(array, Math.toIntExact(dataIndex), values.remaining());
-  }
-
-  @Override
-  public void get(long dataIndex, short[] values, int offset, int length) {
-    // Optimize with System.arraycopy
-    Arguments.checkArrayRange("values array", values.length, offset, length);
-    Arguments.checkArrayRange("ShortArrayData", getLength(), dataIndex, length);
-
-    System.arraycopy(array, Math.toIntExact(dataIndex), values, offset, length);
-  }
-
-  @Override
-  public void get(long dataIndex, ShortBuffer values) {
-    // Optimize with bulk put defined in ShortBuffer
-    Arguments.checkArrayRange("ShortArrayData", getLength(), dataIndex, values.remaining());
-    values.put(array, Math.toIntExact(dataIndex), values.remaining());
   }
 }
