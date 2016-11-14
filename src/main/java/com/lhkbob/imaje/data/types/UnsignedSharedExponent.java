@@ -37,7 +37,26 @@ import com.lhkbob.imaje.util.Functions;
 import java.util.Arrays;
 
 /**
+ * UnsignedSharedExponent
+ * ======================
  *
+ * This is a special binary representation that compactly packs multiple numeric values into a
+ * single bit field. Multiple mantissas rely on a single shared exponent to calculate the actual
+ * numeric value for each. Unlike {@link SignedFloatingPointNumber} and {@link
+ * UnsignedFloatingPointNumber}, these mantissas do not have an implicit leading bit.
+ *
+ * The shared exponent representation has an exponent mask and several mantissa masks. The exponent
+ * is combined with each mantissa to form a vector of numeric values with dimensionality equal to
+ * the number of mantissa masks provided (at least 2). All constructors and operations work with
+ * `long` bit fields, however, there is no requirement that the exponent and mantissa masks fill out
+ * all 64 bits. Lower bit-count shared exponent representations can be easily represented by using
+ * masks that use a particular number of lower-significance bits.
+ *
+ * While this shares much of the same logic as the single-valued binary representations, and can be
+ * used in many of the same overarching scenarios, it requires an entirely different interface
+ * because it operates on a vector of numeric values.
+ *
+ * @author Michael Ludwig
  */
 public class UnsignedSharedExponent {
   private final long[] mantissaMasks;
@@ -51,14 +70,77 @@ public class UnsignedSharedExponent {
 
   private final double maxComponentValues;
 
+  /**
+   * Create a new UnsignedSharedExponent representation where the shared mask is stored in
+   * `exponentMask` and `mantissaMasks` contains the mantissa mask for each vector component.
+   * The mantissa masks are ordered in the array logically, corresponding to how values are
+   * stored in the argument to {@link #toBits(double[])}.
+   *
+   * If `N` is the number of set bits in `exponentMask`, then the configured exponent bias
+   * is equal to `2^(N-1)-1` and the maximum biased exponent is `2^N-1`.
+   *
+   * @param exponentMask
+   *     The exponent mask that is shared
+   * @param mantissaMasks
+   *     The mantissa mask for each value in the packed field, ordered by logical index used to
+   *     refer to the values
+   * @throws IllegalArgumentException
+   *     if the length of `mantissaMasks` is less than 2, or if the number of bits in each mantissa
+   *     mask are not the same
+   */
   public UnsignedSharedExponent(long exponentMask, long[] mantissaMasks) {
     this(exponentMask, mantissaMasks, (1 << (Long.bitCount(exponentMask) - 1)) - 1);
   }
 
+  /**
+   * Create a new UnsignedSharedExponent representation where the shared mask is stored in
+   * `exponentMask` and `mantissaMasks` contains the mantissa mask for each vector component.
+   * The mantissa masks are ordered in the array logically, corresponding to how values are
+   * stored in the argument to {@link #toBits(double[])}.
+   *
+   * This constructor allows a custom exponent bias to be provided. If `N` is the number of set bits
+   * in `exponentMask`, then the maximum biased exponent is `2^N-1`.
+   *
+   * @param exponentMask
+   *     The exponent mask that is shared
+   * @param mantissaMasks
+   *     The mantissa mask for each value in the packed field, ordered by logical index used to
+   *     refer to the values
+   * @param exponentBias
+   *     The custom exponent bias to subtract from the exponent before calculating the final real
+   *     value
+   * @throws IllegalArgumentException
+   *     if the length of `mantissaMasks` is less than 2, or if the number of bits in each mantissa
+   *     mask are not the same
+   */
   public UnsignedSharedExponent(long exponentMask, long[] mantissaMasks, long exponentBias) {
     this(exponentMask, mantissaMasks, exponentBias, (1 << Long.bitCount(exponentMask)) - 1);
   }
 
+  /**
+   * Create a new UnsignedSharedExponent representation where the shared mask is stored in
+   * `exponentMask` and `mantissaMasks` contains the mantissa mask for each vector component.
+   * The mantissa masks are ordered in the array logically, corresponding to how values are
+   * stored in the argument to {@link #toBits(double[])}.
+   *
+   * This constructor enables a custom exponent bias and max biased exponent. The max biased
+   * exponent defines the maximum value that can be represented by this UnsignedSharedExponent.
+   *
+   * @param exponentMask
+   *     The exponent mask that is shared
+   * @param mantissaMasks
+   *     The mantissa mask for each value in the packed field, ordered by logical index used to
+   *     refer to the values
+   * @param exponentBias
+   *     The custom exponent bias to subtract from the exponent before calculating the final real
+   *     value
+   * @param maxBiasedExponent
+   *     The maximum exponent (after being biased by `exponentBias`) that is valid in this
+   *     representation, which determins the maximum value representable
+   * @throws IllegalArgumentException
+   *     if the length of `mantissaMasks` is less than 2, or if the number of bits in each mantissa
+   *     mask are not the same
+   */
   public UnsignedSharedExponent(
       long exponentMask, long[] mantissaMasks, long exponentBias, long maxBiasedExponent) {
     if (mantissaMasks.length <= 1) {
@@ -87,6 +169,111 @@ public class UnsignedSharedExponent {
     this.exponentMask = exponentMask;
   }
 
+  /**
+   * @return The bit mask for the exponent field
+   */
+  public long getExponentMask() {
+    return exponentMask;
+  }
+
+  /**
+   * @return The bias subtracted from the initial unsigned exponent value when converting to numeric
+   * values
+   */
+  public long getExponentBias() {
+    return exponentBias;
+  }
+
+  /**
+   * @param component
+   *     The value component to access, must be between 0 and `getValueCount() - 1`
+   * @return The mantissa mask for the given `component` of the vector this representation can
+   * encode
+   */
+  public long getMantissaMask(int component) {
+    return mantissaMasks[component];
+  }
+
+  /**
+   * @return The number of bits in each mantissa mask (not the total number of bits of all
+   * mantissas)
+   */
+  public int getMantissaBitCount() {
+    return mantissaBits;
+  }
+
+  /**
+   * @return The number of bits in the exponent mask
+   */
+  public int getExponentBitCount() {
+    return Long.bitCount(exponentMask);
+  }
+
+  /**
+   * @return The total bit count required by this representation
+   */
+  public int getBitCount() {
+    return getExponentBitCount() + getValueCount() * getMantissaBitCount();
+  }
+
+  /**
+   * @return A bitmask that is the union of the exponent mask and all mantissa masks
+   */
+  public long getMask() {
+    long mask = exponentMask;
+    for (long mantissaMask : mantissaMasks) {
+      mask |= mantissaMask;
+    }
+    return mask;
+  }
+
+  /**
+   * Get a BinaryRepresentation that exposes a particular vector `component` as the numeric value of
+   * the returned BinaryRepresentation. The bit field still represents the entire shared exponent
+   * vector.
+   *
+   * Calling {@link BinaryRepresentation#toNumericValue(long)} is equivalent to calling
+   * `toNumericValues(bits, result)` and then returning `result[component]`.
+   *
+   * Calling {@link BinaryRepresentation#toBits(double)} uses the given `double` value for every
+   * component.
+   *
+   * @param component
+   *     The component of the numeric vector linked to the returned BinaryRepresentation
+   * @return BinaryRepresentation wrapper over a particular component of the vector
+   */
+  public BinaryRepresentation getComponentRepresentation(int component) {
+    Arguments.checkIndex("component", getValueCount(), component);
+    return new ComponentRepresentation(component);
+  }
+
+  /**
+   * @return The maximum component value storable in this representation, all real numbers will be
+   * clamped to be less than this.
+   */
+  public double getMaxValue() {
+    return maxComponentValues;
+  }
+
+  /**
+   * @return The minimum value, which is 0, since this is an unsigned representation.
+   */
+  public double getMinValue() {
+    return 0.0;
+  }
+
+  /**
+   * Convert the shared exponent values stored in `bits` to numeric values and store these
+   * into the `result` array. `result`'s length must be equal to {@link #getValueCount()}.
+   * Bits in `bits` that are not used by the exponent or mantissa masks are ignored.
+   *
+   * @param bits
+   *     The bit field to convert to numeric values
+   * @param result
+   *     The storage for the output vector
+   * @throws IllegalArgumentException
+   *     if `result` length does not equal the value count of this shared exponent representation
+   */
   public void toNumericValues(long bits, double[] result) {
     Arguments.equals("result.length", mantissaMasks.length, result.length);
 
@@ -102,6 +289,20 @@ public class UnsignedSharedExponent {
     }
   }
 
+  /**
+   * Convert the vector of numeric values stored in the `values` array to a bit field. Bits that
+   * are not used by the exponent or mantissa masks are set to 0. This conversion from `double`
+   * to a much smaller bit representation is lossy but will attempt to preserve the value as best
+   * as possible. Values outside of the minimum and maximum range of this representation will
+   * be clamped.
+   *
+   * @param values
+   *     The numeric values to convert
+   * @return The bit field representation of `values`
+   *
+   * @throws IllegalArgumentException
+   *     if `values`'s length is not equal to the value count of this representation
+   */
   public long toBits(double[] values) {
     Arguments.equals("values.length", mantissaMasks.length, values.length);
 
@@ -134,7 +335,57 @@ public class UnsignedSharedExponent {
     return bitField;
   }
 
+  /**
+   * @return The number of numeric values this format represents
+   */
   public int getValueCount() {
     return mantissaMasks.length;
+  }
+
+  private class ComponentRepresentation implements BinaryRepresentation {
+    private final int component;
+
+    ComponentRepresentation(int component) {
+      this.component = component;
+    }
+
+    @Override
+    public int getBitSize() {
+      return getBitCount();
+    }
+
+    @Override
+    public double toNumericValue(long bits) {
+      double[] vector = new double[getValueCount()];
+      toNumericValues(bits, vector);
+      return vector[component];
+    }
+
+    @Override
+    public long toBits(double value) {
+      double[] vector = new double[getValueCount()];
+      Arrays.fill(vector, value);
+      return UnsignedSharedExponent.this.toBits(vector);
+    }
+
+    @Override
+    public double getMaxValue() {
+      return UnsignedSharedExponent.this.getMaxValue();
+    }
+
+    @Override
+    public double getMinValue() {
+      return UnsignedSharedExponent.this.getMinValue();
+    }
+
+    @Override
+    public boolean isFloatingPoint() {
+      return true;
+    }
+
+    @Override
+    public boolean isUnsigned() {
+      return true;
+    }
   }
 }
