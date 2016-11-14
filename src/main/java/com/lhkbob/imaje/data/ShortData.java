@@ -60,7 +60,7 @@ public abstract class ShortData implements BitData {
    *
    * @author Michael Ludwig
    */
-  public static class Numeric implements NumericData<ShortData>, DataView<ShortData> {
+  public static class Numeric extends NumericData<ShortData> implements DataView<ShortData> {
     private final ShortData source;
 
     public Numeric(ShortData source) {

@@ -59,7 +59,7 @@ public abstract class LongData implements BitData {
    *
    * @author Michael Ludwig
    */
-  public static class Numeric implements NumericData<LongData>, DataView<LongData> {
+  public static class Numeric extends NumericData<LongData> implements DataView<LongData> {
     private final LongData source;
 
     public Numeric(LongData source) {

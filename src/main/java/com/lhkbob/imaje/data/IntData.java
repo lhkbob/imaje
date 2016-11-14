@@ -60,7 +60,7 @@ public abstract class IntData implements BitData {
    *
    * @author Michael Ludwig
    */
-  public static class Numeric implements NumericData<IntData>, DataView<IntData> {
+  public static class Numeric extends NumericData<IntData> implements DataView<IntData> {
     private final IntData source;
 
     public Numeric(IntData source) {

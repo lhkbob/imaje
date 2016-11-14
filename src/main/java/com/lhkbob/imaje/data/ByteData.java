@@ -59,7 +59,7 @@ public abstract class ByteData implements BitData {
    *
    * @author Michael Ludwig
    */
-  public static class Numeric implements NumericData<ByteData>, DataView<ByteData> {
+  public static class Numeric extends NumericData<ByteData> implements DataView<ByteData> {
     private final ByteData source;
 
     public Numeric(ByteData source) {
@@ -224,6 +224,7 @@ public abstract class ByteData implements BitData {
       throw new UnsupportedOperationException(
           "Cannot copy values from unsupported buffer: " + data);
     }
+    // FIXME add support for LargeByteData
   }
 
   /**
