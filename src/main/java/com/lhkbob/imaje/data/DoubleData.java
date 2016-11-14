@@ -32,30 +32,64 @@
 package com.lhkbob.imaje.data;
 
 /**
+ * DoubleData
+ * ==========
  *
+ * DoubleData is a specialization of NumericData that stores numeric values as Java `double`s. The
+ * actual type used for bulk storage is unspecified and can be a `double[]`, `DoubleBuffer` or
+ * something else. However, the key point is that float values are natively represented and do not
+ * need to be further interpreted.
+ *
+ * This class provides a view of the double values by using {@link Double#doubleToLongBits(double)}
+ * and its inverse operation, {@link Double#longBitsToDouble(long)}. It also adds direct getters
+ * and setters for `double`s that avoid casting and widening to `double`.
+ *
+ * @author Michael Ludwig
  */
-public interface DoubleData extends NumericData<LongData> {
-  double get(long index);
+public abstract class DoubleData extends NumericData<LongData> {
+  /**
+   * Get the `double` stored at `index` in this data buffer. This returns the directly
+   * represented floating-point value without any modifications.
+   *
+   * @param index
+   *     The index to access
+   * @return The value as a `double`
+   *
+   * @throws IndexOutOfBoundsException
+   *     if `index` is out of bounds
+   */
+  public abstract double get(long index);
 
-  void set(long index, double value);
+  /**
+   * Set the value at `index` in this buffer to the specified `double` value. This stores the
+   * floating-point value as-is without any other type conversions.
+   *
+   * @param index
+   *     The index to modify
+   * @param value
+   *     The new value
+   * @throws IndexOutOfBoundsException
+   *     if `index` is out of bounds
+   */
+  public abstract void set(long index, double value);
 
   @Override
-  default int getBitSize() {
+  public final int getBitSize() {
     return Double.SIZE;
   }
 
   @Override
-  default double getValue(long index) {
+  public final double getValue(long index) {
     return get(index);
   }
 
   @Override
-  default void setValue(long index, double value) {
+  public final void setValue(long index, double value) {
     set(index, value);
   }
 
   @Override
-  default LongData asBitData() {
+  public LongData asBitData() {
     return new LongData() {
       @Override
       public long get(long index) {
