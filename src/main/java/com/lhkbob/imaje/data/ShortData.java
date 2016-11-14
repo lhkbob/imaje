@@ -32,6 +32,7 @@
 package com.lhkbob.imaje.data;
 
 import com.lhkbob.imaje.data.array.ShortArrayData;
+import com.lhkbob.imaje.data.large.LargeShortData;
 import com.lhkbob.imaje.data.nio.ShortBufferData;
 import com.lhkbob.imaje.util.Arguments;
 
@@ -200,13 +201,20 @@ public abstract class ShortData implements BitData {
   @Override
   public void set(long writeIndex, DataBuffer data, long readIndex, long length) {
     if (data instanceof ShortArrayData) {
+      // Extract the short[] and rely on array-based set() implementation
       set(writeIndex, ((ShortArrayData) data).getSource(), Math.toIntExact(readIndex),
           Math.toIntExact(length));
     } else if (data instanceof ShortBufferData) {
+      // Extract the ShortBuffer and rely on the buffer-based set() implementation
       ShortBuffer source = ((ShortBufferData) data).getSource();
       source.limit(Math.toIntExact(readIndex + length)).position(Math.toIntExact(readIndex));
       set(writeIndex, source);
+    } else if (data instanceof LargeShortData) {
+      // Break apart the data source into its component values
+      LargeShortData large = (LargeShortData) data;
+      large.get(readIndex, this, writeIndex, length);
     } else if (data instanceof ShortData) {
+      // General implementation that supports (naively) all other possible ShortData implementations
       ShortData bd = (ShortData) data;
       for (long i = 0; i < length; i++) {
         set(writeIndex + i, bd.get(readIndex + i));

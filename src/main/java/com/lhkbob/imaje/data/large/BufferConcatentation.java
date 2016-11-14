@@ -33,6 +33,7 @@ package com.lhkbob.imaje.data.large;
 
 import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.data.DataView;
+import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -82,10 +83,10 @@ public class BufferConcatentation<S extends DataBuffer> implements DataView<List
     void run(S src, long srcOffset, D dst, int dstOffset, int length);
   }
 
+  private final boolean bigEndian;
+  private final long repeatedLength;
   private final S[] sources;
   private final long totalLength;
-  private final long repeatedLength;
-  private final boolean bigEndian;
 
   /**
    * Create a new large data buffer that wraps the given ordered sub buffers. The overall state of
@@ -132,53 +133,6 @@ public class BufferConcatentation<S extends DataBuffer> implements DataView<List
     totalLength = total;
   }
 
-  @Override
-  public List<S> getSource() {
-    return Collections.unmodifiableList(Arrays.asList(sources));
-  }
-
-  /**
-   * Get the underlying data buffers that this large buffer concatenates. The returned array
-   * is a defensive copy, although the actual DataBuffer elements are the not cloned.
-   *
-   * @return The sources of this large buffer
-   */
-  public S[] getSources() {
-    return Arrays.copyOf(sources, sources.length);
-  }
-
-  /**
-   * @return The total length of all concatenated sources
-   */
-  public long getLength() {
-    return totalLength;
-  }
-
-  /**
-   * @return The endian-ness that all concatenated sources share
-   */
-  public boolean isBigEndian() {
-    return bigEndian;
-  }
-
-  /**
-   * @param index
-   *     The logical index for accessing data in the large buffer
-   * @return The actual index within the appropriate sub-buffer to access the equivalent element
-   */
-  public long getIndexInSource(long index) {
-    return index % repeatedLength;
-  }
-
-  /**
-   * @param index
-   *     The logical index for accessing data in the large buffer
-   * @return The sub-buffer that contains that logical index
-   */
-  public S getSource(long index) {
-    return sources[(int) (index / repeatedLength)];
-  }
-
   /**
    * Perform an optimized bulk operation that splits executions of `op` across the sub-buffer data
    * boundaries as appropriate based on `dataIndex`, `offset` and `length`. This performs no data
@@ -219,5 +173,94 @@ public class BufferConcatentation<S extends DataBuffer> implements DataView<List
       offset += consumed;
       length -= consumed;
     }
+  }
+
+  /**
+   * Copy values from this buffer concatenation into `dst` by splitting the logical range to copy
+   * into sub blocks based on how the `srcIndex` and length overlap with the boundaries of the
+   * sub-buffers of this instance. Data is moved into `dst` by calling {@link DataBuffer#set(long,
+   * DataBuffer, long, long)} on `dst` for each sub-buffer that intersects the copy range, with
+   * appropriate source and destination offsets and lengths.
+   *
+   * @param srcIndex
+   *     The index into this buffer concatenation that is the start of the data to copy
+   * @param dst
+   *     The data buffer that receives the data
+   * @param dstIndex
+   *     The index that is the start of the received copy
+   * @param length
+   *     The number of elements to copy
+   * @throws IndexOutOfBoundsException
+   *     if bad indices would be accessed based on index and length
+   */
+  public void copyToDataBuffer(long srcIndex, DataBuffer dst, long dstIndex, long length) {
+    Arguments.checkArrayRange("LargeData", getLength(), srcIndex, length);
+    Arguments.checkArrayRange("DataBuffer", dst.getLength(), dstIndex, length);
+
+    long dataLength = srcIndex + length;
+    while (srcIndex < dataLength) {
+      // Get subsource and location within subsource for the copy
+      S source = getSource(srcIndex);
+      long inSourceIndex = getIndexInSource(srcIndex);
+
+      // Get the number of elements from values that this subsource can receive
+      long remainingSource = source.getLength() - inSourceIndex;
+      int consumed = Math.toIntExact(Math.min(length, remainingSource));
+
+      // Copy values from source at srcIndex into dst at dstIndex
+      dst.set(dstIndex, source, srcIndex, length);
+
+      // Update current index and range for the remainder of the values array
+      srcIndex += consumed;
+      dstIndex += consumed;
+      length -= consumed;
+    }
+  }
+
+  /**
+   * @param index
+   *     The logical index for accessing data in the large buffer
+   * @return The actual index within the appropriate sub-buffer to access the equivalent element
+   */
+  public long getIndexInSource(long index) {
+    return index % repeatedLength;
+  }
+
+  /**
+   * @return The total length of all concatenated sources
+   */
+  public long getLength() {
+    return totalLength;
+  }
+
+  /**
+   * @param index
+   *     The logical index for accessing data in the large buffer
+   * @return The sub-buffer that contains that logical index
+   */
+  public S getSource(long index) {
+    return sources[(int) (index / repeatedLength)];
+  }
+
+  @Override
+  public List<S> getSource() {
+    return Collections.unmodifiableList(Arrays.asList(sources));
+  }
+
+  /**
+   * Get the underlying data buffers that this large buffer concatenates. The returned array
+   * is a defensive copy, although the actual DataBuffer elements are the not cloned.
+   *
+   * @return The sources of this large buffer
+   */
+  public S[] getSources() {
+    return Arrays.copyOf(sources, sources.length);
+  }
+
+  /**
+   * @return The endian-ness that all concatenated sources share
+   */
+  public boolean isBigEndian() {
+    return bigEndian;
   }
 }

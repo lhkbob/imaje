@@ -82,7 +82,7 @@ public class LargeIntData extends IntData {
 
     int limit = values.limit();
     data.bulkOperation(
-        this::getSubSource, dataIndex, values, values.position(), values.remaining());
+        LargeIntData::getSubSource, dataIndex, values, values.position(), values.remaining());
     // Make sure the entire buffer looks consumed
     values.limit(limit).position(limit);
   }
@@ -118,7 +118,7 @@ public class LargeIntData extends IntData {
 
     int limit = values.limit();
     data.bulkOperation(
-        this::setSubSource, dataIndex, values, values.position(), values.remaining());
+        LargeIntData::setSubSource, dataIndex, values, values.position(), values.remaining());
     // Make sure the entire buffer looks consumed
     values.limit(limit).position(limit);
   }
@@ -132,13 +132,35 @@ public class LargeIntData extends IntData {
     data.bulkOperation(IntData::set, dataIndex, values, offset, length);
   }
 
-  private void getSubSource(
+  /**
+   * Get the values of this large int data and store them into `dst`. Values are read from this
+   * data starting at `getIndex`, and stored starting at `dstIndex` in `dst`. `length` values are
+   * copied. This works efficiently by invoking {@link DataBuffer#set(long, DataBuffer, long, long)}
+   * multiple times for the buffer sources of this large data set that intersect with the range to
+   * copy.
+   *
+   * @param getIndex
+   *     The index into this data buffer to start copying from
+   * @param dst
+   *     The data buffer that receives the int values from this source
+   * @param dstIndex
+   *     The index in `dst` for the first copied int
+   * @param length
+   *     The number of values to copy
+   * @throws IndexOutOfBoundsException
+   *     if bad indices would be accessed based on index and length
+   */
+  public void get(long getIndex, IntData dst, long dstIndex, long length) {
+    data.copyToDataBuffer(getIndex, dst, dstIndex, length);
+  }
+
+  private static void getSubSource(
       IntData source, long srcOffset, IntBuffer get, int getOffset, int getLength) {
     get.limit(getOffset + getLength).position(getOffset);
     source.get(srcOffset, get);
   }
 
-  private void setSubSource(
+  private static void setSubSource(
       IntData source, long srcOffset, IntBuffer values, int valuesOffset, int valuesLength) {
     // Configure the position and limit of values for the given sub range
     values.limit(valuesOffset + valuesLength).position(valuesOffset);

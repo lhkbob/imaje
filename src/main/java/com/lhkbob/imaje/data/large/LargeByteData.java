@@ -132,6 +132,28 @@ public class LargeByteData extends ByteData {
     data.bulkOperation(ByteData::set, dataIndex, values, offset, length);
   }
 
+  /**
+   * Get the values of this large byte data and store them into `dst`. Values are read from this
+   * data starting at `getIndex`, and stored starting at `dstIndex` in `dst`. `length` values are
+   * copied. This works efficiently by invoking {@link DataBuffer#set(long, DataBuffer, long, long)}
+   * multiple times for the buffer sources of this large data set that intersect with the range to
+   * copy.
+   *
+   * @param getIndex
+   *     The index into this data buffer to start copying from
+   * @param dst
+   *     The data buffer that receives the byte values from this source
+   * @param dstIndex
+   *     The index in `dst` for the first copied byte
+   * @param length
+   *     The number of values to copy
+   * @throws IndexOutOfBoundsException
+   *     if bad indices would be accessed based on index and length
+   */
+  public void get(long getIndex, ByteData dst, long dstIndex, long length) {
+    data.copyToDataBuffer(getIndex, dst, dstIndex, length);
+  }
+
   private static void getSubSource(
       ByteData source, long srcOffset, ByteBuffer get, int getOffset, int getLength) {
     get.limit(getOffset + getLength).position(getOffset);

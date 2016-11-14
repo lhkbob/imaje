@@ -82,7 +82,7 @@ public class LargeShortData extends ShortData {
 
     int limit = values.limit();
     data.bulkOperation(
-        this::getSubSource, dataIndex, values, values.position(), values.remaining());
+        LargeShortData::getSubSource, dataIndex, values, values.position(), values.remaining());
     // Make sure the entire buffer looks consumed
     values.limit(limit).position(limit);
   }
@@ -118,7 +118,7 @@ public class LargeShortData extends ShortData {
 
     int limit = values.limit();
     data.bulkOperation(
-        this::setSubSource, dataIndex, values, values.position(), values.remaining());
+        LargeShortData::setSubSource, dataIndex, values, values.position(), values.remaining());
     // Make sure the entire buffer looks consumed
     values.limit(limit).position(limit);
   }
@@ -132,13 +132,35 @@ public class LargeShortData extends ShortData {
     data.bulkOperation(ShortData::set, dataIndex, values, offset, length);
   }
 
-  private void getSubSource(
+  /**
+   * Get the values of this large short data and store them into `dst`. Values are read from this
+   * data starting at `getIndex`, and stored starting at `dstIndex` in `dst`. `length` values are
+   * copied. This works efficiently by invoking {@link DataBuffer#set(long, DataBuffer, long, long)}
+   * multiple times for the buffer sources of this large data set that intersect with the range to
+   * copy.
+   *
+   * @param getIndex
+   *     The index into this data buffer to start copying from
+   * @param dst
+   *     The data buffer that receives the short values from this source
+   * @param dstIndex
+   *     The index in `dst` for the first copied short
+   * @param length
+   *     The number of values to copy
+   * @throws IndexOutOfBoundsException
+   *     if bad indices would be accessed based on index and length
+   */
+  public void get(long getIndex, ShortData dst, long dstIndex, long length) {
+    data.copyToDataBuffer(getIndex, dst, dstIndex, length);
+  }
+
+  private static void getSubSource(
       ShortData source, long srcOffset, ShortBuffer get, int getOffset, int getLength) {
     get.limit(getOffset + getLength).position(getOffset);
     source.get(srcOffset, get);
   }
 
-  private void setSubSource(
+  private static void setSubSource(
       ShortData source, long srcOffset, ShortBuffer values, int valuesOffset, int valuesLength) {
     // Configure the position and limit of values for the given sub range
     values.limit(valuesOffset + valuesLength).position(valuesOffset);

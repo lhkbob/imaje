@@ -32,6 +32,7 @@
 package com.lhkbob.imaje.data;
 
 import com.lhkbob.imaje.data.array.IntArrayData;
+import com.lhkbob.imaje.data.large.LargeIntData;
 import com.lhkbob.imaje.data.nio.IntBufferData;
 import com.lhkbob.imaje.util.Arguments;
 
@@ -200,13 +201,20 @@ public abstract class IntData implements BitData {
   @Override
   public void set(long writeIndex, DataBuffer data, long readIndex, long length) {
     if (data instanceof IntArrayData) {
+      // Extract the int[] and rely on array-based set() implementation
       set(writeIndex, ((IntArrayData) data).getSource(), Math.toIntExact(readIndex),
           Math.toIntExact(length));
     } else if (data instanceof IntBufferData) {
+      // Extract the IntBuffer and rely on the buffer-based set() implementation
       IntBuffer source = ((IntBufferData) data).getSource();
       source.limit(Math.toIntExact(readIndex + length)).position(Math.toIntExact(readIndex));
       set(writeIndex, source);
+    } else if (data instanceof LargeIntData) {
+      // Break apart the data source into its component values
+      LargeIntData large = (LargeIntData) data;
+      large.get(readIndex, this, writeIndex, length);
     } else if (data instanceof IntData) {
+      // General implementation that supports (naively) all other possible IntData implementations
       IntData bd = (IntData) data;
       for (long i = 0; i < length; i++) {
         set(writeIndex + i, bd.get(readIndex + i));

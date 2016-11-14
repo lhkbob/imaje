@@ -33,6 +33,8 @@ package com.lhkbob.imaje.data;
 
 import com.lhkbob.imaje.data.array.DoubleArrayData;
 import com.lhkbob.imaje.data.array.FloatArrayData;
+import com.lhkbob.imaje.data.large.LargeDoubleData;
+import com.lhkbob.imaje.data.large.LargeFloatData;
 import com.lhkbob.imaje.data.nio.DoubleBufferData;
 import com.lhkbob.imaje.data.nio.FloatBufferData;
 import com.lhkbob.imaje.util.Arguments;
@@ -98,20 +100,34 @@ public abstract class NumericData<T extends BitData> implements DataBuffer {
   @Override
   public void set(long writeIndex, DataBuffer data, long readIndex, long length) {
     if (data instanceof FloatArrayData) {
+      // Extract the float[] and rely on array-based setValues() implementation
       setValues(writeIndex, ((FloatArrayData) data).getSource(), Math.toIntExact(readIndex),
           Math.toIntExact(length));
     } else if (data instanceof FloatBufferData) {
+      // Extract the FloatBuffer and rely on the buffer-based setValues implementation
       FloatBuffer source = ((FloatBufferData) data).getSource();
       source.limit(Math.toIntExact(readIndex + length)).position(Math.toIntExact(readIndex));
       setValues(writeIndex, source);
     } else if (data instanceof DoubleArrayData) {
+      // Extract the double[] and rely on the array-based setValues() implementation
       setValues(writeIndex, ((DoubleArrayData) data).getSource(), Math.toIntExact(readIndex),
           Math.toIntExact(length));
     } else if (data instanceof DoubleBufferData) {
+      // Extract the DoubleBuffer and rely on the buffer-based setValues implementation
       DoubleBuffer source = ((DoubleBufferData) data).getSource();
       source.limit(Math.toIntExact(readIndex + length)).position(Math.toIntExact(readIndex));
       setValues(writeIndex, source);
+    } else if (data instanceof LargeFloatData) {
+      // Break apart the data source into its component values
+      LargeFloatData large = (LargeFloatData) data;
+      large.get(readIndex, this, writeIndex, length);
+    } else if (data instanceof LargeDoubleData) {
+      // Break apart the data source into its component values
+      LargeDoubleData large = (LargeDoubleData) data;
+      large.get(readIndex, this, writeIndex, length);
     } else if (data instanceof NumericData) {
+      // General implementation that supports (naively) all other possible NumericData
+      // implementations
       NumericData<?> bd = (NumericData<?>) data;
       for (long i = 0; i < length; i++) {
         setValue(writeIndex + i, bd.getValue(readIndex + i));
@@ -120,15 +136,6 @@ public abstract class NumericData<T extends BitData> implements DataBuffer {
       throw new UnsupportedOperationException(
           "Cannot copy values from unsupported buffer: " + data);
     }
-    // FIXME add support for bit-based numeric datas where we can do a bulk bit copy, this will
-    //   optimize the numeric wrappers over integer primitives and the custom binary representations
-    //   however, must do more than just make sure the two buffer's bit sources are the same instance type
-    //   since unsigned and signed can both use IntBuffer as backing bits but the value copying
-    //   should go numeric conversion in this case.
-    //   Or maybe it's okay to break numeric smenatics in this case? Just say set moves primitives around
-    //   and if you cross types then you may get odd values; this can be useful when wanting to
-    //    view data in different ways.
-    // FIXME add support for large buffers and split it into multiple sets based on child source buffers
   }
 
   /**

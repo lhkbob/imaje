@@ -32,6 +32,7 @@
 package com.lhkbob.imaje.data.types;
 
 import com.lhkbob.imaje.data.BitData;
+import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.NumericData;
 import com.lhkbob.imaje.util.Arguments;
@@ -97,6 +98,24 @@ public class CustomBinaryData<T extends BitData> extends NumericData<T> implemen
     // representation
     long bits = converter.toBits(value);
     source.setBits(index, bits);
+  }
+
+  @Override
+  public void set(long writeIndex, DataBuffer data, long readIndex, long length) {
+    if (data instanceof CustomBinaryData) {
+      CustomBinaryData<?> custom = (CustomBinaryData<?>) data;
+      if (custom.converter.equals(converter)) {
+        // These are compatible representations so instead of fallback back to the
+        // element-by-element numeric conversion implementation, do a copy directly between this and
+        // data's underlying bit sources.
+        source.set(writeIndex, custom.source, readIndex, length);
+        return;
+      }
+    }
+
+    // Otherwise just fallback to the default implementation that breaks down the copying
+    // based on more concrete data buffer implementations irrespective of this buffer's type.
+    super.set(writeIndex, data, readIndex, length);
   }
 
   @Override

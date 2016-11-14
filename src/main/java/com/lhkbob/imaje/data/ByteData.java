@@ -32,6 +32,7 @@
 package com.lhkbob.imaje.data;
 
 import com.lhkbob.imaje.data.array.ByteArrayData;
+import com.lhkbob.imaje.data.large.LargeByteData;
 import com.lhkbob.imaje.data.nio.ByteBufferData;
 import com.lhkbob.imaje.util.Arguments;
 
@@ -209,13 +210,20 @@ public abstract class ByteData implements BitData {
   @Override
   public void set(long writeIndex, DataBuffer data, long readIndex, long length) {
     if (data instanceof ByteArrayData) {
+      // Extract the byte[] and rely on array-based set() implementation
       set(writeIndex, ((ByteArrayData) data).getSource(), Math.toIntExact(readIndex),
           Math.toIntExact(length));
     } else if (data instanceof ByteBufferData) {
+      // Extract the ByteBuffer and rely on the buffer-based set() implementation
       ByteBuffer source = ((ByteBufferData) data).getSource();
       source.limit(Math.toIntExact(readIndex + length)).position(Math.toIntExact(readIndex));
       set(writeIndex, source);
+    } else if (data instanceof LargeByteData) {
+      // Break apart the data source into its component values
+      LargeByteData large = (LargeByteData) data;
+      large.get(readIndex, this, writeIndex, length);
     } else if (data instanceof ByteData) {
+      // General implementation that supports (naively) all other possible ByteData implementations
       ByteData bd = (ByteData) data;
       for (long i = 0; i < length; i++) {
         set(writeIndex + i, bd.get(readIndex + i));
@@ -224,7 +232,6 @@ public abstract class ByteData implements BitData {
       throw new UnsupportedOperationException(
           "Cannot copy values from unsupported buffer: " + data);
     }
-    // FIXME add support for LargeByteData
   }
 
   /**

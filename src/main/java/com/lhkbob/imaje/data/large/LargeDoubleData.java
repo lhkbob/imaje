@@ -34,6 +34,7 @@ package com.lhkbob.imaje.data.large;
 import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.data.DoubleData;
 import com.lhkbob.imaje.data.LongData;
+import com.lhkbob.imaje.data.NumericData;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.nio.DoubleBuffer;
@@ -64,6 +65,17 @@ public class LargeDoubleData extends DoubleData {
   }
 
   @Override
+  public LongData asBitData() {
+    DoubleData[] sources = data.getSources();
+    LongData[] bits = new LongData[sources.length];
+    for (int i = 0; i < sources.length; i++) {
+      bits[i] = sources[i].asBitData();
+    }
+
+    return new LargeLongData(bits);
+  }
+
+  @Override
   public double get(long index) {
     return data.getSource(index).get(data.getIndexInSource(index));
   }
@@ -71,6 +83,48 @@ public class LargeDoubleData extends DoubleData {
   @Override
   public long getLength() {
     return data.getLength();
+  }
+
+  @Override
+  public void getValues(long dataIndex, double[] values, int offset, int length) {
+    // Optimize by calling bulk sets on sub-sources with appropriately updated ranges
+    Arguments.checkArrayRange("values array", values.length, offset, length);
+    Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, length);
+
+    data.bulkOperation(DoubleData::getValues, dataIndex, values, offset, length);
+  }
+
+  @Override
+  public void getValues(long dataIndex, float[] values, int offset, int length) {
+    // Optimize by calling bulk sets on sub-sources with appropriately updated ranges
+    Arguments.checkArrayRange("values array", values.length, offset, length);
+    Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, length);
+
+    data.bulkOperation(DoubleData::getValues, dataIndex, values, offset, length);
+  }
+
+  @Override
+  public void getValues(long dataIndex, DoubleBuffer values) {
+    // Optimize by calling bulk sets on sub-sources with appropriately updated ranges
+    Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, values.remaining());
+
+    int limit = values.limit();
+    data.bulkOperation(
+        LargeDoubleData::getSubSource, dataIndex, values, values.position(), values.remaining());
+    // Make sure the entire buffer looks consumed
+    values.limit(limit).position(limit);
+  }
+
+  @Override
+  public void getValues(long dataIndex, FloatBuffer values) {
+    // Optimize by calling bulk sets on sub-sources with appropriately updated ranges
+    Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, values.remaining());
+
+    int limit = values.limit();
+    data.bulkOperation(
+        LargeDoubleData::getSubSource, dataIndex, values, values.position(), values.remaining());
+    // Make sure the entire buffer looks consumed
+    values.limit(limit).position(limit);
   }
 
   @Override
@@ -93,32 +147,12 @@ public class LargeDoubleData extends DoubleData {
   }
 
   @Override
-  public LongData asBitData() {
-    DoubleData[] sources = data.getSources();
-    LongData[] bits = new LongData[sources.length];
-    for (int i = 0; i < sources.length; i++) {
-      bits[i] = sources[i].asBitData();
-    }
-
-    return new LargeLongData(bits);
-  }
-
-  @Override
   public void setValues(long dataIndex, double[] values, int offset, int length) {
     // Optimize by calling bulk sets on sub-sources with appropriately updated ranges
     Arguments.checkArrayRange("values array", values.length, offset, length);
     Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, length);
 
     data.bulkOperation(DoubleData::setValues, dataIndex, values, offset, length);
-  }
-
-  @Override
-  public void getValues(long dataIndex, double[] values, int offset, int length) {
-    // Optimize by calling bulk sets on sub-sources with appropriately updated ranges
-    Arguments.checkArrayRange("values array", values.length, offset, length);
-    Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, length);
-
-    data.bulkOperation(DoubleData::getValues, dataIndex, values, offset, length);
   }
 
   @Override
@@ -131,22 +165,13 @@ public class LargeDoubleData extends DoubleData {
   }
 
   @Override
-  public void getValues(long dataIndex, float[] values, int offset, int length) {
-    // Optimize by calling bulk sets on sub-sources with appropriately updated ranges
-    Arguments.checkArrayRange("values array", values.length, offset, length);
-    Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, length);
-
-    data.bulkOperation(DoubleData::getValues, dataIndex, values, offset, length);
-  }
-
-  @Override
   public void setValues(long dataIndex, DoubleBuffer values) {
     // Optimize by calling bulk sets on sub-sources with appropriately updated ranges
     Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, values.remaining());
 
     int limit = values.limit();
     data.bulkOperation(
-        this::setSubSource, dataIndex, values, values.position(), values.remaining());
+        LargeDoubleData::setSubSource, dataIndex, values, values.position(), values.remaining());
     // Make sure the entire buffer looks consumed
     values.limit(limit).position(limit);
   }
@@ -158,58 +183,56 @@ public class LargeDoubleData extends DoubleData {
 
     int limit = values.limit();
     data.bulkOperation(
-        this::setSubSource, dataIndex, values, values.position(), values.remaining());
+        LargeDoubleData::setSubSource, dataIndex, values, values.position(), values.remaining());
     // Make sure the entire buffer looks consumed
     values.limit(limit).position(limit);
   }
 
-  @Override
-  public void getValues(long dataIndex, DoubleBuffer values) {
-    // Optimize by calling bulk sets on sub-sources with appropriately updated ranges
-    Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, values.remaining());
-
-    int limit = values.limit();
-    data.bulkOperation(
-        this::getSubSource, dataIndex, values, values.position(), values.remaining());
-    // Make sure the entire buffer looks consumed
-    values.limit(limit).position(limit);
+  /**
+   * Get the values of this large double data and store them into `dst`. Values are read from this
+   * data starting at `getIndex`, and stored starting at `dstIndex` in `dst`. `length` values are
+   * copied. This works efficiently by invoking {@link DataBuffer#set(long, DataBuffer, long, long)}
+   * multiple times for the buffer sources of this large data set that intersect with the range to
+   * copy.
+   *
+   * @param getIndex
+   *     The index into this data buffer to start copying from
+   * @param dst
+   *     The data buffer that receives the double values from this source
+   * @param dstIndex
+   *     The index in `dst` for the first copied double
+   * @param length
+   *     The number of values to copy
+   * @throws IndexOutOfBoundsException
+   *     if bad indices would be accessed based on index and length
+   */
+  public void get(long getIndex, NumericData<?> dst, long dstIndex, long length) {
+    data.copyToDataBuffer(getIndex, dst, dstIndex, length);
   }
 
-  @Override
-  public void getValues(long dataIndex, FloatBuffer values) {
-    // Optimize by calling bulk sets on sub-sources with appropriately updated ranges
-    Arguments.checkArrayRange("LargeDoubleData", getLength(), dataIndex, values.remaining());
-
-    int limit = values.limit();
-    data.bulkOperation(
-        this::getSubSource, dataIndex, values, values.position(), values.remaining());
-    // Make sure the entire buffer looks consumed
-    values.limit(limit).position(limit);
+  private static void getSubSource(
+      DoubleData source, long srcOffset, DoubleBuffer get, int getOffset, int getLength) {
+    get.limit(getOffset + getLength).position(getOffset);
+    source.getValues(srcOffset, get);
   }
 
-  private void setSubSource(
+  private static void getSubSource(
+      DoubleData source, long srcOffset, FloatBuffer get, int getOffset, int getLength) {
+    get.limit(getOffset + getLength).position(getOffset);
+    source.getValues(srcOffset, get);
+  }
+
+  private static void setSubSource(
       DoubleData source, long srcOffset, DoubleBuffer values, int valuesOffset, int valuesLength) {
     // Configure the position and limit of values for the given sub range
     values.limit(valuesOffset + valuesLength).position(valuesOffset);
     source.setValues(srcOffset, values);
   }
 
-  private void setSubSource(
+  private static void setSubSource(
       DoubleData source, long srcOffset, FloatBuffer values, int valuesOffset, int valuesLength) {
     // Configure the position and limit of values for the given sub range
     values.limit(valuesOffset + valuesLength).position(valuesOffset);
     source.setValues(srcOffset, values);
-  }
-
-  private void getSubSource(
-      DoubleData source, long srcOffset, DoubleBuffer get, int getOffset, int getLength) {
-    get.limit(getOffset + getLength).position(getOffset);
-    source.getValues(srcOffset, get);
-  }
-
-  private void getSubSource(
-      DoubleData source, long srcOffset, FloatBuffer get, int getOffset, int getLength) {
-    get.limit(getOffset + getLength).position(getOffset);
-    source.getValues(srcOffset, get);
   }
 }
