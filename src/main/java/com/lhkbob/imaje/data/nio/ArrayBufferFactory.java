@@ -32,13 +32,50 @@
 package com.lhkbob.imaje.data.nio;
 
 import java.nio.ByteBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
 
 /**
+ * ArrayBufferFactory
+ * ==================
  *
+ * BufferFactory implementation that creates NIO buffers using {@link
+ * ByteBuffer#allocate(int)} and the `allocate()` methods of the other buffer classes.
+ * The byte order is always big endian.
+ *
+ * @author Michael Ludwig
  */
 public class ArrayBufferFactory implements BufferFactory {
   @Override
   public ByteBuffer newByteBuffer(int length) {
     return ByteBuffer.allocate(length);
+  }
+
+  @Override
+  public IntBuffer newIntBuffer(int length) {
+    return IntBuffer.allocate(length);
+  }
+
+  @Override
+  public ShortBuffer newShortBuffer(int length) {
+    return ShortBuffer.allocate(length);
+  }
+
+  @Override
+  public LongBuffer newLongBuffer(int length) {
+    return LongBuffer.allocate(length);
+  }
+
+  @Override
+  public FloatBuffer newFloatBuffer(int length) {
+    return FloatBuffer.allocate(length);
+  }
+
+  @Override
+  public DoubleBuffer newDoubleBuffer(int length) {
+    return DoubleBuffer.allocate(length);
   }
 }

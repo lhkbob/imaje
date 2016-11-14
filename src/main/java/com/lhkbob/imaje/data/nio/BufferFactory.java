@@ -31,6 +31,8 @@
  */
 package com.lhkbob.imaje.data.nio;
 
+import com.lhkbob.imaje.data.Data;
+
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
@@ -39,27 +41,88 @@ import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
 
 /**
+ * BufferFactory
+ * =============
  *
+ * BufferFactory is a factory interface for creating NIO buffers. The performance characteristics of
+ * NIO buffers are heavily dependent on minimizing the class variants loaded into the JVM.
+ * Essentially, mixing array-back buffers and direct buffers hurts much of the JIT optimizations
+ * available to the JVM. Thus, to help avoid this scenario, all NIO buffer allocation by library
+ * code (and ideally application code) should go through the BufferFactory configured in {@link
+ * Data}.
+ *
+ * Implementations are provided for array-based NIO buffers and direct buffers.
+ * Additional implementations can be created and set as the active buffer factory as needed.
+ *
+ * @author Michael Ludwig
+ * @see Data#getBufferFactory()
  */
 public interface BufferFactory {
+  /**
+   * Create a new ByteBuffer of `length` bytes.
+   *
+   * @param length
+   *     The capacity of the new buffer
+   * @return The new byte buffer
+   */
   ByteBuffer newByteBuffer(int length);
 
+  /**
+   * Create a new ShortBuffer of `length` shorts. By default calls `newByteBuffer(2 * length)` and
+   * then relies on that instances {@link ByteBuffer#asShortBuffer()}.
+   *
+   * @param length
+   *     The capacity of the new buffer
+   * @return The new short buffer
+   */
   default ShortBuffer newShortBuffer(int length) {
     return newByteBuffer(2 * length).asShortBuffer();
   }
 
+  /**
+   * Create a new IntBuffer of `length` shorts. By default calls `newByteBuffer(4 * length)` and
+   * then relies on that instances {@link ByteBuffer#asIntBuffer()}.
+   *
+   * @param length
+   *     The capacity of the new buffer
+   * @return The new int buffer
+   */
   default IntBuffer newIntBuffer(int length) {
     return newByteBuffer(4 * length).asIntBuffer();
   }
 
+  /**
+   * Create a new LongBuffer of `length` shorts. By default calls `newByteBuffer(8 * length)` and
+   * then relies on that instances {@link ByteBuffer#asLongBuffer()}.
+   *
+   * @param length
+   *     The capacity of the new buffer
+   * @return The new long buffer
+   */
   default LongBuffer newLongBuffer(int length) {
     return newByteBuffer(8 * length).asLongBuffer();
   }
 
+  /**
+   * Create a new FloatBuffer of `length` shorts. By default calls `newByteBuffer(4 * length)` and
+   * then relies on that instances {@link ByteBuffer#asFloatBuffer()}.
+   *
+   * @param length
+   *     The capacity of the new buffer
+   * @return The new short buffer
+   */
   default FloatBuffer newFloatBuffer(int length) {
     return newByteBuffer(4 * length).asFloatBuffer();
   }
 
+  /**
+   * Create a new DoubleBuffer of `length` shorts. By default calls `newByteBuffer(8 * length)` and
+   * then relies on that instances {@link ByteBuffer#asDoubleBuffer()}.
+   *
+   * @param length
+   *     The capacity of the new buffer
+   * @return The new short buffer
+   */
   default DoubleBuffer newDoubleBuffer(int length) {
     return newByteBuffer(8 * length).asDoubleBuffer();
   }

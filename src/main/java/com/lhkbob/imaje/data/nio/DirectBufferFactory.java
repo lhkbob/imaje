@@ -37,20 +37,40 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
+ * DirectBufferFactory
+ * ===================
  *
+ * BufferFactory implementation that creates NIO buffers using {@link
+ * ByteBuffer#allocateDirect(int)}. It can be configured to use a particular byte order as well.
+ *
+ * @author Michael Ludwig
  */
 public class DirectBufferFactory implements BufferFactory {
   private final ByteOrder byteOrder;
 
+  /**
+   * Create a factory that uses big endian for its byte order.
+   */
   public DirectBufferFactory() {
     this(ByteOrder.BIG_ENDIAN);
   }
 
+  /**
+   * Create a factory that creates direct buffers with the give `byteOrder`.
+   *
+   * @param byteOrder
+   *     The byte order of all created buffers
+   * @throws NullPointerException
+   *     if `byteOrder` is null
+   */
   public DirectBufferFactory(ByteOrder byteOrder) {
     Arguments.notNull("byteOrder", byteOrder);
     this.byteOrder = byteOrder;
   }
 
+  /**
+   * @return A new DirectBufferFactory that uses the native byte order of the current system.
+   */
   public static DirectBufferFactory nativeFactory() {
     return new DirectBufferFactory(ByteOrder.nativeOrder());
   }
