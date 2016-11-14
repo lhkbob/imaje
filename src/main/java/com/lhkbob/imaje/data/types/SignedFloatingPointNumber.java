@@ -220,16 +220,6 @@ public class SignedFloatingPointNumber implements BinaryRepresentation {
   }
 
   @Override
-  public boolean isFloatingPoint() {
-    return true;
-  }
-
-  @Override
-  public boolean isUnsigned() {
-    return false;
-  }
-
-  @Override
   public int getBitSize() {
     return exponentBits + mantissaBits + 1;
   }
@@ -242,6 +232,16 @@ public class SignedFloatingPointNumber implements BinaryRepresentation {
   @Override
   public double getMinValue() {
     return Double.NEGATIVE_INFINITY;
+  }
+
+  @Override
+  public boolean isFloatingPoint() {
+    return true;
+  }
+
+  @Override
+  public boolean isUnsigned() {
+    return false;
   }
 
   @Override
@@ -267,6 +267,20 @@ public class SignedFloatingPointNumber implements BinaryRepresentation {
     }
   }
 
+  /**
+   * @return The number of bits in the exponent
+   */
+  public int getExponentBits() {
+    return exponentBits;
+  }
+
+  /**
+   * @return The number of bits in the mantissa
+   */
+  public int getMantissaBits() {
+    return mantissaBits;
+  }
+
   @Override
   public double toNumericValue(long bits) {
     if (customToDoubleLUT != null) {
@@ -277,6 +291,28 @@ public class SignedFloatingPointNumber implements BinaryRepresentation {
       // General function
       return Double.longBitsToDouble(toJavaDoubleBits(bits));
     }
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 17;
+    result += 31 * result + Long.hashCode(exponentMask);
+    result += 31 * result + Long.hashCode(mantissaMask);
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof SignedFloatingPointNumber)) {
+      return false;
+    }
+    SignedFloatingPointNumber b = (SignedFloatingPointNumber) o;
+    return b.exponentMask == exponentMask && b.mantissaMask == mantissaMask;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("SFLOAT(%d e: %d, m: %d)", getBitSize(), exponentBits, mantissaBits);
   }
 
   private long fromJavaDoubleBits(long bits) {

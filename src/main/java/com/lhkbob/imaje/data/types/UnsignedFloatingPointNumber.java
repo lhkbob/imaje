@@ -121,6 +121,22 @@ public class UnsignedFloatingPointNumber implements BinaryRepresentation {
   }
 
   @Override
+  public int getBitSize() {
+    // Remove the sign bit from the reported count
+    return base.getBitSize() - 1;
+  }
+
+  @Override
+  public double getMaxValue() {
+    return Double.POSITIVE_INFINITY;
+  }
+
+  @Override
+  public double getMinValue() {
+    return 0.0;
+  }
+
+  @Override
   public boolean isFloatingPoint() {
     return true;
   }
@@ -128,18 +144,6 @@ public class UnsignedFloatingPointNumber implements BinaryRepresentation {
   @Override
   public boolean isUnsigned() {
     return true;
-  }
-
-  @Override
-  public int getBitSize() {
-    // Remove the sign bit from the reported count
-    return base.getBitSize() - 1;
-  }
-
-  @Override
-  public double toNumericValue(long bits) {
-    // Make sure to chop off any higher bits in case the signed float misinterprets it
-    return base.toNumericValue(bits & unsignedMask);
   }
 
   @Override
@@ -152,12 +156,27 @@ public class UnsignedFloatingPointNumber implements BinaryRepresentation {
   }
 
   @Override
-  public double getMaxValue() {
-    return Double.POSITIVE_INFINITY;
+  public double toNumericValue(long bits) {
+    // Make sure to chop off any higher bits in case the signed float misinterprets it
+    return base.toNumericValue(bits & unsignedMask);
   }
 
   @Override
-  public double getMinValue() {
-    return 0.0;
+  public int hashCode() {
+    return base.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof UnsignedFloatingPointNumber)) {
+      return false;
+    }
+    return ((UnsignedFloatingPointNumber) o).base.equals(base);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("UFLOAT(%d, e: %d, m: %d)", getBitSize(), base.getExponentBits(),
+        base.getMantissaBits());
   }
 }

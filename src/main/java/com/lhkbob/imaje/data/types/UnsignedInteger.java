@@ -49,13 +49,6 @@ import com.lhkbob.imaje.util.Functions;
  * @author Michael Ludwig
  */
 public class UnsignedInteger implements BinaryRepresentation {
-  private static final long SIGN_MASK_64 = ~(1L << 63);
-  private static final double SIGN_OFFSET_64 = Math.pow(2.0, 63.0);
-  // The highest double value that can be represented as a regular signed long, e.g. Long.MAX_VALUE
-  // which is equal to 2^63 - 1, but since we round the double value anything higher than
-  // 2^63-0.5 will round to 2^63 and then overflow, requiring special handling.
-  private static final double SIGN_THRESHOLD_64 = SIGN_OFFSET_64 - 0.5;
-
   private final int bits;
   private final long mask;
   private final double maxValue;
@@ -84,16 +77,23 @@ public class UnsignedInteger implements BinaryRepresentation {
   }
 
   @Override
-  public double toNumericValue(long bits) {
-    if (this.bits == 64 && bits < 0) {
-      // Special handling to convert Java's 2's complement bit into a positive value,
-      // by masking off the upper most bit and add 2^63 to it
-      return SIGN_OFFSET_64 + (bits & SIGN_MASK_64);
-    } else {
-      // Remove any excess bits and then auto lift to a double, which will be the proper value
-      // since the masked bits must be positive at this point
-      return (mask & bits);
-    }
+  public double getMaxValue() {
+    return maxValue;
+  }
+
+  @Override
+  public double getMinValue() {
+    return 0.0;
+  }
+
+  @Override
+  public boolean isFloatingPoint() {
+    return false;
+  }
+
+  @Override
+  public boolean isUnsigned() {
+    return true;
   }
 
   @Override
@@ -113,22 +113,40 @@ public class UnsignedInteger implements BinaryRepresentation {
   }
 
   @Override
-  public boolean isFloatingPoint() {
-    return false;
+  public double toNumericValue(long bits) {
+    if (this.bits == 64 && bits < 0) {
+      // Special handling to convert Java's 2's complement bit into a positive value,
+      // by masking off the upper most bit and add 2^63 to it
+      return SIGN_OFFSET_64 + (bits & SIGN_MASK_64);
+    } else {
+      // Remove any excess bits and then auto lift to a double, which will be the proper value
+      // since the masked bits must be positive at this point
+      return (mask & bits);
+    }
   }
 
   @Override
-  public boolean isUnsigned() {
-    return true;
+  public int hashCode() {
+    return Integer.hashCode(bits);
   }
 
   @Override
-  public double getMaxValue() {
-    return maxValue;
+  public boolean equals(Object o) {
+    if (!(o instanceof UnsignedInteger)) {
+      return false;
+    }
+    return ((UnsignedInteger) o).bits == bits;
   }
 
   @Override
-  public double getMinValue() {
-    return 0.0;
+  public String toString() {
+    return String.format("UINT(%d)", bits);
   }
+
+  private static final long SIGN_MASK_64 = ~(1L << 63);
+  private static final double SIGN_OFFSET_64 = Math.pow(2.0, 63.0);
+  // The highest double value that can be represented as a regular signed long, e.g. Long.MAX_VALUE
+  // which is equal to 2^63 - 1, but since we round the double value anything higher than
+  // 2^63-0.5 will round to 2^63 and then overflow, requiring special handling.
+  private static final double SIGN_THRESHOLD_64 = SIGN_OFFSET_64 - 0.5;
 }

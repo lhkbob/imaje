@@ -48,8 +48,8 @@ import com.lhkbob.imaje.util.Arguments;
  * @author Michael Ludwig
  */
 public class CustomBinaryData<T extends BitData> extends NumericData<T> implements DataView<T> {
-  private final T source;
   private final BinaryRepresentation converter;
+  private final T source;
 
   /**
    * Create a new CustomBinaryData that uses `bitRep` for its numeric value conversions, and
@@ -69,6 +69,11 @@ public class CustomBinaryData<T extends BitData> extends NumericData<T> implemen
     converter = bitRep;
   }
 
+  @Override
+  public T asBitData() {
+    return source;
+  }
+
   /**
    * @return The binary representation used for value conversion with this data bufferf
    */
@@ -77,13 +82,18 @@ public class CustomBinaryData<T extends BitData> extends NumericData<T> implemen
   }
 
   @Override
-  public T getSource() {
-    return source;
+  public int getBitSize() {
+    return source.getBitSize();
   }
 
   @Override
   public long getLength() {
     return source.getLength();
+  }
+
+  @Override
+  public T getSource() {
+    return source;
   }
 
   @Override
@@ -93,11 +103,13 @@ public class CustomBinaryData<T extends BitData> extends NumericData<T> implemen
   }
 
   @Override
-  public void setValue(long index, double value) {
-    // This assumes the converter handles any clamping to the range of allowable values for the
-    // representation
-    long bits = converter.toBits(value);
-    source.setBits(index, bits);
+  public boolean isBigEndian() {
+    return source.isBigEndian();
+  }
+
+  @Override
+  public boolean isGPUAccessible() {
+    return source.isGPUAccessible();
   }
 
   @Override
@@ -119,22 +131,10 @@ public class CustomBinaryData<T extends BitData> extends NumericData<T> implemen
   }
 
   @Override
-  public T asBitData() {
-    return source;
-  }
-
-  @Override
-  public boolean isBigEndian() {
-    return source.isBigEndian();
-  }
-
-  @Override
-  public boolean isGPUAccessible() {
-    return source.isGPUAccessible();
-  }
-
-  @Override
-  public int getBitSize() {
-    return source.getBitSize();
+  public void setValue(long index, double value) {
+    // This assumes the converter handles any clamping to the range of allowable values for the
+    // representation
+    long bits = converter.toBits(value);
+    source.setBits(index, bits);
   }
 }

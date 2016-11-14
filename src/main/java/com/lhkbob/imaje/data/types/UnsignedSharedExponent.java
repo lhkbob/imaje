@@ -59,15 +59,12 @@ import java.util.Arrays;
  * @author Michael Ludwig
  */
 public class UnsignedSharedExponent {
-  private final long[] mantissaMasks;
-  private final int[] mantissaShifts;
-  private final int mantissaBits;
-
+  private final long exponentBias;
   private final long exponentMask;
   private final int exponentShift;
-
-  private final long exponentBias;
-
+  private final int mantissaBits;
+  private final long[] mantissaMasks;
+  private final int[] mantissaShifts;
   private final double maxComponentValues;
 
   /**
@@ -169,44 +166,40 @@ public class UnsignedSharedExponent {
     this.exponentMask = exponentMask;
   }
 
-  /**
-   * @return The bit mask for the exponent field
-   */
-  public long getExponentMask() {
-    return exponentMask;
+  @Override
+  public int hashCode() {
+    int result = 17;
+    result += 31 * result + Long.hashCode(exponentMask);
+    result += 31 * result + Long.hashCode(exponentBias);
+    result += 31 * result + Double.hashCode(maxComponentValues);
+    for (int i = 0; i < mantissaMasks.length; i++) {
+      result += 31 * result + Long.hashCode(mantissaMasks[i]);
+    }
+    return result;
   }
 
-  /**
-   * @return The bias subtracted from the initial unsigned exponent value when converting to numeric
-   * values
-   */
-  public long getExponentBias() {
-    return exponentBias;
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof UnsignedSharedExponent)) {
+      return false;
+    }
+    UnsignedSharedExponent e = (UnsignedSharedExponent) o;
+    return e.exponentMask == exponentMask && e.exponentBias == exponentBias
+        && Math.abs(e.maxComponentValues - maxComponentValues) < 1e-8 && Arrays
+        .equals(e.mantissaMasks, mantissaMasks);
   }
 
-  /**
-   * @param component
-   *     The value component to access, must be between 0 and `getValueCount() - 1`
-   * @return The mantissa mask for the given `component` of the vector this representation can
-   * encode
-   */
-  public long getMantissaMask(int component) {
-    return mantissaMasks[component];
-  }
-
-  /**
-   * @return The number of bits in each mantissa mask (not the total number of bits of all
-   * mantissas)
-   */
-  public int getMantissaBitCount() {
-    return mantissaBits;
-  }
-
-  /**
-   * @return The number of bits in the exponent mask
-   */
-  public int getExponentBitCount() {
-    return Long.bitCount(exponentMask);
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("UnsignedSharedExponent(");
+    sb.append(getBitCount()).append(", e: ");
+    sb.append(Long.toHexString(exponentMask));
+    for (int i = 0; i < mantissaMasks.length; i++) {
+      sb.append(", m").append(i).append(": ");
+      sb.append(Long.toHexString(mantissaMasks[i]));
+    }
+    sb.append(")");
+    return sb.toString();
   }
 
   /**
@@ -214,17 +207,6 @@ public class UnsignedSharedExponent {
    */
   public int getBitCount() {
     return getExponentBitCount() + getValueCount() * getMantissaBitCount();
-  }
-
-  /**
-   * @return A bitmask that is the union of the exponent mask and all mantissa masks
-   */
-  public long getMask() {
-    long mask = exponentMask;
-    for (long mantissaMask : mantissaMasks) {
-      mask |= mantissaMask;
-    }
-    return mask;
   }
 
   /**
@@ -248,6 +230,57 @@ public class UnsignedSharedExponent {
   }
 
   /**
+   * @return The bias subtracted from the initial unsigned exponent value when converting to numeric
+   * values
+   */
+  public long getExponentBias() {
+    return exponentBias;
+  }
+
+  /**
+   * @return The number of bits in the exponent mask
+   */
+  public int getExponentBitCount() {
+    return Long.bitCount(exponentMask);
+  }
+
+  /**
+   * @return The bit mask for the exponent field
+   */
+  public long getExponentMask() {
+    return exponentMask;
+  }
+
+  /**
+   * @return The number of bits in each mantissa mask (not the total number of bits of all
+   * mantissas)
+   */
+  public int getMantissaBitCount() {
+    return mantissaBits;
+  }
+
+  /**
+   * @param component
+   *     The value component to access, must be between 0 and `getValueCount() - 1`
+   * @return The mantissa mask for the given `component` of the vector this representation can
+   * encode
+   */
+  public long getMantissaMask(int component) {
+    return mantissaMasks[component];
+  }
+
+  /**
+   * @return A bitmask that is the union of the exponent mask and all mantissa masks
+   */
+  public long getMask() {
+    long mask = exponentMask;
+    for (long mantissaMask : mantissaMasks) {
+      mask |= mantissaMask;
+    }
+    return mask;
+  }
+
+  /**
    * @return The maximum component value storable in this representation, all real numbers will be
    * clamped to be less than this.
    */
@@ -263,30 +296,10 @@ public class UnsignedSharedExponent {
   }
 
   /**
-   * Convert the shared exponent values stored in `bits` to numeric values and store these
-   * into the `result` array. `result`'s length must be equal to {@link #getValueCount()}.
-   * Bits in `bits` that are not used by the exponent or mantissa masks are ignored.
-   *
-   * @param bits
-   *     The bit field to convert to numeric values
-   * @param result
-   *     The storage for the output vector
-   * @throws IllegalArgumentException
-   *     if `result` length does not equal the value count of this shared exponent representation
+   * @return The number of numeric values this format represents
    */
-  public void toNumericValues(long bits, double[] result) {
-    Arguments.equals("result.length", mantissaMasks.length, result.length);
-
-    // Extract biased exponent from bit pattern
-    long exponent = (bits & exponentMask) >> exponentShift;
-    double scale = Math.pow(2.0, exponent - exponentBias - mantissaBits);
-    for (int i = 0; i < mantissaMasks.length; i++) {
-      // Extract and shift unnormalized mantissa from bit pattern
-      long mantissa = (bits & mantissaMasks[i]) >>> mantissaShifts[i];
-      // Scale by exponent with bias, and divide by 2^mantissaBits to convert from an unsigned int
-      // into a double value between 0 and 1.
-      result[i] = mantissa * scale;
-    }
+  public int getValueCount() {
+    return mantissaMasks.length;
   }
 
   /**
@@ -336,10 +349,30 @@ public class UnsignedSharedExponent {
   }
 
   /**
-   * @return The number of numeric values this format represents
+   * Convert the shared exponent values stored in `bits` to numeric values and store these
+   * into the `result` array. `result`'s length must be equal to {@link #getValueCount()}.
+   * Bits in `bits` that are not used by the exponent or mantissa masks are ignored.
+   *
+   * @param bits
+   *     The bit field to convert to numeric values
+   * @param result
+   *     The storage for the output vector
+   * @throws IllegalArgumentException
+   *     if `result` length does not equal the value count of this shared exponent representation
    */
-  public int getValueCount() {
-    return mantissaMasks.length;
+  public void toNumericValues(long bits, double[] result) {
+    Arguments.equals("result.length", mantissaMasks.length, result.length);
+
+    // Extract biased exponent from bit pattern
+    long exponent = (bits & exponentMask) >> exponentShift;
+    double scale = Math.pow(2.0, exponent - exponentBias - mantissaBits);
+    for (int i = 0; i < mantissaMasks.length; i++) {
+      // Extract and shift unnormalized mantissa from bit pattern
+      long mantissa = (bits & mantissaMasks[i]) >>> mantissaShifts[i];
+      // Scale by exponent with bias, and divide by 2^mantissaBits to convert from an unsigned int
+      // into a double value between 0 and 1.
+      result[i] = mantissa * scale;
+    }
   }
 
   private class ComponentRepresentation implements BinaryRepresentation {
@@ -352,20 +385,6 @@ public class UnsignedSharedExponent {
     @Override
     public int getBitSize() {
       return getBitCount();
-    }
-
-    @Override
-    public double toNumericValue(long bits) {
-      double[] vector = new double[getValueCount()];
-      toNumericValues(bits, vector);
-      return vector[component];
-    }
-
-    @Override
-    public long toBits(double value) {
-      double[] vector = new double[getValueCount()];
-      Arrays.fill(vector, value);
-      return UnsignedSharedExponent.this.toBits(vector);
     }
 
     @Override
@@ -386,6 +405,20 @@ public class UnsignedSharedExponent {
     @Override
     public boolean isUnsigned() {
       return true;
+    }
+
+    @Override
+    public long toBits(double value) {
+      double[] vector = new double[getValueCount()];
+      Arrays.fill(vector, value);
+      return UnsignedSharedExponent.this.toBits(vector);
+    }
+
+    @Override
+    public double toNumericValue(long bits) {
+      double[] vector = new double[getValueCount()];
+      toNumericValues(bits, vector);
+      return vector[component];
     }
   }
 }

@@ -65,17 +65,13 @@ public class SignedNormalizedInteger implements BinaryRepresentation {
   }
 
   @Override
-  public double toNumericValue(long bits) {
-    // Clamp the scaled values since the distribution about 0 is uneven between positive
-    // and negative axis.
-    return Functions
-        .clamp(unnormalized.toNumericValue(bits) / unnormalized.getMaxValue(), -1.0, 1.0);
+  public double getMaxValue() {
+    return 1.0;
   }
 
   @Override
-  public long toBits(double value) {
-    value = Functions.clamp(value, -1.0, 1.0);
-    return unnormalized.toBits(value * unnormalized.getMaxValue());
+  public double getMinValue() {
+    return -1.0;
   }
 
   @Override
@@ -89,12 +85,34 @@ public class SignedNormalizedInteger implements BinaryRepresentation {
   }
 
   @Override
-  public double getMaxValue() {
-    return 1.0;
+  public long toBits(double value) {
+    value = Functions.clamp(value, -1.0, 1.0);
+    return unnormalized.toBits(value * unnormalized.getMaxValue());
   }
 
   @Override
-  public double getMinValue() {
-    return -1.0;
+  public double toNumericValue(long bits) {
+    // Clamp the scaled values since the distribution about 0 is uneven between positive
+    // and negative axis.
+    return Functions
+        .clamp(unnormalized.toNumericValue(bits) / unnormalized.getMaxValue(), -1.0, 1.0);
+  }
+
+  @Override
+  public int hashCode() {
+    return unnormalized.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof SignedNormalizedInteger)) {
+      return false;
+    }
+    return ((SignedNormalizedInteger) o).unnormalized.equals(unnormalized);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("SNORM(%d)", unnormalized.getBitSize());
   }
 }

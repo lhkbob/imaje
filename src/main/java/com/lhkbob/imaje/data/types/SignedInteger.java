@@ -50,10 +50,10 @@ import com.lhkbob.imaje.util.Functions;
  */
 public class SignedInteger implements BinaryRepresentation {
   private final int bits;
-  private final long posMask;
-  private final long negMask;
-  private final double minValue;
   private final double maxValue;
+  private final double minValue;
+  private final long negMask;
+  private final long posMask;
 
   /**
    * Create a new SignedInteger with the given number of bits.
@@ -76,13 +76,21 @@ public class SignedInteger implements BinaryRepresentation {
   }
 
   @Override
-  public boolean isFloatingPoint() {
-    return false;
+  public int hashCode() {
+    return Integer.hashCode(bits);
   }
 
   @Override
-  public boolean isUnsigned() {
-    return false;
+  public boolean equals(Object o) {
+    if (!(o instanceof SignedInteger)) {
+      return false;
+    }
+    return ((SignedInteger) o).bits == bits;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("SINT(%d)", bits);
   }
 
   @Override
@@ -91,15 +99,23 @@ public class SignedInteger implements BinaryRepresentation {
   }
 
   @Override
-  public double toNumericValue(long bits) {
-    // First lift the positive portion of the bits to a double, and since posMask will have at most
-    // 63 bits in it, value will be correct
-    double value = bits & posMask;
-    if ((bits & negMask) != 0) {
-      // Subtract off 2^(bits-1), which is equal to +minValue
-      value += minValue;
-    }
-    return value;
+  public double getMaxValue() {
+    return maxValue;
+  }
+
+  @Override
+  public double getMinValue() {
+    return minValue;
+  }
+
+  @Override
+  public boolean isFloatingPoint() {
+    return false;
+  }
+
+  @Override
+  public boolean isUnsigned() {
+    return false;
   }
 
   @Override
@@ -118,12 +134,14 @@ public class SignedInteger implements BinaryRepresentation {
   }
 
   @Override
-  public double getMaxValue() {
-    return maxValue;
-  }
-
-  @Override
-  public double getMinValue() {
-    return minValue;
+  public double toNumericValue(long bits) {
+    // First lift the positive portion of the bits to a double, and since posMask will have at most
+    // 63 bits in it, value will be correct
+    double value = bits & posMask;
+    if ((bits & negMask) != 0) {
+      // Subtract off 2^(bits-1), which is equal to +minValue
+      value += minValue;
+    }
+    return value;
   }
 }

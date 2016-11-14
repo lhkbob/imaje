@@ -49,34 +49,10 @@ package com.lhkbob.imaje.data.types;
  * @author Michael Ludwig
  */
 public interface BinaryRepresentation {
-  // TODO implement hashCode and equals for the binary representation implementations
   /**
    * @return The number of bits required to represent the number
    */
   int getBitSize();
-
-  /**
-   * Convert the given bit field to a Java `double` based on the binary representation this instance
-   * describes. The bits from `0` to `getBitSize() - 1` are used, higher bits are ignored.
-   *
-   * @param bits
-   *     The bit field to convert to a real number
-   * @return The real number closes to the value represented by `bits` in this representation
-   */
-  double toNumericValue(long bits);
-
-  /**
-   * Convert the given real number to the closest representable value as its bit pattern. The
-   * returned bit field will have representation-dependent bits between `0` and `getBitSize() - 1`,
-   * and all higher bits will be set to 0. If `value` is outside the range defined by {@link
-   * #getMaxValue()} and {@link #getMinValue()} then the value is clamped to that range before being
-   * converted into a bit field.
-   *
-   * @param value
-   *     The number to convert to bit representation
-   * @return The binary representation closest to value
-   */
-  long toBits(double value);
 
   /**
    * @return The maximum value representable by this instance
@@ -103,4 +79,27 @@ public interface BinaryRepresentation {
    * #getMinValue()} returns 0
    */
   boolean isUnsigned();
+
+  /**
+   * Convert the given real number to the closest representable value as its bit pattern. The
+   * returned bit field will have representation-dependent bits between `0` and `getBitSize() - 1`,
+   * and all higher bits will be set to 0. If `value` is outside the range defined by {@link
+   * #getMaxValue()} and {@link #getMinValue()} then the value is clamped to that range before being
+   * converted into a bit field.
+   *
+   * @param value
+   *     The number to convert to bit representation
+   * @return The binary representation closest to value
+   */
+  long toBits(double value);
+
+  /**
+   * Convert the given bit field to a Java `double` based on the binary representation this instance
+   * describes. The bits from `0` to `getBitSize() - 1` are used, higher bits are ignored.
+   *
+   * @param bits
+   *     The bit field to convert to a real number
+   * @return The real number closes to the value represented by `bits` in this representation
+   */
+  double toNumericValue(long bits);
 }

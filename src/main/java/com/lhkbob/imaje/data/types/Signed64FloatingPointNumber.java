@@ -53,16 +53,6 @@ public class Signed64FloatingPointNumber implements BinaryRepresentation {
   }
 
   @Override
-  public double toNumericValue(long bits) {
-    return Double.longBitsToDouble(bits);
-  }
-
-  @Override
-  public long toBits(double value) {
-    return Double.doubleToRawLongBits(value);
-  }
-
-  @Override
   public double getMaxValue() {
     return Double.POSITIVE_INFINITY;
   }
@@ -80,5 +70,30 @@ public class Signed64FloatingPointNumber implements BinaryRepresentation {
   @Override
   public boolean isUnsigned() {
     return false;
+  }
+
+  @Override
+  public long toBits(double value) {
+    return Double.doubleToRawLongBits(value);
+  }
+
+  @Override
+  public double toNumericValue(long bits) {
+    return Double.longBitsToDouble(bits);
+  }
+
+  @Override
+  public int hashCode() {
+    return Signed64FloatingPointNumber.class.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o instanceof Signed64FloatingPointNumber;
+  }
+
+  @Override
+  public String toString() {
+    return "SFLOAT(64, e: 11, m: 52)";
   }
 }

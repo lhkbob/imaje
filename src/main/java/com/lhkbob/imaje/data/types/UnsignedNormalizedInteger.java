@@ -64,9 +64,13 @@ public class UnsignedNormalizedInteger implements BinaryRepresentation {
   }
 
   @Override
-  public double toNumericValue(long bits) {
-    double unnorm = unnormalized.toNumericValue(bits);
-    return unnorm / unnormalized.getMaxValue();
+  public double getMaxValue() {
+    return 1.0;
+  }
+
+  @Override
+  public double getMinValue() {
+    return 0.0;
   }
 
   @Override
@@ -86,12 +90,27 @@ public class UnsignedNormalizedInteger implements BinaryRepresentation {
   }
 
   @Override
-  public double getMaxValue() {
-    return 1.0;
+  public double toNumericValue(long bits) {
+    double unnorm = unnormalized.toNumericValue(bits);
+    return unnorm / unnormalized.getMaxValue();
   }
 
   @Override
-  public double getMinValue() {
-    return 0.0;
+  public int hashCode() {
+    return unnormalized.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof UnsignedNormalizedInteger)) {
+      return false;
+    }
+
+    return ((UnsignedNormalizedInteger) o).unnormalized.equals(unnormalized);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("UNORM(%d)", unnormalized.getBitSize());
   }
 }
