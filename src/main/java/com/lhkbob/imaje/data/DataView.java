@@ -32,7 +32,22 @@
 package com.lhkbob.imaje.data;
 
 /**
+ * DataView
+ * ========
+ *
+ * DataView is a simple interface that denotes the class is a view or wrapper over some other type
+ * that contains the actual data. There are no constraints on what the underlying data may be. Thus,
+ * DataView can be used by DataBuffers that wrap existing DataBuffers (like {@link
+ * com.lhkbob.imaje.data.types.CustomBinaryData} or the {@link com.lhkbob.imaje.data.large large
+ * variants}), primitive arrays (like in {@link com.lhkbob.imaje.data.array}), and NIO buffers of
+ * particular types (like in {@link com.lhkbob.imaje.data.nio}).
+ *
+ * @author Michael Ludwig
  */
 public interface DataView<T> {
+  /**
+   * @return The underlying source that this instance is a view of. Changes made to the source are
+   * reflected by this instance.
+   */
   T getSource();
 }
