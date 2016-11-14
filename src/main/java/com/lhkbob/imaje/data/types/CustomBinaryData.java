@@ -37,18 +37,40 @@ import com.lhkbob.imaje.data.NumericData;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
+ * CustomBinaryData
+ * ================
  *
+ * A NumericData implementation that wraps a BitData buffer and combines those bit fields with a
+ * particular {@link BinaryRepresentation} that handles the actual conversion logic to-and-from
+ * numeric values.
+ *
+ * @author Michael Ludwig
  */
-public class CustomBinaryData<T extends BitData> implements NumericData<T>, DataView<T> {
+public class CustomBinaryData<T extends BitData> extends NumericData<T> implements DataView<T> {
   private final T source;
   private final BinaryRepresentation converter;
 
+  /**
+   * Create a new CustomBinaryData that uses `bitRep` for its numeric value conversions, and
+   * stores the bit data in `source`. Changes made directly to `source` are reflected in the state
+   * of this DataBuffer, and modifications made via this buffer are reflected in `source`.
+   *
+   * @param bitRep
+   *     The binary representation used to encode numeric values in `source`
+   * @param source
+   *     The bit data source to wrap
+   * @throws IllegalArgumentException
+   *     if the bit size of `bitRep` and `source` are not equal
+   */
   public CustomBinaryData(BinaryRepresentation bitRep, T source) {
     Arguments.equals("bit size", bitRep.getBitSize(), source.getBitSize());
     this.source = source;
     converter = bitRep;
   }
 
+  /**
+   * @return The binary representation used for value conversion with this data bufferf
+   */
   public BinaryRepresentation getBinaryRepresentation() {
     return converter;
   }
@@ -71,7 +93,8 @@ public class CustomBinaryData<T extends BitData> implements NumericData<T>, Data
 
   @Override
   public void setValue(long index, double value) {
-    // This assumes the converter handles any clamping to the range of allowable values for the representation
+    // This assumes the converter handles any clamping to the range of allowable values for the
+    // representation
     long bits = converter.toBits(value);
     source.setBits(index, bits);
   }
