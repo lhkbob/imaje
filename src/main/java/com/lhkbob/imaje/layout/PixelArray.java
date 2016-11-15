@@ -78,6 +78,28 @@ package com.lhkbob.imaje.layout;
  * Use {@link PixelArrayBuilder} to conveniently and fluently create new PixelArrays that
  * automatically pick and combine the implementations described above.
  *
+ * # Coordinate system
+ *
+ * PixelArray has certain default assumptions about the XY coordinate system it uses to access
+ * pixels. Technically, the orientation of the image is entirely up to application code and the
+ * semantics that it uses. However, for consistency and ease of documentation the default assumed
+ * coordinate frame and orientation for a PixelArray is:
+ *
+ * 1. The origin of the image is located in the bottom left corner.
+ * 2. The X axis goes from left to right.
+ * 3. The Y axis goes from bottom to top.
+ * 4. This is consistent with the Cartesian coordinate system used in mathematics, but has a flipped
+ * Y axis direction and origin location compared to how images and user interfaces are often
+ * described.
+ * 5. The X axis is defined from 0 to `width - 1`.
+ * 6. The Y axis is defined from 0 to `height - 1`.
+ * 7. Pixels are described by discrete, integer coordinates in the XY plane. Sampling and
+ * interpolating between integer pixel locations is handled in the {@link com.lhkbob.imaje.sampler
+ * sampler} package.
+ *
+ * If image data does not fit these orientation and layout assumptions, the {@link ReorientedArray}
+ * can be used to automatically transform into this default coordinate frame.
+ *
  * @author Michael Ludwig
  */
 public interface PixelArray {
