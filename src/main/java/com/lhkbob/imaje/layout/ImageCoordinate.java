@@ -31,31 +31,73 @@
  */
 package com.lhkbob.imaje.layout;
 
-import com.lhkbob.imaje.util.Arguments;
+import com.lhkbob.imaje.util.IndexIterator;
+import com.lhkbob.imaje.util.IndexSpliterator;
 
 import java.util.Iterator;
 import java.util.PrimitiveIterator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
-import java.util.function.ObjLongConsumer;
 
 /**
+ * ImageCoordinate
+ * ===============
  *
+ * ImageCoordinate is a data type for describing the X and Y components of a pixel's location. It
+ * can have negative coordinates or coordinates that are outside an associated image's bounds. This
+ * is to facilitate referencing and functioning over a virtual coordinate frame.
+ *
+ * @author Michael Ludwig
  */
-public final class ImageCoordinate {
+public final class ImageCoordinate implements Cloneable {
+  /**
+   * FastIterator
+   * ============
+   *
+   * An iterator of ImageCoordinate values within a particular window. It is a fast iterator in the
+   * sense that it reuses a single ImageCoordinate instance and updates the reported X and Y
+   * coordinates with each iteration step.
+   *
+   * @author Michael Ludwig
+   */
   public static class FastIterator implements Iterator<ImageCoordinate> {
     private final PrimitiveIterator.OfLong indexIterator;
     private final ImageCoordinate output;
-    private final ObjLongConsumer<ImageCoordinate> updater;
+    private final int width;
+    private final int x;
+    private final int y;
 
-    public FastIterator(
-        PrimitiveIterator.OfLong baseIterator, ObjLongConsumer<ImageCoordinate> indexToPixel) {
-      Arguments.notNull("baseIterator", baseIterator);
-      Arguments.notNull("indexToPixel", indexToPixel);
+    /**
+     * Create a new FastIterator that reports all ImageCoordinate values contained within the
+     * given `window`.
+     *
+     * @param window
+     *     The window to iterate over
+     */
+    public FastIterator(ImageWindow window) {
+      this(window.getX(), window.getY(), window.getWidth(), window.getHeight());
+    }
 
-      indexIterator = baseIterator;
-      updater = indexToPixel;
+    /**
+     * Create a new FastIterator that reports all ImageCoordinate values contained within the window
+     * defined by `x`, `y`, `width`, and `height`.
+     *
+     * @param x
+     *     The x coordinate of the lower left corner of the window
+     * @param y
+     *     The y coordinate of the lower left corner of the window
+     * @param width
+     *     The width of the window
+     * @param height
+     *     The height of the window
+     */
+    public FastIterator(int x, int y, int width, int height) {
+      indexIterator = new IndexIterator(width * height);
       output = new ImageCoordinate();
+
+      this.width = width;
+      this.x = x;
+      this.y = y;
     }
 
     @Override
@@ -65,25 +107,64 @@ public final class ImageCoordinate {
 
     @Override
     public ImageCoordinate next() {
-      updater.accept(output, indexIterator.next());
+      updateCoordinate(output, indexIterator.next(), x, y, width);
       return output;
     }
   }
 
+  /**
+   * FastSpliterator
+   * ============
+   *
+   * A spliterator of ImageCoordinate values within a particular window. It is a fast spliterator in
+   * the sense that it reuses a single ImageCoordinate instance and updates the reported X and Y
+   * coordinates with each iteration step. This spliterator can be split down to a single row within
+   * the window it's iterating over. Each split of the original spliterator instance gets its own
+   * ImageCoordinate that is updated in-place so it is still a thread-safe iteration mechanism.
+   *
+   * @author Michael Ludwig
+   */
   public static class FastSpliterator implements Spliterator<ImageCoordinate> {
     private final Spliterator.OfLong indexSpliterator;
     private final ImageCoordinate output;
-    private final ObjLongConsumer<ImageCoordinate> updater;
+    private final int width;
+    private final int x;
+    private final int y;
 
-    public FastSpliterator(
-        Spliterator.OfLong baseSpliterator,
-        ObjLongConsumer<ImageCoordinate> indexToPixel) {
-      Arguments.notNull("baseSpliterator", baseSpliterator);
-      Arguments.notNull("indexToPixel", indexToPixel);
+    /**
+     * Create a new FastSpliterator that reports all ImageCoordinate values contained within the
+     * given `window`.
+     *
+     * @param window
+     *     The window to iterate over
+     */
+    public FastSpliterator(ImageWindow window) {
+      this(window.getX(), window.getY(), window.getWidth(), window.getHeight());
+    }
 
-      indexSpliterator = baseSpliterator;
-      updater = indexToPixel;
+    /**
+     * Create a new FastSpliterator that reports all ImageCoordinate values contained within the
+     * window defined by `x`, `y`, `width`, and `height`.
+     *
+     * @param x
+     *     The x coordinate of the lower left corner of the window
+     * @param y
+     *     The y coordinate of the lower left corner of the window
+     * @param width
+     *     The width of the window
+     * @param height
+     *     The height of the window
+     */
+    public FastSpliterator(int x, int y, int width, int height) {
+      this(new IndexSpliterator(width * height, width), x, y, width);
+    }
+
+    private FastSpliterator(Spliterator.OfLong spliterator, int x, int y, int width) {
+      indexSpliterator = spliterator;
       output = new ImageCoordinate();
+      this.width = width;
+      this.x = x;
+      this.y = y;
     }
 
     @Override
@@ -103,7 +184,7 @@ public final class ImageCoordinate {
     public boolean tryAdvance(
         Consumer<? super ImageCoordinate> action) {
       return indexSpliterator.tryAdvance((long index) -> {
-        updater.accept(output, index);
+        updateCoordinate(output, index, x, y, width);
         action.accept(output);
       });
     }
@@ -112,23 +193,44 @@ public final class ImageCoordinate {
     public FastSpliterator trySplit() {
       Spliterator.OfLong split = indexSpliterator.trySplit();
       if (split != null) {
-        return new FastSpliterator(split, updater);
+        return new FastSpliterator(split, x, y, width);
       } else {
         return null;
       }
     }
   }
+
   private int x;
   private int y;
 
+  /**
+   * Create a new image coordinate at the origin, `(0, 0)`.
+   */
   public ImageCoordinate() {
     x = 0;
     y = 0;
   }
 
+  /**
+   * Create a new image coordinate with the specified initial `x` and `y` values.
+   *
+   * @param x
+   *     The x component
+   * @param y
+   *     The y component
+   */
   public ImageCoordinate(int x, int y) {
     this.x = x;
     this.y = y;
+  }
+
+  @Override
+  public ImageCoordinate clone() {
+    try {
+      return (ImageCoordinate) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException("Should not happen", e);
+    }
   }
 
   @Override
@@ -140,10 +242,16 @@ public final class ImageCoordinate {
     return c.x == x && c.y == y;
   }
 
+  /**
+   * @return The x component, may be negative
+   */
   public int getX() {
     return x;
   }
 
+  /**
+   * @return The y component, may be negative
+   */
   public int getY() {
     return y;
   }
@@ -155,10 +263,22 @@ public final class ImageCoordinate {
     return result;
   }
 
+  /**
+   * Set the new x component of this ImageCoordinate, which can be a negative value.
+   *
+   * @param x
+   *     The new x component
+   */
   public void setX(int x) {
     this.x = x;
   }
 
+  /**
+   * Set the new y component of this ImageCoordinate, which can be a negative value.
+   *
+   * @param y
+   *     The new y component
+   */
   public void setY(int y) {
     this.y = y;
   }
@@ -166,5 +286,13 @@ public final class ImageCoordinate {
   @Override
   public String toString() {
     return String.format("(%d, %d)", x, y);
+  }
+
+  private static void updateCoordinate(
+      ImageCoordinate coord, long index, int offsetX, int offsetY, int width) {
+    int y = (int) (index / width);
+    int x = (int) (index - y * width);
+    coord.setX(offsetX + x);
+    coord.setY(offsetY + y);
   }
 }
