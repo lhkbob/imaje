@@ -78,6 +78,12 @@ package com.lhkbob.imaje.layout;
  * Use {@link PixelArrayBuilder} to conveniently and fluently create new PixelArrays that
  * automatically pick and combine the implementations described above.
  *
+ * PixelArray implementations must be immutable with respect to all properties and dimensions except
+ * for the channel values of the actual pixels. This means pixel arrays will not change formats,
+ * references to data buffers, or dimensions after creation. Implementations must be thread-safe
+ * with respect to concurrent modifications of different pixel locations, but can be unsafe for
+ * concurrent access to the same location.
+ *
  * # Coordinate system
  *
  * PixelArray has certain default assumptions about the XY coordinate system it uses to access

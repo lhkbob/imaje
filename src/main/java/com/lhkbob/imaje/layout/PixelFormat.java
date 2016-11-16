@@ -57,6 +57,8 @@ import java.util.Arrays;
  * {@link PixelFormatBuilder} and {@link #newBuilder()} can be used to fluently build up formats,
  * although its primary constructor is fairly readable on its own.
  *
+ * PixelFormat is an immutable and thread-safe data type.
+ *
  * @author Michael Ludwig
  */
 // FIXME how will this be updated to handle compressed formats?

@@ -67,6 +67,8 @@ import java.util.Spliterator;
  * pixels into consecutive tiles and group bands for all pixels together in contiguous ranges. It is
  * slower but very flexible.
  *
+ * DataLayout implementations must be immutable and thread-safe.
+ *
  * @author Michael Ludwig
  */
 public interface DataLayout extends Iterable<ImageCoordinate> {
