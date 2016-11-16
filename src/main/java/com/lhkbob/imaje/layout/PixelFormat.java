@@ -125,126 +125,10 @@ public class PixelFormat {
      */
     UFLOAT
   }
-
+  private final int alphaDataField;
   private final int[] bitSize;
   private final Type[] channelType;
   private final int[] colorToDataField;
-  private final int alphaDataField;
-
-  /**
-   * @return A new builder in the default initial configuration to build a PixelFormat
-   */
-  public static PixelFormatBuilder newBuilder() {
-    return new PixelFormatBuilder();
-  }
-
-  /**
-   * Create a PixelFormat from a mask specification. This is an alternate way of specifying a format
-   * where each color channel and optionally an alpha channel is described by a bit mask that
-   * contains the bits for that channel.
-   *
-   * The color masks are specified in `colorMasks`, which can contain masks for more channels than
-   * are actually used in the final format. Masks that are equal to 0 are silently ignored. This is
-   * done because many image formats have a fixed number of masks that can be easily submitted to
-   * this function, and the format specifies that optional channels have masks equal to 0.
-   *
-   * `colorMasks` is first filtered to remove masks equal to 0, and the resulting ordered list
-   * defines the logical channel for each mask. If there are more non-zero masks than
-   * `channelCount`, channels beyond that count are marked as skipped channels.
-   *
-   * If `alphaMask` is non-zero, the pixel format will contain an alpha channel, otherwise it will
-   * not. All data fields will have the type specified by `type`, while each fields' bit size is
-   * determined by the number of set bits in its mask. The bit masks must form a continuous bit
-   * field that does not overlap across fields or leave empty gaps between fields. The masks must be
-   * defined from bit 0 up to some number of bits less than or equal to 64.
-   *
-   * @param colorMasks
-   *     The masks for each logical channel, where a mask can be set to 0 to mark it as being
-   *     filtered out (and subsequently shifting the index of remaining channels)
-   * @param channelCount
-   *     The number of color channels in the created format, which must be less than or equal to the
-   *     number of non-zero masks in `colorMasks`
-   * @param alphaMask
-   *     The alpha mask, or 0 for no alpha
-   * @param type
-   *     The data type for each field
-   * @return A pixel format that matches the given mask definition
-   */
-  public static PixelFormat createFromMasks(
-      long[] colorMasks, int channelCount, long alphaMask, Type type) {
-    // First filter masks equal to 0, which is a convenience for image loading code that frequently
-    // has a fixed number of channels specified but their presence in data is encoded as a 0'ed mask
-    int logicalChannelCount = 0;
-    for (int i = 0; i < colorMasks.length; i++) {
-      if (colorMasks[i] != 0) {
-        logicalChannelCount++;
-      }
-    }
-
-    // Before including a possible alpha channel, validate the maxChannels argument, which must be
-    // less than or equal to the number of non-zero masks.
-    if (channelCount > logicalChannelCount) {
-      throw new IllegalArgumentException(
-          "Insufficient non-zero color masks provided to meet requested channel count");
-    }
-    // Now compact the colorMasks array to exclude 0s so that indexing data to color channel is
-    // easier.
-    int filteredCount = 0;
-    long[] filteredColorMasks = new long[logicalChannelCount];
-    for (int i = 0; i < colorMasks.length; i++) {
-      if (colorMasks[i] == 0) {
-        continue;
-      }
-      filteredColorMasks[filteredCount++] = colorMasks[i];
-    }
-
-    if (alphaMask != 0) {
-      logicalChannelCount++;
-    }
-
-    int[] dataChannelMap = new int[logicalChannelCount];
-    Type[] dataType = new Type[logicalChannelCount];
-    int[] bitSize = new int[logicalChannelCount];
-
-    int expectedShift = 0;
-    for (int i = dataChannelMap.length - 1; i >= 0; i--) {
-      // Find the color or alpha channel that has a shift by the expected number of bits,
-      // which will be monotonically increasing, so as we move left through the channel map
-      // we insert the appropriately higher-order masks.
-      int size = 0;
-      int logicalChannel = 0;
-      if (alphaMask != 0 && Long.numberOfTrailingZeros(alphaMask) == expectedShift) {
-        logicalChannel = ALPHA_CHANNEL;
-        size = Long.bitCount(alphaMask);
-      } else {
-        // Search for a color mask
-        boolean found = false;
-        for (int j = 0; j < filteredColorMasks.length; j++) {
-          if (Long.numberOfTrailingZeros(filteredColorMasks[j]) == expectedShift) {
-            if (j >= channelCount) {
-              // Convert channel into a skipped channel
-              logicalChannel = SKIP_CHANNEL;
-            } else {
-              logicalChannel = j;
-            }
-            size = Long.bitCount(colorMasks[j]);
-            found = true;
-            break;
-          }
-        }
-
-        if (!found) {
-          throw new IllegalArgumentException("Provided color masks are not contiguous");
-        }
-      }
-
-      dataChannelMap[i] = logicalChannel;
-      bitSize[i] = size;
-      dataType[i] = type;
-    }
-
-    return new PixelFormat(dataChannelMap, dataType, bitSize);
-  }
 
   /**
    * Create a new PixelFormat whose data fields are described by the three parallel array maps,
@@ -370,6 +254,121 @@ public class PixelFormat {
   }
 
   /**
+   * Create a PixelFormat from a mask specification. This is an alternate way of specifying a format
+   * where each color channel and optionally an alpha channel is described by a bit mask that
+   * contains the bits for that channel.
+   *
+   * The color masks are specified in `colorMasks`, which can contain masks for more channels than
+   * are actually used in the final format. Masks that are equal to 0 are silently ignored. This is
+   * done because many image formats have a fixed number of masks that can be easily submitted to
+   * this function, and the format specifies that optional channels have masks equal to 0.
+   *
+   * `colorMasks` is first filtered to remove masks equal to 0, and the resulting ordered list
+   * defines the logical channel for each mask. If there are more non-zero masks than
+   * `channelCount`, channels beyond that count are marked as skipped channels.
+   *
+   * If `alphaMask` is non-zero, the pixel format will contain an alpha channel, otherwise it will
+   * not. All data fields will have the type specified by `type`, while each fields' bit size is
+   * determined by the number of set bits in its mask. The bit masks must form a continuous bit
+   * field that does not overlap across fields or leave empty gaps between fields. The masks must be
+   * defined from bit 0 up to some number of bits less than or equal to 64.
+   *
+   * @param colorMasks
+   *     The masks for each logical channel, where a mask can be set to 0 to mark it as being
+   *     filtered out (and subsequently shifting the index of remaining channels)
+   * @param channelCount
+   *     The number of color channels in the created format, which must be less than or equal to the
+   *     number of non-zero masks in `colorMasks`
+   * @param alphaMask
+   *     The alpha mask, or 0 for no alpha
+   * @param type
+   *     The data type for each field
+   * @return A pixel format that matches the given mask definition
+   */
+  public static PixelFormat createFromMasks(
+      long[] colorMasks, int channelCount, long alphaMask, Type type) {
+    // First filter masks equal to 0, which is a convenience for image loading code that frequently
+    // has a fixed number of channels specified but their presence in data is encoded as a 0'ed mask
+    int logicalChannelCount = 0;
+    for (int i = 0; i < colorMasks.length; i++) {
+      if (colorMasks[i] != 0) {
+        logicalChannelCount++;
+      }
+    }
+
+    // Before including a possible alpha channel, validate the maxChannels argument, which must be
+    // less than or equal to the number of non-zero masks.
+    if (channelCount > logicalChannelCount) {
+      throw new IllegalArgumentException(
+          "Insufficient non-zero color masks provided to meet requested channel count");
+    }
+    // Now compact the colorMasks array to exclude 0s so that indexing data to color channel is
+    // easier.
+    int filteredCount = 0;
+    long[] filteredColorMasks = new long[logicalChannelCount];
+    for (int i = 0; i < colorMasks.length; i++) {
+      if (colorMasks[i] == 0) {
+        continue;
+      }
+      filteredColorMasks[filteredCount++] = colorMasks[i];
+    }
+
+    if (alphaMask != 0) {
+      logicalChannelCount++;
+    }
+
+    int[] dataChannelMap = new int[logicalChannelCount];
+    Type[] dataType = new Type[logicalChannelCount];
+    int[] bitSize = new int[logicalChannelCount];
+
+    int expectedShift = 0;
+    for (int i = dataChannelMap.length - 1; i >= 0; i--) {
+      // Find the color or alpha channel that has a shift by the expected number of bits,
+      // which will be monotonically increasing, so as we move left through the channel map
+      // we insert the appropriately higher-order masks.
+      int size = 0;
+      int logicalChannel = 0;
+      if (alphaMask != 0 && Long.numberOfTrailingZeros(alphaMask) == expectedShift) {
+        logicalChannel = ALPHA_CHANNEL;
+        size = Long.bitCount(alphaMask);
+      } else {
+        // Search for a color mask
+        boolean found = false;
+        for (int j = 0; j < filteredColorMasks.length; j++) {
+          if (Long.numberOfTrailingZeros(filteredColorMasks[j]) == expectedShift) {
+            if (j >= channelCount) {
+              // Convert channel into a skipped channel
+              logicalChannel = SKIP_CHANNEL;
+            } else {
+              logicalChannel = j;
+            }
+            size = Long.bitCount(colorMasks[j]);
+            found = true;
+            break;
+          }
+        }
+
+        if (!found) {
+          throw new IllegalArgumentException("Provided color masks are not contiguous");
+        }
+      }
+
+      dataChannelMap[i] = logicalChannel;
+      bitSize[i] = size;
+      dataType[i] = type;
+    }
+
+    return new PixelFormat(dataChannelMap, dataType, bitSize);
+  }
+
+  /**
+   * @return A new builder in the default initial configuration to build a PixelFormat
+   */
+  public static PixelFormatBuilder newBuilder() {
+    return new PixelFormatBuilder();
+  }
+
+  /**
    * Get whether or not the color and alpha channels of this format are compatible with `format`.
    * Two pixel formats are compatible if they store the same number of color channels and have
    * equivalent alpha channel presence (i.e. both have an alpha channel or both have no alpha). It
@@ -443,122 +442,29 @@ public class PixelFormat {
     return true;
   }
 
-  /**
-   * Get the number of logical channels that this pixel format contains. This is the number of
-   * fields of the format that have a logical channel index or are the alpha channel, ignoring all
-   * fields that are marked to skip.
-   *
-   * This is equal to the color channel count plus an additional one if the format has an alpha
-   * channel.
-   *
-   * @return The logical channel count of this format
-   */
-  public int getChannelCount() {
-    return colorToDataField.length + (alphaDataField >= 0 ? 1 : 0);
-  }
-
-  /**
-   * Get the total number of bits used by the valid channels of this format (i.e. all non-skipped
-   * fields). This represents the informational content of the format although it may not equal the
-   * bit size of the primitive types required to hold pixels for the format.
-   *
-   * @return The total number of bits for just the color and alpha channel
-   */
-  public int getBitSizeOfChannels() {
-    int total = 0;
-    for (int i = 0; i < bitSize.length; i++) {
-      if (!isDataFieldSkipped(i)) {
-        total += bitSize[i];
-      }
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof PixelFormat)) {
+      return false;
     }
-    return total;
+    PixelFormat f = (PixelFormat) o;
+    return Arrays.equals(f.colorToDataField, colorToDataField) && Arrays
+        .equals(f.channelType, channelType) && Arrays.equals(f.bitSize, bitSize)
+        && f.alphaDataField == alphaDataField;
   }
 
   /**
-   * Get whether or not the specified data field is skipped for this format, or if it represents a
-   * color or alpha channel. A skipped field has no type interpretation with respect to the format,
-   * although it still has a bit size.
+   * Get the bit size of the data field storing alpha data. If this format does not have alpha
+   * data then this returns 0.
    *
-   * @param dataIndex
-   *     The index of the data field
-   * @return True if the field is skipped and has no defined type information
+   * @return The number of bits used to store alpha values
    */
-  public boolean isDataFieldSkipped(int dataIndex) {
-    return channelType[dataIndex] == null;
-  }
-
-  /**
-   * Get the type semantics for the data field associated with the given color channel.
-   *
-   * @param colorChannel
-   *     The logical color channel
-   * @return The type associated with the channel
-   *
-   * @throws IndexOutOfBoundsException
-   *     if `colorChannel` is less than 0 or greater than or equal to `getColorChannelCount()`
-   */
-  public Type getColorChannelType(int colorChannel) {
-    return channelType[colorToDataField[colorChannel]];
-  }
-
-  /**
-   * Get the bit size of the data field associated with the given color channel.
-   *
-   * @param colorChannel
-   *     The logical color channel
-   * @return The number of bits for the color channel
-   *
-   * @throws IndexOutOfBoundsException
-   *     if `colorChannel` is less than 0 or greater than or equal to `getColorChannelCount()`
-   */
-  public int getColorChannelBitSize(int colorChannel) {
-    return bitSize[colorToDataField[colorChannel]];
-  }
-
-  /**
-   * Get the data field index the given color channel is mapped to.
-   *
-   * @param colorChannel
-   *     The logical color channel
-   * @return The data field index that stores values for `colorChannel`
-   *
-   * @throws IndexOutOfBoundsException
-   *     if `colorChannel` is less than 0 or greater than or equal to `getColorChannelCount()`
-   */
-  public int getColorChannelDataField(int colorChannel) {
-    return colorToDataField[colorChannel];
-  }
-
-  /**
-   * @return The total number of bits required by this format, including skipped fields
-   */
-  public int getBitSize() {
-    int total = 0;
-    for (int i = 0; i < bitSize.length; i++) {
-      total += bitSize[i];
+  public int getAlphaChannelBitSize() {
+    if (hasAlphaChannel()) {
+      return bitSize[alphaDataField];
+    } else {
+      return 0;
     }
-    return total;
-  }
-
-  /**
-   * @return The number of data fields of the format
-   */
-  public int getDataFieldCount() {
-    return bitSize.length;
-  }
-
-  /**
-   * @return The number of color channels for this format
-   */
-  public int getColorChannelCount() {
-    return colorToDataField.length;
-  }
-
-  /**
-   * @return True if this format has a data field representing the alpha channel
-   */
-  public boolean hasAlphaChannel() {
-    return alphaDataField >= 0;
   }
 
   /**
@@ -583,17 +489,94 @@ public class PixelFormat {
   }
 
   /**
-   * Get the bit size of the data field storing alpha data. If this format does not have alpha
-   * data then this returns 0.
-   *
-   * @return The number of bits used to store alpha values
+   * @return The total number of bits required by this format, including skipped fields
    */
-  public int getAlphaChannelBitSize() {
-    if (hasAlphaChannel()) {
-      return bitSize[alphaDataField];
-    } else {
-      return 0;
+  public int getBitSize() {
+    int total = 0;
+    for (int i = 0; i < bitSize.length; i++) {
+      total += bitSize[i];
     }
+    return total;
+  }
+
+  /**
+   * Get the total number of bits used by the valid channels of this format (i.e. all non-skipped
+   * fields). This represents the informational content of the format although it may not equal the
+   * bit size of the primitive types required to hold pixels for the format.
+   *
+   * @return The total number of bits for just the color and alpha channel
+   */
+  public int getBitSizeOfChannels() {
+    int total = 0;
+    for (int i = 0; i < bitSize.length; i++) {
+      if (!isDataFieldSkipped(i)) {
+        total += bitSize[i];
+      }
+    }
+    return total;
+  }
+
+  /**
+   * Get the number of logical channels that this pixel format contains. This is the number of
+   * fields of the format that have a logical channel index or are the alpha channel, ignoring all
+   * fields that are marked to skip.
+   *
+   * This is equal to the color channel count plus an additional one if the format has an alpha
+   * channel.
+   *
+   * @return The logical channel count of this format
+   */
+  public int getChannelCount() {
+    return colorToDataField.length + (alphaDataField >= 0 ? 1 : 0);
+  }
+
+  /**
+   * Get the bit size of the data field associated with the given color channel.
+   *
+   * @param colorChannel
+   *     The logical color channel
+   * @return The number of bits for the color channel
+   *
+   * @throws IndexOutOfBoundsException
+   *     if `colorChannel` is less than 0 or greater than or equal to `getColorChannelCount()`
+   */
+  public int getColorChannelBitSize(int colorChannel) {
+    return bitSize[colorToDataField[colorChannel]];
+  }
+
+  /**
+   * @return The number of color channels for this format
+   */
+  public int getColorChannelCount() {
+    return colorToDataField.length;
+  }
+
+  /**
+   * Get the data field index the given color channel is mapped to.
+   *
+   * @param colorChannel
+   *     The logical color channel
+   * @return The data field index that stores values for `colorChannel`
+   *
+   * @throws IndexOutOfBoundsException
+   *     if `colorChannel` is less than 0 or greater than or equal to `getColorChannelCount()`
+   */
+  public int getColorChannelDataField(int colorChannel) {
+    return colorToDataField[colorChannel];
+  }
+
+  /**
+   * Get the type semantics for the data field associated with the given color channel.
+   *
+   * @param colorChannel
+   *     The logical color channel
+   * @return The type associated with the channel
+   *
+   * @throws IndexOutOfBoundsException
+   *     if `colorChannel` is less than 0 or greater than or equal to `getColorChannelCount()`
+   */
+  public Type getColorChannelType(int colorChannel) {
+    return channelType[colorToDataField[colorChannel]];
   }
 
   /**
@@ -610,21 +593,6 @@ public class PixelFormat {
    */
   public int getDataFieldBitSize(int dataIndex) {
     return bitSize[dataIndex];
-  }
-
-  /**
-   * Get the type semantics of the data stored in the given data field. If this is a skipped field
-   * then null is returned because the values in that field are undefined.
-   *
-   * @param dataIndex
-   *     The data field index
-   * @return The type of the data field
-   *
-   * @throws IndexOutOfBoundsException
-   *     if `dataIndex` is less than 0 or greater than or equal to `getDataFieldCount()`
-   */
-  public Type getDataFieldType(int dataIndex) {
-    return channelType[dataIndex];
   }
 
   /**
@@ -654,6 +622,35 @@ public class PixelFormat {
     }
   }
 
+  /**
+   * @return The number of data fields of the format
+   */
+  public int getDataFieldCount() {
+    return bitSize.length;
+  }
+
+  /**
+   * Get the type semantics of the data stored in the given data field. If this is a skipped field
+   * then null is returned because the values in that field are undefined.
+   *
+   * @param dataIndex
+   *     The data field index
+   * @return The type of the data field
+   *
+   * @throws IndexOutOfBoundsException
+   *     if `dataIndex` is less than 0 or greater than or equal to `getDataFieldCount()`
+   */
+  public Type getDataFieldType(int dataIndex) {
+    return channelType[dataIndex];
+  }
+
+  /**
+   * @return True if this format has a data field representing the alpha channel
+   */
+  public boolean hasAlphaChannel() {
+    return alphaDataField >= 0;
+  }
+
   @Override
   public int hashCode() {
     int result = 17;
@@ -664,15 +661,17 @@ public class PixelFormat {
     return result;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (!(o instanceof PixelFormat)) {
-      return false;
-    }
-    PixelFormat f = (PixelFormat) o;
-    return Arrays.equals(f.colorToDataField, colorToDataField) && Arrays
-        .equals(f.channelType, channelType) && Arrays.equals(f.bitSize, bitSize)
-        && f.alphaDataField == alphaDataField;
+  /**
+   * Get whether or not the specified data field is skipped for this format, or if it represents a
+   * color or alpha channel. A skipped field has no type interpretation with respect to the format,
+   * although it still has a bit size.
+   *
+   * @param dataIndex
+   *     The index of the data field
+   * @return True if the field is skipped and has no defined type information
+   */
+  public boolean isDataFieldSkipped(int dataIndex) {
+    return channelType[dataIndex] == null;
   }
 
   @Override
