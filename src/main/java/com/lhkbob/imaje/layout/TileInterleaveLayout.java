@@ -84,17 +84,20 @@ public class TileInterleaveLayout implements DataLayout {
      * Every band value for a pixel is packed together in adjacent primitives. Pixels are then
      * arranged in the data buffer according to the tiling and dimensions of the layout.
      */
-    PIXEL, /**
+    PIXEL,
+    /**
      * A band's values for every pixel in a scanline are packed together, followed by the next
      * band's values for the same scanline row. The scanline row is restricted by the tiling (i.e.
      * scanline interleaving is more fine-grained than tile interlreaving).
      */
-    SCANLINE, /**
+    SCANLINE,
+    /**
      * A band's values for every pixel within a tile are packed together, followed by the next
      * band's values for the same tile. The tile blocks (holding every band values) are arranged
      * according to the image and tile dimensions.
      */
-    TILE, /**
+    TILE,
+    /**
      * A band's values for the entire image (arranged according to the tile and image dimensions)
      * are packed together as subsequent primitive elements. The next band's values are arranged the
      * same immediately following the previous band's data.
