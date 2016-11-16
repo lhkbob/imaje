@@ -31,62 +31,52 @@
  */
 package com.lhkbob.imaje.layout;
 
-import com.lhkbob.imaje.data.ByteData;
-import com.lhkbob.imaje.data.DoubleData;
-import com.lhkbob.imaje.data.FloatData;
-import com.lhkbob.imaje.data.IntData;
-import com.lhkbob.imaje.data.LongData;
+import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.data.NumericData;
-import com.lhkbob.imaje.data.ShortData;
-import com.lhkbob.imaje.data.types.CustomBinaryData;
-import com.lhkbob.imaje.data.types.SignedInteger;
-import com.lhkbob.imaje.data.types.SignedNormalizedInteger;
-import com.lhkbob.imaje.data.types.UnsignedInteger;
-import com.lhkbob.imaje.data.types.UnsignedNormalizedInteger;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
+ * UnpackedPixelArray
+ * ================
  *
+ * UnpackedPixelArray is a RootPixelArray implementation that represents each channel value of a
+ * pixel as its own numeric value, for every pixel in the image. It uses a {@link DataLayout} to
+ * describe how the pixels are mapped from two dimensions to one. Data is stored in a {@link
+ * NumericData} instance whose bit size matches the bit size of each data field defined in its
+ * {@link PixelFormat}. The implementation and characteristics of the numeric data buffer must
+ * correspond with the formats' field types.
+ *
+ * @author Michael Ludwig
  */
-public class UnpackedPixelArray implements PixelArray {
-  private final DataLayout layout;
-  private final PixelFormat format;
+public class UnpackedPixelArray extends RootPixelArray {
   private final NumericData<?> data;
+  private final PixelFormat format;
+  private final DataLayout layout;
 
-  // Returns true if all data bit sizes are the same size, all bit sizes equal 8, 16, 32, or 64.
-  // And all types are the same.
-  public static boolean isSupported(PixelFormat format) {
-    int reqBits = -1;
-    PixelFormat.Type reqType = null;
-    for (int i = 0; i < format.getDataChannelCount(); i++) {
-      if (reqBits < 0) {
-        reqBits = format.getDataChannelBitSize(i);
-        // Validate bit size, without a specific data buffer assume a Java primitive bit size
-        if (reqBits != 8 && reqBits != 16 && reqBits != 32 && reqBits != 64) {
-          // Channel cannot be fully stored in a single primitive
-          return false;
-        }
-      } else if (reqBits != format.getDataChannelBitSize(i)) {
-        // Channel does not have the same size
-        return false;
-      }
-
-      PixelFormat.Type curType = format.getDataChannelType(i);
-      if (reqType == null) {
-        // This could still be null if the data channel is skipped
-        reqType = curType;
-      } else if (curType != null && reqType != curType) {
-        // Unskipped channel differs from another unskipped channel
-        return false;
-      }
-    }
-
-    return true;
-  }
-
+  /**
+   * Create a new UnpackedPixelArray that assumes logical color channel data is described by
+   * `format`, mapped from two dimensions to one by `layout`, and stored within `data`.
+   *
+   * The layout must have a band count equal to the data field count of the format, since each data
+   * field of the format correspond to a band in the data layout (even if the field is marked as
+   * skipped). Every data field bit size must be the same and all unskipped fields must have the
+   * same type. This bit size and type must be compatible with `data`, which holds the pixel data
+   * for every single band. Compatibility is determined by {@link
+   * PixelArrays#checkBufferCompatible(DataBuffer, PixelFormat.Type, int)}. `data` must have a
+   * length equal to the required elements specified by `layout`.
+   *
+   * @param format
+   *     The pixel format for the array
+   * @param layout
+   *     The layout of the array
+   * @param data
+   *     The data source of the array
+   * @throws IllegalArgumentException
+   *     if the requirements described above are not met
+   */
   public UnpackedPixelArray(PixelFormat format, DataLayout layout, NumericData<?> data) {
-    Arguments.equals("channel count", format.getDataChannelCount(), layout.getChannelCount());
-    Arguments.checkArrayRange("data length", data.getLength(), 0, layout.getRequiredDataElements());
+    Arguments.equals("channel count", format.getDataFieldCount(), layout.getBandCount());
+    Arguments.equals("data length", layout.getRequiredDataElements(), data.getLength());
 
     // Now verify that the format fits the mold expected of unpacked types
     // i.e. bit size for each channel is the same and type of each channel is the same.
@@ -100,89 +90,20 @@ public class UnpackedPixelArray implements PixelArray {
     // NOTE: this performs the equivalent validation as isSupported() but is also targeted directly
     // with the bit size of the data buffer, so is more efficient and potentially more flexible if
     // someone implemented a non-Java primitive sized numeric data source.
-    for (int i = 0; i < format.getDataChannelCount(); i++) {
-      if (format.getDataChannelType(i) != null && format.getDataChannelType(i) != channelType) {
+    for (int i = 0; i < format.getDataFieldCount(); i++) {
+      if (format.getDataFieldType(i) != null && format.getDataFieldType(i) != channelType) {
         throw new IllegalArgumentException(
             "Data channel " + i + " has incorrect type for an unpacked encoder, expected "
-                + channelType + " but was " + format.getDataChannelType(i));
+                + channelType + " but was " + format.getDataFieldType(i));
       }
-      if (format.getDataChannelBitSize(i) != channelBitSize) {
+      if (format.getDataFieldBitSize(i) != channelBitSize) {
         throw new IllegalArgumentException(
             "Data channel " + i + " has incorrect bit size for an unpacked encoder, expected "
-                + channelBitSize + " but was " + format.getDataChannelBitSize(i));
+                + channelBitSize + " but was " + format.getDataFieldBitSize(i));
       }
     }
 
-    // At this point the format is self-consistent with an unpacked format but make sure the
-    // numeric data source provides a compatible type to the pixel format
-    if (channelBitSize != data.getBitSize()) {
-      throw new IllegalArgumentException(
-          "Channel bit size is incompatible with data source bit size, expected " + channelBitSize
-              + " but was " + data.getBitSize());
-    }
-
-    boolean badType = true;
-    switch (channelType) {
-    case UINT:
-    case USCALED:
-      // Must go through a known type with UINT semantics
-      if (data instanceof CustomBinaryData && ((CustomBinaryData) data)
-          .getBinaryRepresentation() instanceof UnsignedInteger) {
-        badType = false;
-      }
-    case SINT:
-    case SSCALED:
-      // Native short, int, long, byte is preferred
-      if (data instanceof ByteData || data instanceof ShortData || data instanceof IntData
-          || data instanceof LongData) {
-        badType = false;
-      } else if (data instanceof CustomBinaryData && ((CustomBinaryData) data)
-          .getBinaryRepresentation() instanceof SignedInteger) {
-        badType = false;
-      }
-      break;
-    case UNORM:
-      // Must go through a known type with UNORM semantics
-      if (data instanceof CustomBinaryData && ((CustomBinaryData) data)
-          .getBinaryRepresentation() instanceof UnsignedNormalizedInteger) {
-        badType = false;
-      }
-      break;
-    case SNORM:
-      // Must go through a known type with SNORM semantics
-      if (data instanceof CustomBinaryData && ((CustomBinaryData) data)
-          .getBinaryRepresentation() instanceof SignedNormalizedInteger) {
-        badType = false;
-      }
-      break;
-    case SFLOAT:
-      // Native float or double is preferred
-      if (data instanceof FloatData || data instanceof DoubleData) {
-        badType = false;
-      } else if (data instanceof CustomBinaryData) {
-        // Only other valid source type is a BinaryNumericSource with one of the known SFLOAT types
-        CustomBinaryData d = (CustomBinaryData) data;
-        if (d.getBinaryRepresentation().isFloatingPoint() && !d.getBinaryRepresentation()
-            .isUnsigned()) {
-          badType = false;
-        }
-      }
-      break;
-    case UFLOAT:
-      if (data instanceof CustomBinaryData) {
-        CustomBinaryData d = (CustomBinaryData) data;
-        if (d.getBinaryRepresentation().isFloatingPoint() && d.getBinaryRepresentation()
-            .isUnsigned()) {
-          badType = false;
-        }
-      }
-      break;
-    }
-
-    if (badType) {
-      throw new IllegalArgumentException(
-          "Unsupported DataSource type (" + data + ") for type " + channelType);
-    }
+    PixelArrays.checkBufferCompatible(data, channelType, channelBitSize);
 
     // Validation complete
     this.data = data;
@@ -190,45 +111,69 @@ public class UnpackedPixelArray implements PixelArray {
     this.layout = layout;
   }
 
-  @Override
-  public DataLayout getLayout() {
-    return layout;
-  }
+  /**
+   * Determine if the given pixel format can be used by UnpackedPixelArray instances. To be
+   * compatible, every data field of the format (even if skipped) must have the same bit size. This
+   * bit size must be an exact match with one of the Java primitive types (i.e. 8, 16, 32, or 64).
+   * Every unskipped data field must also have the same type semantics.
+   *
+   * @param format
+   *     The pixel format to check
+   * @return True if could be used to represent a format unpacked across multiple primitives
+   */
+  public static boolean isSupported(PixelFormat format) {
+    int reqBits = -1;
+    PixelFormat.Type reqType = null;
+    for (int i = 0; i < format.getDataFieldCount(); i++) {
+      if (reqBits < 0) {
+        reqBits = format.getDataFieldBitSize(i);
+        // Validate bit size, without a specific data buffer assume a Java primitive bit size
+        if (reqBits != 8 && reqBits != 16 && reqBits != 32 && reqBits != 64) {
+          // Channel cannot be fully stored in a single primitive
+          return false;
+        }
+      } else if (reqBits != format.getDataFieldBitSize(i)) {
+        // Channel does not have the same size
+        return false;
+      }
 
-  @Override
-  public PixelFormat getFormat() {
-    return format;
-  }
+      PixelFormat.Type curType = format.getDataFieldType(i);
+      if (reqType == null) {
+        // This could still be null if the data channel is skipped
+        reqType = curType;
+      } else if (curType != null && reqType != curType) {
+        // Unskipped channel differs from another unskipped channel
+        return false;
+      }
+    }
 
-  @Override
-  public NumericData<?> getData() {
-    return data;
+    return true;
   }
 
   @Override
   public double get(int x, int y, double[] channelValues) {
     for (int i = 0; i < format.getColorChannelCount(); i++) {
-      int dataChannel = format.getColorChannelDataIndex(i);
-      channelValues[i] = data.getValue(layout.getChannelIndex(x, y, dataChannel));
+      int dataChannel = format.getColorChannelDataField(i);
+      channelValues[i] = data.getValue(layout.getBandOffset(x, y, dataChannel));
     }
 
     if (format.hasAlphaChannel()) {
-      return data.getValue(layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()));
+      return data.getValue(layout.getBandOffset(x, y, format.getAlphaChannelDataField()));
     } else {
       return 1.0;
     }
   }
 
   @Override
-  public double get(int x, int y, double[] channelValues, long[] channels) {
-    layout.getChannelIndices(x, y, channels);
+  public double get(int x, int y, double[] channelValues, long[] bandOffsets) {
+    layout.getBandOffsets(x, y, bandOffsets);
     for (int i = 0; i < format.getColorChannelCount(); i++) {
-      int dataChannel = format.getColorChannelDataIndex(i);
-      channelValues[i] = data.getValue(channels[dataChannel]);
+      int dataChannel = format.getColorChannelDataField(i);
+      channelValues[i] = data.getValue(bandOffsets[dataChannel]);
     }
 
     if (format.hasAlphaChannel()) {
-      return data.getValue(channels[format.getAlphaChannelDataIndex()]);
+      return data.getValue(bandOffsets[format.getAlphaChannelDataField()]);
     } else {
       return 1.0;
     }
@@ -237,7 +182,7 @@ public class UnpackedPixelArray implements PixelArray {
   @Override
   public double getAlpha(int x, int y) {
     if (format.hasAlphaChannel()) {
-      return data.getValue(layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()));
+      return data.getValue(layout.getBandOffset(x, y, format.getAlphaChannelDataField()));
     } else {
       // No alpha channel
       return 1.0;
@@ -245,39 +190,55 @@ public class UnpackedPixelArray implements PixelArray {
   }
 
   @Override
+  public NumericData<?> getData(int band) {
+    Arguments.checkIndex("band", format.getDataFieldCount(), band);
+    return data;
+  }
+
+  @Override
+  public PixelFormat getFormat() {
+    return format;
+  }
+
+  @Override
+  public DataLayout getLayout() {
+    return layout;
+  }
+
+  @Override
+  public boolean isReadOnly() {
+    return false;
+  }
+
+  @Override
   public void set(int x, int y, double[] channelValues, double a) {
     for (int i = 0; i < format.getColorChannelCount(); i++) {
-      int dataChannel = format.getColorChannelDataIndex(i);
-      data.setValue(layout.getChannelIndex(x, y, dataChannel), channelValues[i]);
+      int dataChannel = format.getColorChannelDataField(i);
+      data.setValue(layout.getBandOffset(x, y, dataChannel), channelValues[i]);
     }
 
     if (format.hasAlphaChannel()) {
-      data.setValue(layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()), a);
+      data.setValue(layout.getBandOffset(x, y, format.getAlphaChannelDataField()), a);
     } // otherwise no alpha channel so ignore the set request
   }
 
   @Override
-  public void set(int x, int y, double[] channelValues, double a, long[] channels) {
-    layout.getChannelIndices(x, y, channels);
+  public void set(int x, int y, double[] channelValues, double a, long[] bandOffsets) {
+    layout.getBandOffsets(x, y, bandOffsets);
     for (int i = 0; i < format.getColorChannelCount(); i++) {
-      int dataChannel = format.getColorChannelDataIndex(i);
-      data.setValue(channels[dataChannel], channelValues[i]);
+      int dataChannel = format.getColorChannelDataField(i);
+      data.setValue(bandOffsets[dataChannel], channelValues[i]);
     }
 
     if (format.hasAlphaChannel()) {
-      data.setValue(channels[format.getAlphaChannelDataIndex()], a);
+      data.setValue(bandOffsets[format.getAlphaChannelDataField()], a);
     } // otherwise no alpha channel so ignore the set request
   }
 
   @Override
   public void setAlpha(int x, int y, double alpha) {
     if (format.hasAlphaChannel()) {
-      data.setValue(layout.getChannelIndex(x, y, format.getAlphaChannelDataIndex()), alpha);
+      data.setValue(layout.getBandOffset(x, y, format.getAlphaChannelDataField()), alpha);
     } // otherwise no alpha channel so ignore the set request
-  }
-
-  @Override
-  public boolean isReadOnly() {
-    return false;
   }
 }
