@@ -16,7 +16,9 @@ import com.lhkbob.imaje.data.DataBuffer;
  * + {@link DataBuffer}, which hold the pixel data as arranged by the layout
  *
  * RootPixelArray implementations define the constraints and relationships between these
- * components.
+ * components. The methods defined in PixelArray that can be determined by these components
+ * are implemented by RootPixelArray and made final so that all implementations have consistent
+ * behavior.
  *
  * @author Michael Ludwig
  */

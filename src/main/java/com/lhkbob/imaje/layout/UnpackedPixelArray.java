@@ -63,7 +63,8 @@ public class UnpackedPixelArray extends RootPixelArray {
    * same type. This bit size and type must be compatible with `data`, which holds the pixel data
    * for every single band. Compatibility is determined by {@link
    * PixelArrays#checkBufferCompatible(DataBuffer, PixelFormat.Type, int)}. `data` must have a
-   * length equal to the required elements specified by `layout`.
+   * length equal to the required elements specified by `layout`. The format cannot have any
+   * custom fields.
    *
    * @param format
    *     The pixel format for the array
@@ -77,6 +78,7 @@ public class UnpackedPixelArray extends RootPixelArray {
   public UnpackedPixelArray(PixelFormat format, DataLayout layout, NumericData<?> data) {
     Arguments.equals("channel count", format.getDataFieldCount(), layout.getBandCount());
     Arguments.equals("data length", layout.getRequiredDataElements(), data.getLength());
+    Arguments.equals("custom channel count", 0, format.getCustomChannelCount());
 
     // Now verify that the format fits the mold expected of unpacked types
     // i.e. bit size for each channel is the same and type of each channel is the same.
@@ -115,13 +117,17 @@ public class UnpackedPixelArray extends RootPixelArray {
    * Determine if the given pixel format can be used by UnpackedPixelArray instances. To be
    * compatible, every data field of the format (even if skipped) must have the same bit size. This
    * bit size must be an exact match with one of the Java primitive types (i.e. 8, 16, 32, or 64).
-   * Every unskipped data field must also have the same type semantics.
+   * Every unskipped data field must also have the same type semantics. If the format has custom
+   * channel counts then it is not supported.
    *
    * @param format
    *     The pixel format to check
    * @return True if could be used to represent a format unpacked across multiple primitives
    */
   public static boolean isSupported(PixelFormat format) {
+    if (format.getCustomChannelCount() != 0)
+      return false;
+
     int reqBits = -1;
     PixelFormat.Type reqType = null;
     for (int i = 0; i < format.getDataFieldCount(); i++) {

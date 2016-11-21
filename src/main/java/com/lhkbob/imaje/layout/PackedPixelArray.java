@@ -67,7 +67,8 @@ public class PackedPixelArray extends RootPixelArray {
    *
    * The layout must have a band count of 1 since all data fields of the format are packed into
    * a single primitive element. The total bit size of the format must equal the bit size of `data`.
-   * `data` must have a length equal to the required elements specified by `layout`.
+   * `data` must have a length equal to the required elements specified by `layout`. The format
+   * cannot have any custom fields.
    *
    * @param format
    *     The pixel format for the array
@@ -82,6 +83,7 @@ public class PackedPixelArray extends RootPixelArray {
     Arguments.equals("layout.getBandCount()", 1, layout.getBandCount());
     Arguments.equals("bit size", format.getBitSize(), data.getBitSize());
     Arguments.equals("data length", layout.getRequiredDataElements(), data.getLength());
+    Arguments.equals("custom channel count", 0, format.getCustomChannelCount());
 
     fields = new BinaryRepresentation[format.getDataFieldCount()];
     fieldMasks = new long[fields.length];
@@ -106,12 +108,17 @@ public class PackedPixelArray extends RootPixelArray {
    * PackedPixelArray also requires that any DataLayout has a band count of 1, the structure of a
    * PixelFormat guarantees that the data fields will be contiguous. The only caveat being that the
    * total number of bits required line up with the `byte`, `short`, `int`, or `long` sizes.
+   * The format is not supported if it has custom channels.
    *
    * @param format
    *     The pixel format to check
    * @return True if could be used to represent a format packed into a single primitive
    */
   public static boolean isSupported(PixelFormat format) {
+    if (format.getCustomChannelCount() != 0) {
+      return false;
+    }
+
     // PixelFormat's structure already guarantees the channels will be packed, and any bits that
     // are ignored will be marked as SKIPPED. Thus, the only validation is that the total bit
     // size must equal one of Java's primitive types.
