@@ -40,7 +40,12 @@ import java.util.Arrays;
  * PixelFormat describes how logical color channels (ordered from 0 to `N` consistent with color
  * definitions in the {@link com.lhkbob.imaje.color color} package) and an optional alpha channel
  * map to data fields. Data fields are almost equivalent to the bands described in {@link
- * DataLayout} except that they operate on a slightly higher level.
+ * DataLayout} except that they operate on a slightly higher level. Negative channel labels are
+ * interpreted in a special manner, with two defined behaviors ({@link #ALPHA_CHANNEL alpha} and
+ * {@link #SKIP_CHANNEL skipping}). Any negative channel value less than or equal to {@link
+ * #CUSTOM_DATA_CHANNEL} denotes a special data field that is not skipped but does not map to an
+ * actual color channel. The use of custom data channels is dependent on the RootPixelArray which
+ * utilizes it.
  *
  * Data fields can be packed together into a single primitive and extracted by an appropriately
  * implemented PixelArray. In this scenario, the layout has only one band but many fields. Another
@@ -63,8 +68,19 @@ import java.util.Arrays;
  */
 // FIXME how will this be updated to handle compressed formats?
 public class PixelFormat {
+  /**
+   * Special channel label to designate the data field will store alpha transparency data.
+   */
   public static final int ALPHA_CHANNEL = -1;
+  /**
+   * Special channel label to designate the data field as "skipped. It is ignored by this
+   * format but does influence the overall data layout, e.g. padding.
+   */
   public static final int SKIP_CHANNEL = -2;
+  /**
+   * The maximum
+   */
+  public static final int CUSTOM_DATA_CHANNEL = -3;
 
   /**
    * Type
@@ -127,25 +143,30 @@ public class PixelFormat {
      */
     UFLOAT
   }
+
   private final int alphaDataField;
-  private final int[] bitSize;
-  private final Type[] channelType;
+  private final int[] dataFieldBitSizes;
+  private final Type[] dataFieldTypes;
   private final int[] colorToDataField;
+
+  private final int[] customToDataField; // Index is -label - CUSTOM_DATA_FIELD
+  private final int customChannelCount;
 
   /**
    * Create a new PixelFormat whose data fields are described by the three parallel array maps,
-   * `dataChannelMap`, `dataType`, and `bitSize`. Each array must have the same length. The position
-   * within the array map represents the data field index. The corresponding value in
+   * `dataChannelMap`, `dataType`, and `dataFieldBitSizes`. Each array must have the same length.
+   * The position within the array map represents the data field index. The corresponding value in
    * `dataChannelMap` defines the channel associated with that field. A positive value represents a
    * logical color channel, ordered to line up with the color definitions in the {@link
-   * com.lhkbob.imaje.color color} package. {@link #ALPHA_CHANNEL} and {@link #SKIP_CHANNEL} may
-   * also be used to mark the field as holding alpha data or as ignorable padding. A channel may
+   * com.lhkbob.imaje.color color} package. {@link #ALPHA_CHANNEL}, {@link #SKIP_CHANNEL} and values
+   * less than or equal to {@link #CUSTOM_DATA_CHANNEL} may also be used to mark the field as
+   * holding alpha data, acting as padding, or as a PixelArray-dependent data channel. A channel may
    * only be assigned to one field. All logical color channels (up to maximum positive channel
    * provided in `dataChannelMap`) must be present in the mapping.
    *
    * `dataType` defines the type semantics for the data field. It must be non-null for any field
    * that is not declared as a skipped channel. The bit size of each data field is specified
-   * in `bitSize`. Each field must have a bit size of at least 1.
+   * in `dataFieldBitSizes`. Each field must have a bit size of at least 1.
    *
    * @param dataChannelMap
    *     The data field to channel assignment
@@ -156,7 +177,7 @@ public class PixelFormat {
    * @throws IllegalArgumentException
    *     if the mapping would not create a valid format
    * @throws NullPointerException
-   *     if a unskipped field has a null type
+   *     if an unskipped field has a null type
    */
   public PixelFormat(int[] dataChannelMap, Type[] dataType, int[] bitSize) {
     if (dataChannelMap.length != dataType.length || dataType.length != bitSize.length) {
@@ -165,7 +186,7 @@ public class PixelFormat {
 
     // Make sure all types are non-null for non-skipped channels
     for (int i = 0; i < dataType.length; i++) {
-      if (dataType[i] == null && dataChannelMap[i] > SKIP_CHANNEL) {
+      if (dataType[i] == null && dataChannelMap[i] != SKIP_CHANNEL) {
         throw new NullPointerException("Type cannot be null for unskipped channel " + i);
       }
     }
@@ -223,8 +244,7 @@ public class PixelFormat {
     // inverse map simultaneously
     int[] logicalToData = new int[logicalChannelsCount];
     for (int i = 0; i < logicalChannelsCount; i++) {
-      // Search for i within dataToLogicalMap. Although not necessary to check for duplicates, it
-      // allows for improved error reporting (instead of specifying a different value is missing).
+      // Search for i within dataChannelMap.
       int index = -1;
       for (int j = 0; j < dataChannelMap.length; j++) {
         if (dataChannelMap[j] == i) {
@@ -242,17 +262,65 @@ public class PixelFormat {
       logicalToData[i] = index;
     }
 
-    this.bitSize = Arrays.copyOf(bitSize, bitSize.length);
-    this.channelType = Arrays.copyOf(dataType, dataType.length);
-    // Nullify channel type for skipped channels
-    for (int i = 0; i < dataType.length; i++) {
-      if (dataChannelMap[i] < ALPHA_CHANNEL) {
-        this.channelType[i] = null;
+    // Now handle any custom data channels
+    int maxCustomIndex = -1;
+    for (int i = 0; i < dataChannelMap.length; i++) {
+      if (dataChannelMap[i] <= CUSTOM_DATA_CHANNEL) {
+        int index = getCustomChannelIndex(dataChannelMap[i]);
+        if (index >= maxCustomIndex) {
+          maxCustomIndex = index;
+        }
       }
     }
 
+    int customChannels = 0;
+    int[] customToData = new int[maxCustomIndex + 1];
+    for (int i = 0; i < customToData.length; i++) {
+      // Search for label within dataChannelMap.
+      int customLabel = getCustomChannelLabel(i);
+      int index = -1;
+      for (int j = 0; j < dataChannelMap.length; j++) {
+        if (dataChannelMap[j] == customLabel) {
+          if (index >= 0) {
+            // Duplicate custom index
+            throw new IllegalArgumentException(
+                "Duplicate custom data channel provided: " + customLabel);
+          }
+          index = j;
+        }
+      }
+
+      if (index < 0) {
+        // There was no custom data label, which can occur if someone uses a negative label
+        // that is significantly less than CUSTOM_DATA_CHANNEL.
+        customToData[i] = -1;
+      } else {
+        customToData[i] = index;
+        customChannels++;
+      }
+    }
+
+    this.dataFieldBitSizes = Arrays.copyOf(bitSize, bitSize.length);
+    this.dataFieldTypes = Arrays.copyOf(dataType, dataType.length);
+    // Nullify channel type for skipped channels
+    for (int i = 0; i < dataType.length; i++) {
+      if (dataChannelMap[i] < ALPHA_CHANNEL) {
+        this.dataFieldTypes[i] = null;
+      }
+    }
+
+    customChannelCount = customChannels;
     colorToDataField = logicalToData;
     alphaDataField = alphaIndex;
+    customToDataField = customToData;
+  }
+
+  private int getCustomChannelLabel(int index) {
+    return -(index + CUSTOM_DATA_CHANNEL);
+  }
+
+  private int getCustomChannelIndex(int label) {
+    return -label - CUSTOM_DATA_CHANNEL;
   }
 
   /**
@@ -378,6 +446,10 @@ public class PixelFormat {
    * formats. The ordering or mapping from color channel to data field does not need to be the same
    * for two formats to be compatible.
    *
+   * Custom channels are ignored when determining compatibility. Custom channels are pixel-array
+   * dependent fields that influence the actual color channel values but do not restrict or define
+   * the number of color channels.
+   *
    * If potential loss of resolution or precision is acceptable, then returning true from this
    * method indicates that the two formats can store the same type of color information.
    *
@@ -406,7 +478,8 @@ public class PixelFormat {
    * Two pixel formats have equivalent channels if they are {@link
    * #areChannelsCompatible(PixelFormat) compatible} and have matching types and bit sizes for each
    * channel. However, the ordering or mapping from color channel to data field does not need to be
-   * the same for two formats to be compatible.
+   * the same for two formats to be compatible. Unlike `areChannelsCompatible`, this does require
+   * custom channels to be equal as well.
    *
    * Equivalent channels implies that moving pixel data from one format to the other does not
    * lose any information, and is purely a reordering of the channels in the underlying data.
@@ -441,6 +514,27 @@ public class PixelFormat {
       }
     }
 
+    // Check all custom fields defined in this format for presence in the other; but first check
+    // the number of custom channels. If they are different then one of the format's has an extra
+    // custom field.
+    if (getCustomChannelCount() != format.getCustomChannelCount()) {
+      return false;
+    }
+    // If all of this format's fields are defined in the other format then the custom format
+    // has the exact same set of custom fields (given the counts are the same)
+    for (int i = 0; i < customToDataField.length; i++) {
+      int field = customToDataField[i];
+
+      if (field < 0)
+        continue;
+      int label = getCustomChannelLabel(i);
+      if (dataFieldBitSizes[field] != format.getCustomChannelBitSize(label))
+        return false;
+      if (dataFieldTypes[field] != format.getCustomChannelType(label)) {
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -451,8 +545,93 @@ public class PixelFormat {
     }
     PixelFormat f = (PixelFormat) o;
     return Arrays.equals(f.colorToDataField, colorToDataField) && Arrays
-        .equals(f.channelType, channelType) && Arrays.equals(f.bitSize, bitSize)
-        && f.alphaDataField == alphaDataField;
+        .equals(f.dataFieldTypes, dataFieldTypes) && Arrays
+        .equals(f.dataFieldBitSizes, dataFieldBitSizes)
+        && f.customChannelCount == customChannelCount && f.alphaDataField == alphaDataField
+        && Arrays.equals(customToDataField, customToDataField);
+  }
+
+  /**
+   * Get the bit size of the data field associated with the given custom channel. `channel` must be
+   * less than or equal to {@link #CUSTOM_DATA_CHANNEL}. If this format does not have the given
+   * custom channel present then 0 is returned.
+   *
+   * @param channel
+   *     The channel label
+   * @return The bits associated with the channel's data field, or 0 if it's not present
+   */
+  public int getCustomChannelBitSize(int channel) {
+    int dataField = getCustomChannelDataField(channel);
+    if (dataField >= 0) {
+      return dataFieldBitSizes[dataField];
+    } else {
+      return 0;
+    }
+  }
+
+  /**
+   * Get the data field index that stores data fo the given custom channel label. If `channel` is
+   * not present in this pixel format then `-1` is returned. `channel` must be less than or equal to
+   * {@link #CUSTOM_DATA_CHANNEL}.
+   *
+   * @param channel
+   *     The channel label
+   * @return The data field index for `channel` or -1 if no field is present for that channel
+   */
+  public int getCustomChannelDataField(int channel) {
+    if (channel > CUSTOM_DATA_CHANNEL) {
+      throw new IllegalArgumentException(
+          "Custom channel label must be less than or equal to CUSTOM_DATA_CHANNEL: " + channel);
+    }
+    int index = getCustomChannelIndex(channel);
+    if (index >= customToDataField.length) {
+      return -1;
+    } else {
+      return customToDataField[index];
+    }
+  }
+
+  /**
+   * Get the type of the data field associated with the given custom channel. `channel` must be
+   * less than or equal to {@link #CUSTOM_DATA_CHANNEL}. If this format does not have the given
+   * custom channel present then `null` is returned.
+   *
+   * @param channel
+   *     The channel label
+   * @return The type associated with the channel's data field, or `null` if it's not present
+   */
+  public Type getCustomChannelType(int channel) {
+    int dataField = getCustomChannelDataField(channel);
+    if (dataField >= 0) {
+      return dataFieldTypes[dataField];
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Get whether or not this format has a data field that stores value for the given custom channel.
+   * `channel` must be less than or equal to {@link #CUSTOM_DATA_CHANNEL}.
+   *
+   * @param channel
+   *     The channel label
+   * @return True if the channel is associated with a data field
+   */
+  public boolean hasCustomChannel(int channel) {
+    if (channel > CUSTOM_DATA_CHANNEL) {
+      throw new IllegalArgumentException(
+          "channel label must be less than or equal to CUSTOM_DATA_CHANNEL: " + channel);
+    }
+
+    int index = getCustomChannelIndex(channel);
+    return index < customToDataField.length && customToDataField[index] >= 0;
+  }
+
+  /**
+   * @return The number of custom channels mapped to data fields in this format.
+   */
+  public int getCustomChannelCount() {
+    return customChannelCount;
   }
 
   /**
@@ -463,7 +642,7 @@ public class PixelFormat {
    */
   public int getAlphaChannelBitSize() {
     if (hasAlphaChannel()) {
-      return bitSize[alphaDataField];
+      return dataFieldBitSizes[alphaDataField];
     } else {
       return 0;
     }
@@ -484,7 +663,7 @@ public class PixelFormat {
    */
   public Type getAlphaChannelType() {
     if (hasAlphaChannel()) {
-      return channelType[alphaDataField];
+      return dataFieldTypes[alphaDataField];
     } else {
       return null;
     }
@@ -495,8 +674,8 @@ public class PixelFormat {
    */
   public int getBitSize() {
     int total = 0;
-    for (int i = 0; i < bitSize.length; i++) {
-      total += bitSize[i];
+    for (int i = 0; i < dataFieldBitSizes.length; i++) {
+      total += dataFieldBitSizes[i];
     }
     return total;
   }
@@ -504,15 +683,16 @@ public class PixelFormat {
   /**
    * Get the total number of bits used by the valid channels of this format (i.e. all non-skipped
    * fields). This represents the informational content of the format although it may not equal the
-   * bit size of the primitive types required to hold pixels for the format.
+   * bit size of the primitive types required to hold pixels for the format. This includes color,
+   * alpha, and custom channels.
    *
-   * @return The total number of bits for just the color and alpha channel
+   * @return The total number of bits in unskipped channels
    */
   public int getBitSizeOfChannels() {
     int total = 0;
-    for (int i = 0; i < bitSize.length; i++) {
+    for (int i = 0; i < dataFieldBitSizes.length; i++) {
       if (!isDataFieldSkipped(i)) {
-        total += bitSize[i];
+        total += dataFieldBitSizes[i];
       }
     }
     return total;
@@ -523,13 +703,13 @@ public class PixelFormat {
    * fields of the format that have a logical channel index or are the alpha channel, ignoring all
    * fields that are marked to skip.
    *
-   * This is equal to the color channel count plus an additional one if the format has an alpha
-   * channel.
+   * This is equal to the color channel count plus custom channel count plus an additional one if
+   * the format has an alpha channel.
    *
    * @return The logical channel count of this format
    */
   public int getChannelCount() {
-    return colorToDataField.length + (alphaDataField >= 0 ? 1 : 0);
+    return colorToDataField.length + (alphaDataField >= 0 ? 1 : 0) + customChannelCount;
   }
 
   /**
@@ -543,7 +723,7 @@ public class PixelFormat {
    *     if `colorChannel` is less than 0 or greater than or equal to `getColorChannelCount()`
    */
   public int getColorChannelBitSize(int colorChannel) {
-    return bitSize[colorToDataField[colorChannel]];
+    return dataFieldBitSizes[colorToDataField[colorChannel]];
   }
 
   /**
@@ -578,7 +758,7 @@ public class PixelFormat {
    *     if `colorChannel` is less than 0 or greater than or equal to `getColorChannelCount()`
    */
   public Type getColorChannelType(int colorChannel) {
-    return channelType[colorToDataField[colorChannel]];
+    return dataFieldTypes[colorToDataField[colorChannel]];
   }
 
   /**
@@ -594,7 +774,7 @@ public class PixelFormat {
    *     if `dataIndex` is less than 0 or greater than or equal to `getDataFieldCount()`
    */
   public int getDataFieldBitSize(int dataIndex) {
-    return bitSize[dataIndex];
+    return dataFieldBitSizes[dataIndex];
   }
 
   /**
@@ -619,6 +799,11 @@ public class PixelFormat {
           return i;
         }
       }
+      for (int i = 0; i < customToDataField.length; i++) {
+        if (customToDataField[i] == dataIndex) {
+          return getCustomChannelLabel(i);
+        }
+      }
 
       return SKIP_CHANNEL;
     }
@@ -628,7 +813,7 @@ public class PixelFormat {
    * @return The number of data fields of the format
    */
   public int getDataFieldCount() {
-    return bitSize.length;
+    return dataFieldBitSizes.length;
   }
 
   /**
@@ -643,7 +828,7 @@ public class PixelFormat {
    *     if `dataIndex` is less than 0 or greater than or equal to `getDataFieldCount()`
    */
   public Type getDataFieldType(int dataIndex) {
-    return channelType[dataIndex];
+    return dataFieldTypes[dataIndex];
   }
 
   /**
@@ -656,9 +841,10 @@ public class PixelFormat {
   @Override
   public int hashCode() {
     int result = 17;
-    result = 31 * result + Arrays.hashCode(bitSize);
-    result = 31 * result + Arrays.hashCode(channelType);
+    result = 31 * result + Arrays.hashCode(dataFieldBitSizes);
+    result = 31 * result + Arrays.hashCode(dataFieldTypes);
     result = 31 * result + Arrays.hashCode(colorToDataField);
+    result = 31 * result + Arrays.hashCode(customToDataField);
     result = 31 * result + alphaDataField;
     return result;
   }
@@ -673,7 +859,7 @@ public class PixelFormat {
    * @return True if the field is skipped and has no defined type information
    */
   public boolean isDataFieldSkipped(int dataIndex) {
-    return channelType[dataIndex] == null;
+    return dataFieldTypes[dataIndex] == null;
   }
 
   @Override
@@ -699,6 +885,15 @@ public class PixelFormat {
             break;
           }
         }
+        if (!color) {
+          for (int j = 0; j < customToDataField.length; j++) {
+            if (i == customToDataField[j]) {
+              channelName = "Cu" + getCustomChannelLabel(j);
+              color = true;
+              break;
+            }
+          }
+        }
 
         if (!color) {
           // A skipped data channel
@@ -709,9 +904,9 @@ public class PixelFormat {
 
       sb.append(channelName).append("(");
       if (!ignoreType) {
-        sb.append(channelType[i]).append(", ");
+        sb.append(dataFieldTypes[i]).append(", ");
       }
-      sb.append(bitSize[i]).append(")");
+      sb.append(dataFieldBitSizes[i]).append(")");
     }
     sb.append(")");
     return sb.toString();
