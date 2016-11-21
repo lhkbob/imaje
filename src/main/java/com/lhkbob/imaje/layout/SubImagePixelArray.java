@@ -31,15 +31,23 @@
  */
 package com.lhkbob.imaje.layout;
 
-import com.lhkbob.imaje.Images;
-import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.util.Arguments;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
+ * SubImagePixelArray
+ * ==================
  *
+ * SubImagePixelArray is a wrapper PixelArray that accesses a window within its parent based on an
+ * offset along the X and Y axis. Unlike {@link VirtualWindowArray}, this wrapping array must be
+ * completely contained in the parent image's dimensions (as per {@link
+ * ImageWindow#isContainedInImage(int, int)}. As a wrapper, any modifications made via this array
+ * directly affect the parent's state, and any modifications to the parent's state (within the
+ * window) will be visible in this array.
+ *
+ * The window's lower-left corner in the parent PixelArray is mapped to the origin of the
+ * SubImagePixelArray, and the sub-image array's dimensions are that of the window.
+ *
+ * @author Michael Ludwig
  */
 public class SubImagePixelArray implements PixelArray {
   private final PixelArray parent;
@@ -49,6 +57,45 @@ public class SubImagePixelArray implements PixelArray {
   private final int width;
   private final int height;
 
+  /**
+   * Create a SubImagePixelArray that represents the given `window` within the parent's
+   * coordinate space. This is equivalent to `new SubImagePixelArray(parent, window.getX(),
+   * window.getY(), window.getWidth(), window.getHeight())`.
+   *
+   * @param parent
+   *     The parent array
+   * @param window
+   *     The window to access within parent
+   * @throws NullPointerException
+   *     if `parent` or `window` are null
+   * @throws IndexOutOfBoundsException
+   *     if the window is not contained in `parent`'s dimensions
+   */
+  public SubImagePixelArray(PixelArray parent, ImageWindow window) {
+    this(parent, window.getX(), window.getY(), window.getWidth(), window.getHeight());
+  }
+
+  /**
+   * Create a SubImagePixelArray that represents a window within the parent's coordinate space.
+   * The window is fully contained within the pixel data defined by `parent`. The pixel of this
+   * image at `(0,0)` corresponds to `(x,y)` in `parent`. This array's reported dimensions are
+   * `w X h`.
+   *
+   * @param parent
+   *     The array this sub-image accesses
+   * @param x
+   *     The x offset into parent for this image's origin
+   * @param y
+   *     The y offset into parent for this image's origin
+   * @param w
+   *     The width of this array
+   * @param h
+   *     The height of this array
+   * @throws NullPointerException
+   *     if `parent` is null
+   * @throws IndexOutOfBoundsException
+   *     `x`, `y`, `w`, and `h` define a region not contained with in `parent`'s dimensions.
+   */
   public SubImagePixelArray(PixelArray parent, int x, int y, int w, int h) {
     Arguments.notNull("parent", parent);
     Arguments.checkArrayRange("width", parent.getWidth(), x, w);
@@ -61,101 +108,57 @@ public class SubImagePixelArray implements PixelArray {
     height = h;
   }
 
-  public static PixelArray createSubImageForRaster(PixelArray parent, int x, int y, int w, int h) {
-    return new SubImagePixelArray(parent, x, y, w, h);
+  /**
+   * @return The offset along the x axis into its parent's coordinate system.
+   */
+  public int getOffsetX() {
+    return offsetX;
   }
 
-  public static List<PixelArray> createSubImagesForMipmap(
-      List<PixelArray> parents, int x, int y, int w, int h) {
-    // Because w and h are necessary <= to the base width and height, then the max mipmaps of the
-    // subimage pyramid must be <= to the size of parents.
-    int mipmapCount = Images.getMaxMipmaps(w, h);
-
-    List<PixelArray> subMips = new ArrayList<>(mipmapCount);
-    for (int i = 0; i < mipmapCount; i++) {
-      // The subimage size for the mipmap level is straightforwardly based on base subimage's size
-      int mipWidth = Images.getMipmapDimension(w, i);
-      int mipHeight = Images.getMipmapDimension(h, i);
-
-      // The offset into the mipmap is offset / 2^i, flooring and clamping to 0, which accounts
-      // for the effective pixel size doubling when moving from one level to a lower resolution one
-      int mipX = Math.max(x >> i, 0);
-      int mipY = Math.max(y >> i, 0);
-
-      subMips.add(createSubImageForRaster(parents.get(i), mipX, mipY, mipWidth, mipHeight));
-    }
-
-    return subMips;
-  }
-
-  public static List<PixelArray> createSubImagesForArray(
-      List<PixelArray> parents, int x, int y, int w, int h) {
-    List<PixelArray> subImages = new ArrayList<>(parents.size());
-    for (PixelArray parent : parents) {
-      subImages.add(createSubImageForRaster(parent, x, y, w, h));
-    }
-    return subImages;
-  }
-
-  public static List<List<PixelArray>> createSubImagesForMipmapArray(
-      List<List<PixelArray>> parents, int x, int y, int w, int h) {
-    List<List<PixelArray>> subLayers = new ArrayList<>(parents.size());
-    for (List<PixelArray> mipmaps : parents) {
-      subLayers.add(createSubImagesForMipmap(mipmaps, x, y, w, h));
-    }
-    return subLayers;
-  }
-
-  public static List<PixelArray> createSubImagesForVolume(
-      List<PixelArray> parents, int x, int y, int z, int w, int h, int d) {
-    List<PixelArray> subImages = new ArrayList<>(d);
-    for (int i = z; i < z + d; i++) {
-      subImages.add(createSubImageForRaster(parents.get(i), x, y, w, h));
-    }
-    return subImages;
-  }
-
-  public static List<List<PixelArray>> createSubImagesForMipmapVolume(
-      List<List<PixelArray>> parents, int x, int y, int z, int w, int h, int d) {
-    // This process follows the same pattern as in createSubImagesForMipmap except that it handles
-    // three dimensions, thus relying on createSubImagesForVolume for the inner subimage creation.
-    int mipmapCount = Images.getMaxMipmaps(w, h, d);
-
-    List<List<PixelArray>> subMips = new ArrayList<>(mipmapCount);
-    for (int i = 0; i < mipmapCount; i++) {
-      int mipWidth = Images.getMipmapDimension(w, i);
-      int mipHeight = Images.getMipmapDimension(h, i);
-      int mipDepth = Images.getMipmapDimension(d, i);
-
-      int mipX = Math.max(x >> i, 0);
-      int mipY = Math.max(y >> i, 0);
-      int mipZ = Math.max(z >> i, 0);
-
-      subMips.add(createSubImagesForVolume(parents.get(i), mipX, mipY, mipZ, mipWidth, mipHeight,
-          mipDepth));
-    }
-
-    return subMips;
-  }
-
-  @Override
-  public DataLayout getLayout() {
-    return parent.getLayout();
-  }
-
-  @Override
-  public DataBuffer getData() {
-    return parent.getData();
-  }
-
-  @Override
-  public PixelFormat getFormat() {
-    return parent.getFormat();
+  /**
+   * @return The offset along the y axis into its parent's coordinate system.
+   */
+  public int getOffsetY() {
+    return offsetY;
   }
 
   @Override
   public int getColorChannelCount() {
     return parent.getColorChannelCount();
+  }
+
+  @Override
+  public boolean hasAlphaChannel() {
+    return parent.hasAlphaChannel();
+  }
+
+  @Override
+  public int getBandCount() {
+    return parent.getBandCount();
+  }
+
+  @Override
+  public void toParentCoordinate(ImageCoordinate coord) {
+    coord.setX(coord.getX() + offsetX);
+    coord.setY(coord.getY() + offsetY);
+  }
+
+  @Override
+  public void fromParentCoordinate(ImageCoordinate coord) {
+    coord.setX(coord.getX() - offsetX);
+    coord.setY(coord.getY() - offsetY);
+  }
+
+  @Override
+  public void toParentWindow(ImageWindow window) {
+    window.setX(window.getX() + offsetX);
+    window.setY(window.getY() + offsetY);
+  }
+
+  @Override
+  public void fromParentWindow(ImageWindow window) {
+    window.setX(window.getX() - offsetX);
+    window.setY(window.getY() - offsetY);
   }
 
   @Override
@@ -165,9 +168,9 @@ public class SubImagePixelArray implements PixelArray {
   }
 
   @Override
-  public double get(int x, int y, double[] channelValues, long[] channels) {
+  public double get(int x, int y, double[] channelValues, long[] bandOffsets) {
     checkCoordinate(x, y);
-    return parent.get(offsetX + x, offsetY + y, channelValues, channels);
+    return parent.get(offsetX + x, offsetY + y, channelValues, bandOffsets);
   }
 
   @Override
@@ -183,9 +186,9 @@ public class SubImagePixelArray implements PixelArray {
   }
 
   @Override
-  public void set(int x, int y, double[] channelValues, double a, long[] channels) {
+  public void set(int x, int y, double[] channelValues, double a, long[] bandOffsets) {
     checkCoordinate(x, y);
-    parent.set(offsetX + x, offsetY + y, channelValues, a, channels);
+    parent.set(offsetX + x, offsetY + y, channelValues, a, bandOffsets);
   }
 
   @Override
