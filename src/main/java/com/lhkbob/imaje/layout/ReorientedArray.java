@@ -102,12 +102,10 @@ public class ReorientedArray implements PixelArray {
      */
     ROW_MAJOR
   }
-
-  private final RootPixelArray parent;
-  private final boolean topToBottom;
-  private final boolean rightToLeft;
-
   private final boolean columnMajor;
+  private final RootPixelArray parent;
+  private final boolean rightToLeft;
+  private final boolean topToBottom;
 
   /**
    * Create a ReorientedArray that reorients the coordinate system and data of `parent` based on the
@@ -163,25 +161,46 @@ public class ReorientedArray implements PixelArray {
     }
   }
 
-  /**
-   * @return True if data is arranged from top to bottom; if false then data is bottom to top.
-   */
-  public boolean isTopToBottom() {
-    return topToBottom;
+  @Override
+  public void fromParentCoordinate(ImageCoordinate coord) {
+    // It just so happens that the to-parent conversion math is its own inverse to go from parent
+    // to child coordinate space.
+    toParentCoordinate(coord);
   }
 
-  /**
-   * @return True if data is arranged from right to left; if false then data is left to right.
-   */
-  public boolean isRightToLeft() {
-    return rightToLeft;
+  @Override
+  public void fromParentWindow(ImageWindow window) {
+    toParentWindow(window);
   }
 
-  /**
-   * @return True if data is arranged column-major; if false then data is row-major.
-   */
-  public boolean isColumnMajor() {
-    return columnMajor;
+  @Override
+  public double get(int x, int y, double[] channelValues) {
+    return parent.get(getParentX(x, y), getParentY(x, y), channelValues);
+  }
+
+  @Override
+  public double get(int x, int y, double[] channelValues, long[] bandOffsets) {
+    return parent.get(getParentX(x, y), getParentY(x, y), channelValues, bandOffsets);
+  }
+
+  @Override
+  public double getAlpha(int x, int y) {
+    return parent.getAlpha(getParentX(x, y), getParentY(x, y));
+  }
+
+  @Override
+  public int getBandCount() {
+    return parent.getBandCount();
+  }
+
+  @Override
+  public int getColorChannelCount() {
+    return parent.getColorChannelCount();
+  }
+
+  @Override
+  public int getHeight() {
+    return columnMajor ? parent.getWidth() : parent.getHeight();
   }
 
   /**
@@ -205,63 +224,45 @@ public class ReorientedArray implements PixelArray {
     return EnumSet.of(major, vertical, horizontal);
   }
 
-  private int getParentY(int x, int y) {
-    if (columnMajor) {
-      return getOrientedX(x);
-    } else {
-      return getOrientedY(y);
-    }
-  }
-
-  private int getParentX(int x, int y) {
-    if (columnMajor) {
-      return getOrientedY(y);
-    } else {
-      return getOrientedX(x);
-    }
-  }
-
-  private int getOrientedY(int y) {
-    if (topToBottom) {
-      return getHeight() - y - 1;
-    } else {
-      return y;
-    }
-  }
-
-  private int getOrientedX(int x) {
-    if (rightToLeft) {
-      return getWidth() - x - 1;
-    } else {
-      return x;
-    }
-  }
-
-  private static boolean hasOption(OrientationOption[] options, OrientationOption target) {
-    if (options == null) {
-      return false;
-    }
-    for (OrientationOption option : options) {
-      if (option == target) {
-        return true;
-      }
-    }
-    return false;
+  @Override
+  public PixelArray getParent() {
+    return parent;
   }
 
   @Override
-  public double get(int x, int y, double[] channelValues) {
-    return parent.get(getParentX(x, y), getParentY(x, y), channelValues);
+  public int getWidth() {
+    return columnMajor ? parent.getHeight() : parent.getWidth();
   }
 
   @Override
-  public double get(int x, int y, double[] channelValues, long[] bandOffsets) {
-    return parent.get(getParentX(x, y), getParentY(x, y), channelValues, bandOffsets);
+  public boolean hasAlphaChannel() {
+    return parent.hasAlphaChannel();
+  }
+
+  /**
+   * @return True if data is arranged column-major; if false then data is row-major.
+   */
+  public boolean isColumnMajor() {
+    return columnMajor;
   }
 
   @Override
-  public double getAlpha(int x, int y) {
-    return parent.getAlpha(getParentX(x, y), getParentY(x, y));
+  public boolean isReadOnly() {
+    return parent.isReadOnly();
+  }
+
+  /**
+   * @return True if data is arranged from right to left; if false then data is left to right.
+   */
+  public boolean isRightToLeft() {
+    return rightToLeft;
+  }
+
+  /**
+   * @return True if data is arranged from top to bottom; if false then data is bottom to top.
+   */
+  public boolean isTopToBottom() {
+    return topToBottom;
   }
 
   @Override
@@ -280,53 +281,11 @@ public class ReorientedArray implements PixelArray {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return parent.isReadOnly();
-  }
-
-  @Override
-  public PixelArray getParent() {
-    return parent;
-  }
-
-  @Override
-  public int getWidth() {
-    return columnMajor ? parent.getHeight() : parent.getWidth();
-  }
-
-  @Override
-  public int getHeight() {
-    return columnMajor ? parent.getWidth() : parent.getHeight();
-  }
-
-  @Override
-  public int getColorChannelCount() {
-    return parent.getColorChannelCount();
-  }
-
-  @Override
-  public boolean hasAlphaChannel() {
-    return parent.hasAlphaChannel();
-  }
-
-  @Override
-  public int getBandCount() {
-    return parent.getBandCount();
-  }
-
-  @Override
   public void toParentCoordinate(ImageCoordinate coord) {
     int x = coord.getX();
     int y = coord.getY();
     coord.setX(getParentX(x, y));
     coord.setY(getParentY(x, y));
-  }
-
-  @Override
-  public void fromParentCoordinate(ImageCoordinate coord) {
-    // It just so happens that the to-parent conversion math is its own inverse to go from parent
-    // to child coordinate space.
-    toParentCoordinate(coord);
   }
 
   @Override
@@ -341,8 +300,47 @@ public class ReorientedArray implements PixelArray {
     window.setHeight(columnMajor ? w : h);
   }
 
-  @Override
-  public void fromParentWindow(ImageWindow window) {
-    toParentWindow(window);
+  private int getOrientedX(int x) {
+    if (rightToLeft) {
+      return getWidth() - x - 1;
+    } else {
+      return x;
+    }
+  }
+
+  private int getOrientedY(int y) {
+    if (topToBottom) {
+      return getHeight() - y - 1;
+    } else {
+      return y;
+    }
+  }
+
+  private int getParentX(int x, int y) {
+    if (columnMajor) {
+      return getOrientedY(y);
+    } else {
+      return getOrientedX(x);
+    }
+  }
+
+  private int getParentY(int x, int y) {
+    if (columnMajor) {
+      return getOrientedX(x);
+    } else {
+      return getOrientedY(y);
+    }
+  }
+
+  private static boolean hasOption(OrientationOption[] options, OrientationOption target) {
+    if (options == null) {
+      return false;
+    }
+    for (OrientationOption option : options) {
+      if (option == target) {
+        return true;
+      }
+    }
+    return false;
   }
 }
