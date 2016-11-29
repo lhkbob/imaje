@@ -29,7 +29,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.annot;
+package com.lhkbob.imaje.color.space.rgb;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -38,12 +38,27 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Chromaticity
+ * ============
+ *
+ * A type annotation used in conjunction with {@link Primaries} and {@link Illuminant} to specify
+ * the chromaticity coordinates of a color, where the luminance of the color is irrelevant. The
+ * chromaticity specifies the `x` and `y` component values in the {@link com.lhkbob.imaje.color.Yxy}
+ * color system.
+ *
+ * @author Michael Ludwig
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target(ElementType.TYPE_USE)
 public @interface Chromaticity {
+  /**
+   * @return The `x` chromaticity coordinate
+   */
   double x();
 
+  /**
+   * @return The `y` chromaticity coordinate
+   */
   double y();
 }
