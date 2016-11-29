@@ -29,10 +29,13 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
 
+import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
+import com.lhkbob.imaje.util.Functions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,12 +43,32 @@ import java.util.List;
 /**
  *
  */
-public class Curves implements Transform {
-  private final List<Curve> curves;
+public class CurveTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI>, SO extends ColorSpace<O, SO>, O extends Color<O, SO>> implements ColorTransform<SI, I, SO, O> {
+  private final SI inputSpace;
+  private final SO outputSpace;
 
-  public Curves(List<? extends Curve> curves) {
-    Arguments.notEmpty("curves", curves);
+  private final List<Curve> curves;
+  private final CurveTransform<SO, O, SI, I> inverse;
+
+  public CurveTransform(SI inputSpace, SO outputSpace, List<? extends Curve> curves) {
+    Arguments.equals("inputSpace.getChannelCount()", curves.size(), inputSpace.getChannelCount());
+    Arguments.equals("outputSpace.getChannelCount()", curves.size(), outputSpace.getChannelCount());
+    this.inputSpace = inputSpace;
+    this.outputSpace = outputSpace;
     this.curves = new ArrayList<>(curves);
+    inverse = new CurveTransform<>(this);
+  }
+
+  private CurveTransform(CurveTransform<SO, O, SI, I> inverse) {
+    this.inverse = inverse;
+    inputSpace = inverse.getOutputSpace();
+    outputSpace = inverse.getInputSpace();
+
+    curves = new ArrayList<>(inverse.curves.size());
+    for (Curve c : inverse.curves) {
+      Curve invC = (c == null ? null : c.inverted());
+      curves.add(invC);
+    }
   }
 
   @Override
@@ -53,46 +76,53 @@ public class Curves implements Transform {
     if (o == this) {
       return true;
     }
-    if (!(o instanceof Curves)) {
+    if (!(o instanceof CurveTransform)) {
       return false;
     }
-    return ((Curves) o).curves.equals(curves);
-  }
 
-  @Override
-  public int getInputChannels() {
-    return curves.size();
-  }
-
-  @Override
-  public Curves getLocallySafeInstance() {
-    // This is purely functional (curve list is constant, and a curve is meant to be a constant
-    // thread-safe function) so the instance can be used by any thread
-    return this;
-  }
-
-  @Override
-  public int getOutputChannels() {
-    return curves.size();
+    CurveTransform<?, ?, ?, ?> c = (CurveTransform<?, ?, ?, ?>) o;
+    return c.inputSpace.equals(inputSpace) && c.outputSpace.equals(outputSpace) && c.curves
+        .equals(curves);
   }
 
   @Override
   public int hashCode() {
-    return curves.hashCode();
+    int result = inputSpace.hashCode();
+    result += result * 31 + outputSpace.hashCode();
+    result += result * 31 + curves.hashCode();
+    return result;
   }
 
   @Override
-  public Curves inverted() {
-    List<Curve> inverted = new ArrayList<>();
-    for (Curve c : curves) {
-      Curve invC = c.inverted();
-      if (invC == null) {
-        return null;
+  public CurveTransform<SO, O, SI, I> inverse() {
+    return inverse;
+  }
+
+  @Override
+  public SI getInputSpace() {
+    return inputSpace;
+  }
+
+  @Override
+  public SO getOutputSpace() {
+    return outputSpace;
+  }
+
+  @Override
+  public boolean applyUnchecked(double[] input, double[] output) {
+    Arguments.equals("input.length", inputSpace.getChannelCount(), input.length);
+    Arguments.equals("output.length", outputSpace.getChannelCount(), output.length);
+
+    for (int i = 0; i < input.length; i++) {
+      Curve c = curves.get(i);
+      if (c != null) {
+        double inDomain = Functions.clamp(input[i], c.getDomainMin(), c.getDomainMax());
+        output[i] = c.evaluate(inDomain);
       } else {
-        inverted.add(invC);
+        output[i] = input[i];
       }
     }
-    return new Curves(inverted);
+    return true;
   }
 
   @Override
@@ -103,16 +133,5 @@ public class Curves implements Transform {
       sb.append("\n  channel ").append(i + 1).append(": ").append(curves.get(i));
     }
     return sb.toString();
-  }
-
-  @Override
-  public void transform(double[] input, double[] output) {
-    Transform.validateDimensions(this, input, output);
-
-    for (int i = 0; i < input.length; i++) {
-      Curve c = curves.get(i);
-      double inDomain = Math.max(c.getDomainMin(), Math.min(input[i], c.getDomainMax()));
-      output[i] = c.evaluate(inDomain);
-    }
   }
 }
