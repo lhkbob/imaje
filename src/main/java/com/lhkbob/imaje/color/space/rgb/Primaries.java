@@ -29,7 +29,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.annot;
+package com.lhkbob.imaje.color.space.rgb;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -39,16 +39,32 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Primaries
+ * =========
  *
+ * Primaries is a type annotation used by subclasses of {@link AnnotationRGBSpace} to describe the
+ * chromaticity coordinates of the red, green, and blue primaries that define the color space
+ * mapping from RGB to XYZ.
+ *
+ * @author Michael Ludwig
  */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Primaries {
+  /**
+   * @return The chromaticity coordinates for the blue primary
+   */
   Chromaticity blue();
 
+  /**
+   * @return The chromaticity coordinates for the green primary
+   */
   Chromaticity green();
 
+  /**
+   * @return The chromaticity coordinates for the red primary
+   */
   Chromaticity red();
 }
