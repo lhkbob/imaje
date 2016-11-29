@@ -29,10 +29,13 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
 
 
+import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.XYZ;
+import com.lhkbob.imaje.color.Yxy;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
 
@@ -43,25 +46,44 @@ import org.ejml.data.FixedMatrix3x3_64F;
 /**
  *
  */
-public class RGBToXYZ implements Transform {
+public class RGBToXYZ<I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<O>, O>> implements ColorTransform<I, RGB<I>, O, XYZ<O>> {
+  private final I inputSpace;
+  private final O outputSpace;
+
   private final Curve gammaCurve;
   private final FixedMatrix3x3_64F linearRGBToXYZ;
-  private final FixedMatrix3_64F workIn;
-  private final FixedMatrix3_64F workOut;
 
-  public RGBToXYZ(FixedMatrix3x3_64F linearRGBToXYZ, @Arguments.Nullable Curve gammaCurve) {
-    this(linearRGBToXYZ, gammaCurve, false);
-  }
+  private final XYZToRGB<O, I> inverse;
 
-  RGBToXYZ(FixedMatrix3x3_64F linearRGBToXYZ, @Arguments.Nullable Curve gammaCurve, boolean ownMatrix) {
-    this.linearRGBToXYZ = (ownMatrix ? linearRGBToXYZ : linearRGBToXYZ.copy());
+  private RGBToXYZ(
+      I inputSpace, O outputSpace, FixedMatrix3x3_64F linearRGBToXYZ,
+      @Arguments.Nullable Curve gammaCurve) {
+    this.inputSpace = inputSpace;
+    this.outputSpace = outputSpace;
+    this.linearRGBToXYZ = linearRGBToXYZ;
     this.gammaCurve = gammaCurve;
-    workIn = new FixedMatrix3_64F();
-    workOut = new FixedMatrix3_64F();
+
+    inverse = new XYZToRGB<>(this);
   }
 
-  public static FixedMatrix3x3_64F calculateLinearRGBToXYZ(
-      double xr, double yr, double xg, double yg, double xb, double yb, XYZ whitepoint) {
+  public Curve getGammaCurve() {
+    return gammaCurve;
+  }
+
+  public FixedMatrix3x3_64F getLinearRGBToXYZ() {
+    return linearRGBToXYZ.copy();
+  }
+
+  public static <I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<O>, O>> RGBToXYZ<I, O> newRGBToXYZ(
+      I rgbSpace, XYZ<O> whitepoint, Yxy<O> redPrimary, Yxy<O> greenPrimary, Yxy<O> bluePrimary,
+      @Arguments.Nullable Curve gammaCurve) {
+    FixedMatrix3x3_64F linearRGBToXYZ = calculateLinearRGBToXYZ(redPrimary.x(), redPrimary.y(),
+        greenPrimary.x(), greenPrimary.y(), bluePrimary.x(), bluePrimary.y(), whitepoint);
+    return new RGBToXYZ<>(rgbSpace, whitepoint.getColorSpace(), linearRGBToXYZ, gammaCurve);
+  }
+
+  private static FixedMatrix3x3_64F calculateLinearRGBToXYZ(
+      double xr, double yr, double xg, double yg, double xb, double yb, XYZ<?> whitepoint) {
     Arguments.notNull("whitepoint", whitepoint);
 
     double zr = 1.0 - xr - yr;
@@ -102,8 +124,15 @@ public class RGBToXYZ implements Transform {
       return false;
     }
     RGBToXYZ t = (RGBToXYZ) o;
-    return (t.gammaCurve == null ? gammaCurve == null : t.gammaCurve.equals(gammaCurve))
-        && Double.compare(t.linearRGBToXYZ.a11, linearRGBToXYZ.a11) == 0
+    if (!t.inputSpace.equals(inputSpace) || !t.outputSpace.equals(outputSpace)) {
+      return false;
+    }
+    if ((t.gammaCurve == null && gammaCurve != null) || (t.gammaCurve != null && !t.gammaCurve
+        .equals(gammaCurve))) {
+      return false;
+    }
+
+    return Double.compare(t.linearRGBToXYZ.a11, linearRGBToXYZ.a11) == 0
         && Double.compare(t.linearRGBToXYZ.a12, linearRGBToXYZ.a12) == 0
         && Double.compare(t.linearRGBToXYZ.a13, linearRGBToXYZ.a13) == 0
         && Double.compare(t.linearRGBToXYZ.a21, linearRGBToXYZ.a21) == 0
@@ -115,18 +144,47 @@ public class RGBToXYZ implements Transform {
   }
 
   @Override
-  public int getInputChannels() {
-    return 3;
+  public XYZToRGB<O, I> inverse() {
+    return inverse;
   }
 
   @Override
-  public RGBToXYZ getLocallySafeInstance() {
-    return new RGBToXYZ(linearRGBToXYZ, gammaCurve, true);
+  public I getInputSpace() {
+    return inputSpace;
   }
 
   @Override
-  public int getOutputChannels() {
-    return 3;
+  public O getOutputSpace() {
+    return outputSpace;
+  }
+
+  @Override
+  public boolean applyUnchecked(double[] input, double[] output) {
+    Arguments.equals("input.length", 3, input.length);
+    Arguments.equals("output.length", 3, output.length);
+
+    // Rely on escape analysis for performance
+    FixedMatrix3_64F in = new FixedMatrix3_64F();
+    FixedMatrix3_64F out = new FixedMatrix3_64F();
+
+    // Apply linearization curve
+    if (gammaCurve != null) {
+      in.a1 = gammaCurve.evaluate(clampToCurveDomain(input[0]));
+      in.a2 = gammaCurve.evaluate(clampToCurveDomain(input[1]));
+      in.a3 = gammaCurve.evaluate(clampToCurveDomain(input[2]));
+    } else {
+      in.a1 = input[0];
+      in.a2 = input[1];
+      in.a3 = input[2];
+    }
+
+    // Transform by the matrix from linear RGB to XYZ
+    FixedOps3.mult(linearRGBToXYZ, in, out);
+
+    output[0] = out.a1;
+    output[1] = out.a2;
+    output[2] = out.a3;
+    return true;
   }
 
   @Override
@@ -141,15 +199,9 @@ public class RGBToXYZ implements Transform {
     result = 31 * result + Double.hashCode(linearRGBToXYZ.a32);
     result = 31 * result + Double.hashCode(linearRGBToXYZ.a33);
     result = 31 * result + (gammaCurve != null ? gammaCurve.hashCode() : 0);
+    result = 31 * result + inputSpace.hashCode();
+    result = 31 * result + outputSpace.hashCode();
     return result;
-  }
-
-  @Override
-  public XYZToRGB inverted() {
-    Curve gammaCurve = (this.gammaCurve == null ? null : this.gammaCurve.inverted());
-    FixedMatrix3x3_64F xyzToLinearRGB = new FixedMatrix3x3_64F();
-    FixedOps3.invert(linearRGBToXYZ, xyzToLinearRGB);
-    return new XYZToRGB(xyzToLinearRGB, gammaCurve, true);
   }
 
   @Override
@@ -174,29 +226,6 @@ public class RGBToXYZ implements Transform {
     }
     sb.append(']');
     return sb.toString();
-  }
-
-  @Override
-  public void transform(double[] input, double[] output) {
-    Transform.validateDimensions(this, input, output);
-
-    // Apply linearization curve
-    if (gammaCurve != null) {
-      workIn.a1 = gammaCurve.evaluate(clampToCurveDomain(input[0]));
-      workIn.a2 = gammaCurve.evaluate(clampToCurveDomain(input[1]));
-      workIn.a3 = gammaCurve.evaluate(clampToCurveDomain(input[2]));
-    } else {
-      workIn.a1 = input[0];
-      workIn.a2 = input[1];
-      workIn.a3 = input[2];
-    }
-
-    // Transform by the matrix from linear RGB to XYZ
-    FixedOps3.mult(linearRGBToXYZ, workIn, workOut);
-
-    output[0] = workOut.a1;
-    output[1] = workOut.a2;
-    output[2] = workOut.a3;
   }
 
   private double clampToCurveDomain(double c) {

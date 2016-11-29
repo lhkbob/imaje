@@ -29,50 +29,65 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
+
+import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.XYZ;
+import com.lhkbob.imaje.color.Yxy;
+import com.lhkbob.imaje.color.space.xyz.YxySpace;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  */
-public class XYZToYxy implements Transform {
+public class XYZToYxy<S extends ColorSpace<XYZ<S>, S>> implements ColorTransform<S, XYZ<S>, YxySpace<S>, Yxy<S>> {
+  private final YxySpace<S> outputSpace;
+  private final YxyToXYZ<S> inverse;
+
+  public XYZToYxy(YxySpace<S> outputSpace) {
+    this.outputSpace = outputSpace;
+    inverse = new YxyToXYZ<>(this);
+  }
+
+  XYZToYxy(YxyToXYZ<S> inverse) {
+    outputSpace = inverse.getInputSpace();
+    this.inverse = inverse;
+  }
+
   @Override
   public boolean equals(Object o) {
-    return o instanceof XYZToYxy;
-  }
-
-  @Override
-  public int getInputChannels() {
-    return 3;
-  }
-
-  @Override
-  public XYZToYxy getLocallySafeInstance() {
-    // This is purely functional so the instance can be used by any thread
-    return this;
-  }
-
-  @Override
-  public int getOutputChannels() {
-    return 3;
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof XYZToYxy)) {
+      return false;
+    }
+    return ((XYZToYxy<?>) o).outputSpace.equals(outputSpace);
   }
 
   @Override
   public int hashCode() {
-    return XYZToYxy.class.hashCode();
+    return XYZToYxy.class.hashCode() ^ outputSpace.hashCode();
   }
 
   @Override
-  public YxyToXYZ inverted() {
-    return new YxyToXYZ();
+  public YxyToXYZ<S> inverse() {
+    return inverse;
   }
 
   @Override
-  public String toString() {
-    return "XYZ -> Yxy Transform";
+  public S getInputSpace() {
+    return outputSpace.getXYZSpace();
   }
 
   @Override
-  public void transform(double[] input, double[] output) {
-    Transform.validateDimensions(this, input, output);
+  public YxySpace<S> getOutputSpace() {
+    return outputSpace;
+  }
+
+  @Override
+  public boolean applyUnchecked(double[] input, double[] output) {
+    Arguments.equals("input.length", 3, input.length);
+    Arguments.equals("output.length", 3, output.length);
 
     double sum = input[0] + input[1] + input[2];
     // Y from Y
@@ -81,5 +96,12 @@ public class XYZToYxy implements Transform {
     output[1] = input[0] / sum;
     // y from X, Y, and Z
     output[2] = input[1] / sum;
+
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return "XYZ -> Yxy Transform";
   }
 }

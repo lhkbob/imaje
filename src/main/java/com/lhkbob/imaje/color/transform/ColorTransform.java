@@ -32,6 +32,7 @@
 package com.lhkbob.imaje.color.transform;
 
 import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.color.ColorSpace;
 
 /**
  * Useful resources:
@@ -39,8 +40,22 @@ import com.lhkbob.imaje.color.Color;
  * http://www.color.org/specification/ICC1v43_2010-12.pdf
  * http://www.adobe.com/digitalimag/pdfs/AdobeRGB1998.pdf
  */
-public interface ColorTransform<I extends Color, O extends Color> {
-  boolean apply(I input, O output);
+public interface ColorTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI>, SO extends ColorSpace<O, SO>, O extends Color<O, SO>> {
+  ColorTransform<SO, O, SI, I> inverse();
 
-  O apply(I input);
+  SI getInputSpace();
+
+  SO getOutputSpace();
+
+  boolean applyUnchecked(double[] input, double[] output);
+
+  default boolean apply(I input, O output) {
+    return applyUnchecked(input.getChannels(), output.getChannels());
+  }
+
+  default O apply(I input) {
+    O res = getOutputSpace().newColor();
+    apply(input, res);
+    return res;
+  }
 }

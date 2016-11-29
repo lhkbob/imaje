@@ -31,17 +31,73 @@
  */
 package com.lhkbob.imaje.color.transform;
 
-import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.XYZ;
+import com.lhkbob.imaje.color.Yxy;
+import com.lhkbob.imaje.color.space.xyz.YxySpace;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
- *
  */
-public interface TransformFactory<I extends Color, O extends Color> {
-  Class<I> getInputType();
+public class YxyToXYZ<S extends ColorSpace<XYZ<S>, S>> implements ColorTransform<YxySpace<S>, Yxy<S>, S, XYZ<S>> {
+  private final YxySpace<S> inputSpace;
+  private final XYZToYxy<S> inverse;
 
-  Class<O> getOutputType();
+  public YxyToXYZ(YxySpace<S> inputSpace) {
+    this.inputSpace = inputSpace;
+    inverse = new XYZToYxy<>(this);
+  }
 
-  ColorTransform<O, I> newInverseTransform();
+  YxyToXYZ(XYZToYxy<S> inverse) {
+    inputSpace = inverse.getOutputSpace();
+    this.inverse = inverse;
+  }
 
-  ColorTransform<I, O> newTransform();
+  @Override
+  public boolean equals(Object o) {
+    if (o == this)
+      return true;
+    if (!(o instanceof YxyToXYZ))
+      return false;
+    return ((YxyToXYZ<?>) o).inputSpace.equals(inputSpace);
+  }
+
+  @Override
+  public int hashCode() {
+    return YxyToXYZ.class.hashCode() ^ inputSpace.hashCode();
+  }
+
+  @Override
+  public XYZToYxy<S> inverse() {
+    return inverse;
+  }
+
+  @Override
+  public YxySpace<S> getInputSpace() {
+    return inputSpace;
+  }
+
+  @Override
+  public S getOutputSpace() {
+    return inputSpace.getXYZSpace();
+  }
+
+  @Override
+  public boolean applyUnchecked(double[] input, double[] output) {
+    Arguments.equals("input.length", 3, input.length);
+    Arguments.equals("output.length", 3, output.length);
+
+    // X from Y, x, and y
+    output[0] = input[0] * input[1] / input[2];
+    // Y from Y
+    output[1] = input[0];
+    // Z from Y, y, and x
+    output[2] = input[0] * (1.0 - input[1] - input[2]) / input[2];
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return "Yxy -> XYZ Transform";
+  }
 }
