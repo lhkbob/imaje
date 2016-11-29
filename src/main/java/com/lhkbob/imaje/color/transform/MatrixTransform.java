@@ -29,8 +29,10 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
 
+import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.util.Arguments;
 
 import org.ejml.data.DenseMatrix64F;
@@ -40,31 +42,57 @@ import java.util.Arrays;
 
 /**
  */
-public class Matrix implements Transform {
-  public static final Matrix IDENTITY_3X3 = new Matrix(
-      new DenseMatrix64F(3, 3, true, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0), false);
-  private final DenseMatrix64F input;
+public class MatrixTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI>, SO extends ColorSpace<O, SO>, O extends Color<O, SO>> implements ColorTransform<SI, I, SO, O> {
+  private final SI inputSpace;
+  private final SO outputSpace;
+
   private final boolean isAffine;
   private final DenseMatrix64F matrix;
-  private final DenseMatrix64F output;
 
-  public Matrix(int numRows, int numCols, double[] matrix) {
-    this(makeMatrix(numRows, numCols, matrix, null), false, true);
+  private final MatrixTransform<SO, O, SI, I> inverse;
+
+  public MatrixTransform(SI inputSpace, SO outputSpace, int numRows, int numCols, double[] matrix) {
+    this(inputSpace, outputSpace, makeMatrix(numRows, numCols, matrix, null), false, true);
   }
 
-  public Matrix(int numRows, int numCols, double[] matrix, @Arguments.Nullable double[] translation) {
-    this(makeMatrix(numRows, numCols, matrix, translation), true, true);
+  public MatrixTransform(
+      SI inputSpace, SO outputSpace, int numRows, int numCols, double[] matrix,
+      @Arguments.Nullable double[] translation) {
+    this(inputSpace, outputSpace, makeMatrix(numRows, numCols, matrix, translation), true, true);
   }
 
-  public Matrix(DenseMatrix64F matrix, boolean isAffine) {
-    this(matrix, isAffine, false);
+  public MatrixTransform(SI inputSpace, SO outputSpace, DenseMatrix64F matrix, boolean isAffine) {
+    this(inputSpace, outputSpace, matrix, isAffine, false);
   }
 
-  private Matrix(DenseMatrix64F matrix, boolean isAffine, boolean ownMatrix) {
+  private MatrixTransform(
+      SI inputSpace, SO outputSpace, DenseMatrix64F matrix, boolean isAffine, boolean ownMatrix) {
+    Arguments.equals("inputSpace.getChannelCount()", isAffine ? matrix.numCols - 1 : matrix.numCols,
+        inputSpace.getChannelCount());
+    Arguments
+        .equals("outputSpace.getChannelCount()", isAffine ? matrix.numRows - 1 : matrix.numRows,
+            outputSpace.getChannelCount());
+
     this.matrix = (ownMatrix ? matrix : matrix.copy());
     this.isAffine = isAffine;
-    input = new DenseMatrix64F(matrix.getNumCols(), 1);
-    output = new DenseMatrix64F(1, matrix.getNumRows());
+    this.inputSpace = inputSpace;
+    this.outputSpace = outputSpace;
+
+    inverse = new MatrixTransform<>(this);
+  }
+
+  private MatrixTransform(MatrixTransform<SO, O, SI, I> inverse) {
+    matrix = new DenseMatrix64F(inverse.matrix.numCols, inverse.matrix.numRows);
+
+    if (matrix.numRows != matrix.numCols || !CommonOps.invert(inverse.matrix, matrix)) {
+      // Calculate a pseudo-inverse instead of failing completely
+      CommonOps.pinv(inverse.matrix, matrix);
+    }
+
+    isAffine = inverse.isAffine;
+    inputSpace = inverse.getOutputSpace();
+    outputSpace = inverse.getInputSpace();
+    this.inverse = inverse;
   }
 
   @Override
@@ -72,28 +100,12 @@ public class Matrix implements Transform {
     if (o == this) {
       return true;
     }
-    if (!(o instanceof Matrix)) {
+    if (!(o instanceof MatrixTransform)) {
       return false;
     }
-    Matrix c = (Matrix) o;
+    MatrixTransform c = (MatrixTransform) o;
     return c.matrix.numCols == matrix.numCols && c.matrix.numRows == matrix.numRows
         && c.isAffine == isAffine && Arrays.equals(c.matrix.data, matrix.data);
-  }
-
-  @Override
-  public int getInputChannels() {
-    return isAffine ? matrix.numCols - 1 : matrix.numCols;
-  }
-
-  @Override
-  public Matrix getLocallySafeInstance() {
-    // Input/output matrices cannot be shared by threads
-    return new Matrix(matrix, isAffine, true);
-  }
-
-  @Override
-  public int getOutputChannels() {
-    return isAffine ? matrix.numRows - 1 : matrix.numRows;
   }
 
   @Override
@@ -107,14 +119,42 @@ public class Matrix implements Transform {
   }
 
   @Override
-  public Transform inverted() {
-    DenseMatrix64F inv = new DenseMatrix64F(matrix.numCols, matrix.numRows);
+  public MatrixTransform<SO, O, SI, I> inverse() {
+    return inverse;
+  }
 
-    if (matrix.numRows != matrix.numCols || !CommonOps.invert(matrix, inv)) {
-      // Calculate a pseudo-inverse instead of failing completely
-      CommonOps.pinv(matrix, inv);
+  @Override
+  public SI getInputSpace() {
+    return inputSpace;
+  }
+
+  @Override
+  public SO getOutputSpace() {
+    return outputSpace;
+  }
+
+  @Override
+  public boolean applyUnchecked(double[] input, double[] output) {
+    Arguments.equals("input.length", isAffine ? matrix.numCols - 1 : matrix.numCols, input.length);
+    Arguments
+        .equals("output.length", isAffine ? matrix.numRows - 1 : matrix.numRows, output.length);
+
+    DenseMatrix64F in = new DenseMatrix64F(matrix.getNumCols(), 1);
+    DenseMatrix64F out = new DenseMatrix64F(1, matrix.getNumRows());
+
+    // input will be length of input matrix, or 1 less
+    System.arraycopy(input, 0, in.data, 0, input.length);
+    if (isAffine) {
+      // Make sure last value in input matrix is 1.0 (when affine, input.length ==
+      // this.input.numCols - 1)
+      in.set(input.length, 1.0);
     }
-    return new Matrix(inv, isAffine, true);
+    CommonOps.mult(matrix, in, out);
+
+    // output will be length output matrix, or 1 less (and we ignore the additional homogenous
+    // coord)
+    System.arraycopy(out.data, 0, output, 0, output.length);
+    return true;
   }
 
   @Override
@@ -151,22 +191,6 @@ public class Matrix implements Transform {
     }
 
     return sb.toString();
-  }
-
-  @Override
-  public void transform(double[] input, double[] output) {
-    Transform.validateDimensions(this, input, output);
-
-    // input will be length of input matrix, or 1 less
-    System.arraycopy(input, 0, this.input.data, 0, input.length);
-    if (isAffine) {
-      // Make sure last value in input matrix is 1.0 (when affine, input.length == this.input.numCols - 1)
-      this.input.set(input.length, 1.0);
-    }
-    CommonOps.mult(matrix, this.input, this.output);
-
-    // output will be length output matrix, or 1 less (and we ignore the additional homogenous coord)
-    System.arraycopy(this.output.data, 0, output, 0, output.length);
   }
 
   private static DenseMatrix64F makeMatrix(
