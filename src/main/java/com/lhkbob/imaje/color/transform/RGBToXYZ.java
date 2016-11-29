@@ -38,6 +38,7 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.Yxy;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
+import com.lhkbob.imaje.util.Functions;
 
 import org.ejml.alg.fixed.FixedOps3;
 import org.ejml.data.FixedMatrix3_64F;
@@ -66,6 +67,10 @@ public class RGBToXYZ<I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<
     inverse = new XYZToRGB<>(this);
   }
 
+  public <L extends ColorSpace<RGB<L>, L>> RGBToXYZ<L, O> getLinearTransform(L linearSpace) {
+    return new RGBToXYZ<>(linearSpace, outputSpace, linearRGBToXYZ, null);
+  }
+
   public Curve getGammaCurve() {
     return gammaCurve;
   }
@@ -77,6 +82,8 @@ public class RGBToXYZ<I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<
   public static <I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<O>, O>> RGBToXYZ<I, O> newRGBToXYZ(
       I rgbSpace, XYZ<O> whitepoint, Yxy<O> redPrimary, Yxy<O> greenPrimary, Yxy<O> bluePrimary,
       @Arguments.Nullable Curve gammaCurve) {
+    Arguments.notNull("rgbSpace", rgbSpace);
+
     FixedMatrix3x3_64F linearRGBToXYZ = calculateLinearRGBToXYZ(redPrimary.x(), redPrimary.y(),
         greenPrimary.x(), greenPrimary.y(), bluePrimary.x(), bluePrimary.y(), whitepoint);
     return new RGBToXYZ<>(rgbSpace, whitepoint.getColorSpace(), linearRGBToXYZ, gammaCurve);
@@ -230,6 +237,6 @@ public class RGBToXYZ<I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<
 
   private double clampToCurveDomain(double c) {
     // Only called when curve is not null, so this is safe
-    return Math.max(gammaCurve.getDomainMin(), Math.min(c, gammaCurve.getDomainMax()));
+    return Functions.clamp(c, gammaCurve.getDomainMin(), gammaCurve.getDomainMax());
   }
 }
