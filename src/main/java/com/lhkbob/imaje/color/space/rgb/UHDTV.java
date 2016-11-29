@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.space.rgb;
 
+import com.lhkbob.imaje.color.RGB;
+
 /**
  * UHDTV
  * =====
@@ -7,7 +9,7 @@ package com.lhkbob.imaje.color.space.rgb;
  * An RGB color space representing the [UHDTV (ITU-R BT.2020)
  * standard](https://en.wikipedia.org/wiki/Rec._2020). Because this space represents a standard with
  * no additional parameters, it has no public constructor and is exposed as a singleton: {@link
- * #INSTANCE}.
+ * #SPACE}.
  *
  * @author Michael Ludwig
  */
@@ -18,7 +20,45 @@ public final class UHDTV extends AnnotationRGBSpace<UHDTV> {
   /**
    * The singleton instance for the UHDTV color space.
    */
-  public static final UHDTV INSTANCE = new UHDTV();
+  public static final UHDTV SPACE = new UHDTV();
 
   private UHDTV() {}
+
+  /**
+   * @return A new RGB color value in the UHDTV color space
+   */
+  public static RGB<UHDTV> newRGB() {
+    return new RGB<>(SPACE);
+  }
+
+  /**
+   * A new RGB color value in the UHDTV color space with given color components. The color
+   * components are assumed to be in the UHDTV color space.
+   *
+   * @param r
+   *     The red component
+   * @param g
+   *     The green component
+   * @param b
+   *     The blue component
+   * @return A new RGB color
+   */
+  public static RGB<UHDTV> newRGB(double r, double g, double b) {
+    return new RGB<>(SPACE, r, g, b);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o == this || o instanceof UHDTV;
+  }
+
+  @Override
+  public int hashCode() {
+    return getClass().hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "UHDTV BT.2020";
+  }
 }

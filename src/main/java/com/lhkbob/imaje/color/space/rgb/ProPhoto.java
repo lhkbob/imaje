@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.space.rgb;
 
+import com.lhkbob.imaje.color.RGB;
+
 /**
  * ProPhoto
  * ========
@@ -7,7 +9,7 @@ package com.lhkbob.imaje.color.space.rgb;
  * An RGB color space representing [ProPhoto RGB
  * standard](https://en.wikipedia.org/wiki/ProPhoto_RGB_color_space). Because this space represents
  * a standard with no additional parameters, it has no public constructor and is exposed as a
- * singleton: {@link #INSTANCE}.
+ * singleton: {@link #SPACE}.
  *
  * @author Michael Ludwig
  */
@@ -18,7 +20,45 @@ public final class ProPhoto extends AnnotationRGBSpace<ProPhoto> {
   /**
    * The singleton instance of the ProPhoto color space.
    */
-  public static final ProPhoto INSTANCE = new ProPhoto();
+  public static final ProPhoto SPACE = new ProPhoto();
 
   private ProPhoto() {}
+
+  /**
+   * @return A new RGB color value in the ProPhoto color space
+   */
+  public static RGB<ProPhoto> newRGB() {
+    return new RGB<>(SPACE);
+  }
+
+  /**
+   * A new RGB color value in the ProPhoto color space with given color components. The color
+   * components are assumed to be in the ProPhoto color space.
+   *
+   * @param r
+   *     The red component
+   * @param g
+   *     The green component
+   * @param b
+   *     The blue component
+   * @return A new RGB color
+   */
+  public static RGB<ProPhoto> newRGB(double r, double g, double b) {
+    return new RGB<>(SPACE, r, g, b);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o == this || o instanceof ProPhoto;
+  }
+
+  @Override
+  public int hashCode() {
+    return getClass().hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "Pro Photo";
+  }
 }

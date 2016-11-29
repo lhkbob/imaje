@@ -1,5 +1,7 @@
 package com.lhkbob.imaje.color.space.rgb;
 
+import com.lhkbob.imaje.color.RGB;
+
 /**
  * HDTV
  * =====
@@ -7,7 +9,7 @@ package com.lhkbob.imaje.color.space.rgb;
  * An RGB color space representing the [HDTV (ITU-R BT.709)
  * standard](https://en.wikipedia.org/wiki/Rec._709). Because this space represents a standard with
  * no additional parameters, it has no public constructor and is exposed as a singleton: {@link
- * #INSTANCE}.
+ * #SPACE}.
  *
  * @author Michael Ludwig
  */
@@ -19,7 +21,45 @@ public final class HDTV extends AnnotationRGBSpace<HDTV> {
   /**
    * The singleton instance of the HDTV color space.
    */
-  public static final HDTV INSTANCE = new HDTV();
+  public static final HDTV SPACE = new HDTV();
 
   private HDTV() {}
+
+  /**
+   * @return A new RGB color value in the HDTV color space
+   */
+  public static RGB<HDTV> newRGB() {
+    return new RGB<>(SPACE);
+  }
+
+  /**
+   * A new RGB color value in the HDTV color space with given color components. The color
+   * components are assumed to be in the HDTV color space.
+   *
+   * @param r
+   *     The red component
+   * @param g
+   *     The green component
+   * @param b
+   *     The blue component
+   * @return A new RGB color
+   */
+  public static RGB<HDTV> newRGB(double r, double g, double b) {
+    return new RGB<>(SPACE, r, g, b);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o == this || o instanceof HDTV;
+  }
+
+  @Override
+  public int hashCode() {
+    return getClass().hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "HDTV BT.709";
+  }
 }
