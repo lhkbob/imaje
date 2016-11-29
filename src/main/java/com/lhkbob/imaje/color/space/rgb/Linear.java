@@ -2,12 +2,16 @@ package com.lhkbob.imaje.color.space.rgb;
 
 import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.RGB;
+import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.color.transform.CurveTransform;
+import com.lhkbob.imaje.color.transform.MatrixTransform;
 import com.lhkbob.imaje.color.transform.RGBToXYZ;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
+
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
 
@@ -76,7 +80,7 @@ public class Linear<S extends RGBSpace<S>> implements ColorSpace<RGB<Linear<S>>,
 
   private final S rgbSpace;
   private final ColorTransform<Linear<S>, RGB<Linear<S>>, S, RGB<S>> linearTransform;
-  private final RGBToXYZ<Linear<S>, CIE31> xyzTransform;
+  private final ColorTransform<Linear<S>, RGB<Linear<S>>, CIE31, XYZ<CIE31>> xyzTransform;
 
   /**
    * Create a Linear color space wrapping the given `rgbSpace`.
@@ -96,9 +100,12 @@ public class Linear<S extends RGBSpace<S>> implements ColorSpace<RGB<Linear<S>>,
     Curve invGamma = (baseTransform.getGammaCurve() == null ? null
         : baseTransform.getGammaCurve().inverted());
 
+    DenseMatrix64F rgbToXYZ = new DenseMatrix64F(3, 3);
+    rgbToXYZ.set(baseTransform.getLinearRGBToXYZ());
+
     linearTransform = new CurveTransform<>(
         this, rgbSpace, Arrays.asList(invGamma, invGamma, invGamma));
-    xyzTransform = baseTransform.getLinearTransform(this);
+    xyzTransform = new MatrixTransform<>(this, CIE31.SPACE, rgbToXYZ, false);
   }
 
   /**
@@ -115,7 +122,7 @@ public class Linear<S extends RGBSpace<S>> implements ColorSpace<RGB<Linear<S>>,
   }
 
   @Override
-  public RGBToXYZ<Linear<S>, CIE31> getXYZTransform() {
+  public ColorTransform<Linear<S>, RGB<Linear<S>>, CIE31, XYZ<CIE31>> getXYZTransform() {
     return xyzTransform;
   }
 

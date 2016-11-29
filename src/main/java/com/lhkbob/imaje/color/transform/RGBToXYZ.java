@@ -67,10 +67,6 @@ public class RGBToXYZ<I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<
     inverse = new XYZToRGB<>(this);
   }
 
-  public <L extends ColorSpace<RGB<L>, L>> RGBToXYZ<L, O> getLinearTransform(L linearSpace) {
-    return new RGBToXYZ<>(linearSpace, outputSpace, linearRGBToXYZ, null);
-  }
-
   public Curve getGammaCurve() {
     return gammaCurve;
   }
