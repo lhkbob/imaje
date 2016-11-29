@@ -19,7 +19,7 @@ import com.lhkbob.imaje.util.Arguments;
  *
  * A YCbCr color space defined in terms of a particular RGB color space. The YCbCrcolor space
  * represents luminance and two difference chroma coordinates. More details can be found
- * [here](https://en.wikipedia.org/wiki/YUV). This space is highly similar to the other
+ * [here](https://en.wikipedia.org/wiki/YCbCr). This space is highly similar to the other
  * chroma-difference space, {@link YUVSpace}. Note that the {@link YCbCr} color definition is
  * defined directly against `YCbCrSpace`.
  *
