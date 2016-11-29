@@ -6,7 +6,7 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.Yxy;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.curves.Curve;
-import com.lhkbob.imaje.color.transform.general.RGBToXYZ;
+import com.lhkbob.imaje.color.transform.RGBToXYZ;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
@@ -38,7 +38,7 @@ public abstract class RGBSpace<S extends RGBSpace<S>> implements ColorSpace<RGB<
    * @param bluePrimary
    *     The blue primary (Y is ignored)
    * @param gammaCurve
-   *     Gamma curve converting from linear to non-linear, or null for no transformation
+   *     Gamma curve converting from non-linear to linear values, or null for no transformation
    */
   protected void initialize(
       XYZ<CIE31> whitepoint, Yxy<CIE31> redPrimary, Yxy<CIE31> greenPrimary, Yxy<CIE31> bluePrimary,
