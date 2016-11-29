@@ -19,6 +19,10 @@ import com.lhkbob.imaje.util.Arguments;
  *
  * Subclasses *must* call {@link #initialize(XYZ, Yxy, Yxy, Yxy, Curve)} from their constructor.
  *
+ * Many standardized RGB color spaces are provided in this package as subclasses of RGBSpace.
+ * Descriptions and specifications for these spaces can be found
+ * [here](https://en.wikipedia.org/wiki/RGB_color_space)
+ *
  * @author Michael Ludwig
  */
 public abstract class RGBSpace<S extends RGBSpace<S>> implements ColorSpace<RGB<S>, S> {
