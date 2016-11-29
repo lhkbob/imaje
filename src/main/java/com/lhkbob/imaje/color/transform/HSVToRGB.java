@@ -29,34 +29,32 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
+
+import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.HSV;
+import com.lhkbob.imaje.color.RGB;
+import com.lhkbob.imaje.color.space.hsv.HSVSpace;
 
 /**
  *
  */
-public class HSVToRGB extends AbstractHueToRGBTransform {
-  private final double[] work = new double[3];
+public class HSVToRGB<S extends ColorSpace<RGB<S>, S>> extends AbstractHueToRGBTransform<HSVSpace<S>, HSV<S>, S> {
+  private final RGBToHSV<S> inverse;
 
-  @Override
-  public boolean equals(Object o) {
-    return o instanceof HSVToRGB;
+  public HSVToRGB(HSVSpace<S> inputSpace) {
+    super(inputSpace, inputSpace.getRGBSpace());
+    inverse = new RGBToHSV<>(this);
+  }
+
+  HSVToRGB(RGBToHSV<S> inverse) {
+    super(inverse.getOutputSpace(), inverse.getInputSpace());
+    this.inverse = inverse;
   }
 
   @Override
-  public HSVToRGB getLocallySafeInstance() {
-    // HSVToRGB uses a member variable for work during the transform() call so a new instance
-    // must be created for it to be used safely.
-    return new HSVToRGB();
-  }
-
-  @Override
-  public int hashCode() {
-    return HSVToRGB.class.hashCode();
-  }
-
-  @Override
-  public RGBToHSV inverted() {
-    return new RGBToHSV();
+  public RGBToHSV<S> inverse() {
+    return inverse;
   }
 
   @Override
@@ -65,12 +63,9 @@ public class HSVToRGB extends AbstractHueToRGBTransform {
   }
 
   @Override
-  public void transform(double[] input, double[] output) {
-    Transform.validateDimensions(this, input, output);
-
-    work[0] = input[0]; // hue
-    work[1] = input[2] * input[1]; // chroma
-    work[2] = input[2] - work[1]; // m
-    super.transform(work, output);
+  protected void toHueChromaM(double[] input, double[] hcm) {
+    hcm[0] = input[0]; // hue
+    hcm[1] = input[2] * input[1]; // chroma
+    hcm[2] = input[2] - hcm[1]; // m
   }
 }

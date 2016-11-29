@@ -29,32 +29,32 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
+
+import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.HSV;
+import com.lhkbob.imaje.color.RGB;
+import com.lhkbob.imaje.color.space.hsv.HSVSpace;
 
 /**
  *
  */
-public class RGBToHSV extends AbstractRGBToHueTransform {
-  @Override
-  public boolean equals(Object o) {
-    return o instanceof RGBToHSV;
+public class RGBToHSV<S extends ColorSpace<RGB<S>, S>> extends AbstractRGBToHueTransform<S, HSVSpace<S>, HSV<S>> {
+  private final HSVToRGB<S> inverse;
+
+  public RGBToHSV(HSVSpace<S> outputSpace) {
+    super(outputSpace.getRGBSpace(), outputSpace);
+    inverse = new HSVToRGB<>(this);
+  }
+
+  RGBToHSV(HSVToRGB<S> inverse) {
+    super(inverse.getOutputSpace(), inverse.getInputSpace());
+    this.inverse = inverse;
   }
 
   @Override
-  public RGBToHSV getLocallySafeInstance() {
-    // This reuses the output array as a work array (unlike its partner HSVToRGB, which requires a
-    // new instance to be locally safe)
-    return this;
-  }
-
-  @Override
-  public int hashCode() {
-    return RGBToHSV.class.hashCode();
-  }
-
-  @Override
-  public HSVToRGB inverted() {
-    return new HSVToRGB();
+  public HSVToRGB<S> inverse() {
+    return inverse;
   }
 
   @Override
@@ -63,10 +63,7 @@ public class RGBToHSV extends AbstractRGBToHueTransform {
   }
 
   @Override
-  public void transform(double[] input, double[] output) {
-    // Super class stores hue, and min, max components into output
-    super.transform(input, output);
-
+  protected void fromHueMinMax(double[] output) {
     double hue = output[0];
     double c = output[2] - output[1];
     double saturation;
@@ -84,5 +81,6 @@ public class RGBToHSV extends AbstractRGBToHueTransform {
     output[1] = saturation;
     output[2] = value;
   }
+
   private static final double EPS = 1e-8;
 }

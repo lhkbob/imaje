@@ -29,46 +29,58 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
+
+import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.HLS;
+import com.lhkbob.imaje.color.RGB;
+import com.lhkbob.imaje.color.space.hsv.HLSSpace;
 
 /**
  *
  */
-public abstract class AbstractRGBToHueTransform implements Transform {
-  @Override
-  public int getInputChannels() {
-    return 3;
+public class RGBToHLS<S extends ColorSpace<RGB<S>, S>> extends AbstractRGBToHueTransform<S, HLSSpace<S>, HLS<S>> {
+  private final HLSToRGB<S> inverse;
+
+  public RGBToHLS(HLSSpace<S> outputSpace) {
+    super(outputSpace.getRGBSpace(), outputSpace);
+    inverse = new HLSToRGB<>(this);
+  }
+
+  RGBToHLS(HLSToRGB<S> inverse) {
+    super(inverse.getOutputSpace(), inverse.getInputSpace());
+    this.inverse = inverse;
   }
 
   @Override
-  public int getOutputChannels() {
-    return 3;
+  public HLSToRGB<S> inverse() {
+    return inverse;
   }
 
   @Override
-  public void transform(double[] input, double[] output) {
-    Transform.validateDimensions(this, input, output);
+  public String toString() {
+    return "RGB -> HLS Transform";
+  }
 
-    double hue, min, max;
-    if (input[0] >= input[1] && input[0] >= input[2]) {
-      // Red is the largest component
-      max = input[0];
-      min = Math.min(input[1], input[2]);
-      hue = ((input[1] - input[2]) / (max - min)) % 6.0;
-    } else if (input[1] >= input[2]) {
-      // Green is the largest component
-      max = input[1];
-      min = Math.min(input[0], input[2]);
-      hue = (input[2] - input[0]) / (max - min) + 2.0;
+  @Override
+  protected void fromHueMinMax(double[] output) {
+    double hue = output[0];
+    double c = output[2] - output[1];
+    double saturation;
+    double lightness = 0.5 * (output[2] + output[1]);
+    if (c < EPS) {
+      // Neutral color, use hue = 0 arbitrarily
+      hue = 0.0;
+      saturation = 0.0;
     } else {
-      // Blue is the largest component
-      max = input[2];
-      min = Math.min(input[0], input[1]);
-      hue = (input[0] - input[1]) / (max - min) + 4.0;
+      hue *= 60.0; // Scale hue to 0 to 360 degrees
+      saturation = c / (1.0 - Math.abs(2.0 * lightness - 1.0));
     }
 
     output[0] = hue;
-    output[1] = min;
-    output[2] = max;
+    output[1] = lightness;
+    output[2] = saturation;
   }
+
+  private static final double EPS = 1e-8;
 }

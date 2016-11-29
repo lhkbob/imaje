@@ -29,29 +29,75 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
+
+import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.RGB;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-public abstract class AbstractHueToRGBTransform implements Transform {
-  @Override
-  public int getInputChannels() {
-    return 3;
+public abstract class AbstractHueToRGBTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI>, SO extends ColorSpace<RGB<SO>, SO>> implements ColorTransform<SI, I, SO, RGB<SO>> {
+  private final SI inputSpace;
+  private final SO outputSpace;
+
+  public AbstractHueToRGBTransform(SI inputSpace, SO outputSpace) {
+    Arguments.notNull("inputSpace", inputSpace);
+    Arguments.notNull("outputSpace", outputSpace);
+
+    this.inputSpace = inputSpace;
+    this.outputSpace = outputSpace;
   }
 
   @Override
-  public int getOutputChannels() {
-    return 3;
+  public SI getInputSpace() {
+    return inputSpace;
   }
 
   @Override
-  public void transform(double[] input, double[] output) {
-    // This assumes that input has been rewritten to hold hue, chroma, and m
-    double chroma = input[1];
-    double hp = input[0] / 60.0;
+  public SO getOutputSpace() {
+    return outputSpace;
+  }
+
+  @Override
+  public boolean applyUnchecked(double[] input, double[] output) {
+    Arguments.equals("input.length", 3, input.length);
+    Arguments.equals("output.length", 3, output.length);
+
+    toHueChromaM(input, output);
+    hueChromaMToRGB(output);
+    return true;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this)
+      return true;
+    if (!getClass().isInstance(o))
+      return false;
+    AbstractHueToRGBTransform s = (AbstractHueToRGBTransform) o;
+    return s.inputSpace.equals(inputSpace) && s.outputSpace.equals(outputSpace);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 17;
+    result = 31 * result + getClass().hashCode();
+    result = 31 * result + inputSpace.hashCode();
+    result = 31 * result + outputSpace.hashCode();
+    return result;
+  }
+
+  protected abstract void toHueChromaM(double[] input, double[] hcm);
+
+  private void hueChromaMToRGB(double[] output) {
+    // This assumes that output has been rewritten to hold hue, chroma, and m
+    double chroma = output[1];
+    double hp = output[0] / 60.0;
     double x = chroma * (1.0 - Math.abs(hp % 2.0 - 1.0));
-    double m = input[2];
+    double m = output[2];
 
     if (hp < 1.0) {
       output[0] = chroma + m;

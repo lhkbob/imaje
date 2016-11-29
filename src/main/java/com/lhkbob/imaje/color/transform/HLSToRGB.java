@@ -29,60 +29,43 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
+
+import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.HLS;
+import com.lhkbob.imaje.color.RGB;
+import com.lhkbob.imaje.color.space.hsv.HLSSpace;
 
 /**
  *
  */
-public class RGBToHLS extends AbstractRGBToHueTransform {
-  @Override
-  public boolean equals(Object o) {
-    return o instanceof RGBToHLS;
+public class HLSToRGB<S extends ColorSpace<RGB<S>, S>> extends AbstractHueToRGBTransform<HLSSpace<S>, HLS<S>, S> {
+  private final RGBToHLS<S> inverse;
+
+  public HLSToRGB(HLSSpace<S> inputSpace) {
+    super(inputSpace,inputSpace.getRGBSpace());
+    inverse = new RGBToHLS<>(this);
+  }
+
+  HLSToRGB(RGBToHLS<S> inverse) {
+    super(inverse.getOutputSpace(), inverse.getInputSpace());
+    this.inverse = inverse;
   }
 
   @Override
-  public RGBToHLS getLocallySafeInstance() {
-    // This reuses the output array as a work array (unlike its partner HLSToRGB, which requires a
-    // new instance to be locally safe)
-    return this;
+  protected void toHueChromaM(double[] input, double[] hcm) {
+    hcm[0] = input[0]; // hue
+    hcm[1] = (1.0 - Math.abs(2.0 * input[1] - 1.0)) * input[2]; // chroma
+    hcm[2] = input[1] - 0.5 * hcm[1]; // m
   }
 
   @Override
-  public int hashCode() {
-    return RGBToHLS.class.hashCode();
-  }
-
-  @Override
-  public HLSToRGB inverted() {
-    return new HLSToRGB();
+  public RGBToHLS<S> inverse() {
+    return inverse;
   }
 
   @Override
   public String toString() {
-    return "RGB -> HLS Transform";
+    return "HLS -> RGB Transform";
   }
-
-  @Override
-  public void transform(double[] input, double[] output) {
-    // Super class stores hue, and min, max components into output
-    super.transform(input, output);
-
-    double hue = output[0];
-    double c = output[2] - output[1];
-    double saturation;
-    double lightness = 0.5 * (output[2] + output[1]);
-    if (c < EPS) {
-      // Neutral color, use hue = 0 arbitrarily
-      hue = 0.0;
-      saturation = 0.0;
-    } else {
-      hue *= 60.0; // Scale hue to 0 to 360 degrees
-      saturation = c / (1.0 - Math.abs(2.0 * lightness - 1.0));
-    }
-
-    output[0] = hue;
-    output[1] = lightness;
-    output[2] = saturation;
-  }
-  private static final double EPS = 1e-8;
 }
