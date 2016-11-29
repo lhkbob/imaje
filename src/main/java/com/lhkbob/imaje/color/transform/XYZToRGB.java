@@ -38,6 +38,7 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.Yxy;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
+import com.lhkbob.imaje.util.Functions;
 
 import org.ejml.alg.fixed.FixedOps3;
 import org.ejml.data.FixedMatrix3_64F;
@@ -165,6 +166,6 @@ public class XYZToRGB<I extends ColorSpace<XYZ<I>, I>, O extends ColorSpace<RGB<
 
   private double clampToCurveDomain(double c) {
     // Only called when invGammaCurve is not null
-    return Math.max(invGammaCurve.getDomainMin(), Math.min(c, invGammaCurve.getDomainMax()));
+    return Functions.clamp(c, invGammaCurve.getDomainMin(), invGammaCurve.getDomainMax());
   }
 }

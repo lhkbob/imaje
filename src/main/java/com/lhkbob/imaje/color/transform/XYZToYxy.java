@@ -44,6 +44,8 @@ public class XYZToYxy<S extends ColorSpace<XYZ<S>, S>> implements ColorTransform
   private final YxyToXYZ<S> inverse;
 
   public XYZToYxy(YxySpace<S> outputSpace) {
+    Arguments.notNull("outputSpace", outputSpace);
+
     this.outputSpace = outputSpace;
     inverse = new YxyToXYZ<>(this);
   }
