@@ -29,7 +29,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.annot;
+package com.lhkbob.imaje.color.space.rgb;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -39,25 +39,57 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * NOTE: This function describes the non-linear transformation from colors of the annotated class
- * to linear color values
+ * Gamma
+ * =====
+ *
+ * A type annotation that is processed by subclasses of {@link AnnotationRGBSpace} to define the
+ * gamma curve for the RGB space. The curve is modeled by a {@link
+ * com.lhkbob.imaje.color.transform.curves.UnitGammaFunction}, which has seven parameters: `a`, `b`,
+ * `c`, `d`, `e`, `f`, and `gamma`. This function is defined as:
+ *
+ *    x in [0, 1], y(x) =
+ *       x >= d: (ax + b)^gamma + c
+ *       x < d: ex + f
+ *
+ * @author Michael Ludwig
  */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Gamma {
+  /**
+   * @return The multiplier of `x` within the power function's base
+   */
   double a() default 1.0;
 
+  /**
+   * @return The offset to `x` within the power function's base
+   */
   double b() default 0.0;
 
+  /**
+   * @return The offset to the power function
+   */
   double c() default 0.0;
 
+  /**
+   * @return The threshold between 0 and 1 to switch from a linear to a power function
+   */
   double d() default 0.0;
 
+  /**
+   * @return The slope of the linear function
+   */
   double e() default 1.0;
 
+  /**
+   * @return The offset of the linear function
+   */
   double f() default 0.0;
 
+  /**
+   * @return The exponent of the power function
+   */
   double gamma();
 }
