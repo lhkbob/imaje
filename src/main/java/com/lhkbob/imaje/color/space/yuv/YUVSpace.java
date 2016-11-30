@@ -9,7 +9,7 @@ import com.lhkbob.imaje.color.space.rgb.SMPTEC;
 import com.lhkbob.imaje.color.space.rgb.UHDTV;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.ColorTransform;
-import com.lhkbob.imaje.color.transform.Composition;
+import com.lhkbob.imaje.color.transform.general.Composition;
 import com.lhkbob.imaje.color.transform.DifferenceChromaToRGB;
 import com.lhkbob.imaje.util.Arguments;
 

@@ -5,8 +5,8 @@ import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.ColorTransform;
-import com.lhkbob.imaje.color.transform.CurveTransform;
-import com.lhkbob.imaje.color.transform.MatrixTransform;
+import com.lhkbob.imaje.color.transform.general.CurveTransform;
+import com.lhkbob.imaje.color.transform.general.MatrixTransform;
 import com.lhkbob.imaje.color.transform.RGBToXYZ;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
@@ -112,7 +112,7 @@ public class Linear<S extends RGBSpace<S>> implements ColorSpace<RGB<Linear<S>>,
    * @return The color transformation from this linear space back to its wrapped, non-linear RGB
    * space
    */
-  public ColorTransform<Linear<S>, RGB<Linear<S>>, S, RGB<S>> getGammaCorrection() {
+  public ColorTransform<Linear<S>, RGB<Linear<S>>, S, RGB<S>> getGammaEncoder() {
     return linearTransform;
   }
 

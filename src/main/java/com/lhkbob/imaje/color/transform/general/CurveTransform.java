@@ -29,10 +29,11 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.transform.general;
 
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.Functions;
@@ -87,9 +88,10 @@ public class CurveTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI>
 
   @Override
   public int hashCode() {
-    int result = inputSpace.hashCode();
-    result += result * 31 + outputSpace.hashCode();
-    result += result * 31 + curves.hashCode();
+    int result = 17;
+    result = 31 * result + inputSpace.hashCode();
+    result = 31 * result + outputSpace.hashCode();
+    result = 31 * result + curves.hashCode();
     return result;
   }
 
