@@ -29,35 +29,39 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.lab;
 
-import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.color.ColorSpace;
-import com.lhkbob.imaje.color.RGB;
-import com.lhkbob.imaje.color.YCbCr;
-import com.lhkbob.imaje.color.YUV;
-import com.lhkbob.imaje.color.space.yuv.YCbCrSpace;
-import com.lhkbob.imaje.color.space.yuv.YUVSpace;
+import com.lhkbob.imaje.color.Lab;
+import com.lhkbob.imaje.color.XYZ;
+import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-public class RGBToDifferenceChroma<SI extends ColorSpace<RGB<SI>, SI>, SO extends ColorSpace<O, SO>, O extends Color<O, SO>> implements ColorTransform<SI, RGB<SI>, SO, O> {
-  private final DifferenceChromaToRGB<SO, O, SI> inverse;
+public class XYZToHunterLab implements ColorTransform<CIE31, XYZ<CIE31>, Hunter, Lab<Hunter>> {
+  private final double ka;
+  private final double kb;
+  private final XYZ<CIE31> whitepoint; // cached from labSpace
+  private final Hunter labSpace;
+  private final HunterLabToXYZ inverse;
 
-  RGBToDifferenceChroma(DifferenceChromaToRGB<SO, O, SI> inverse) {
+  public XYZToHunterLab(Hunter labSpace) {
+    this.labSpace = labSpace;
+    this.whitepoint = labSpace.getReferenceWhitepoint();
+    ka = calculateKA(whitepoint);
+    kb = calculateKB(whitepoint);
+
+    inverse = new HunterLabToXYZ(this);
+  }
+
+  XYZToHunterLab(HunterLabToXYZ inverse) {
+    labSpace = inverse.getInputSpace();
+    whitepoint = labSpace.getReferenceWhitepoint();
+    ka = calculateKA(whitepoint);
+    kb = calculateKB(whitepoint);
     this.inverse = inverse;
-  }
-
-  public static <S extends ColorSpace<RGB<S>, S>> RGBToDifferenceChroma<S, YCbCrSpace<S>, YCbCr<S>> newRGBToYCbCr(
-      YCbCrSpace<S> yCbCrSpace, double kb, double kr) {
-    return DifferenceChromaToRGB.newYCbCrToRGB(yCbCrSpace, kb, kr).inverse();
-  }
-
-  public static <S extends ColorSpace<RGB<S>, S>> RGBToDifferenceChroma<S, YUVSpace<S>, YUV<S>> newYUVToRGB(
-      YUVSpace<S> yuvSpace, double kb, double kr) {
-    return DifferenceChromaToRGB.newYUVToRGB(yuvSpace, kb, kr).inverse();
   }
 
   @Override
@@ -65,31 +69,30 @@ public class RGBToDifferenceChroma<SI extends ColorSpace<RGB<SI>, SI>, SO extend
     if (o == this) {
       return true;
     }
-    if (!(o instanceof RGBToDifferenceChroma)) {
+    if (!(o instanceof XYZToHunterLab)) {
       return false;
     }
-    RGBToDifferenceChroma c = (RGBToDifferenceChroma) o;
-    return c.inverse.equals(inverse);
+    return ((XYZToHunterLab) o).whitepoint.equals(whitepoint);
   }
 
   @Override
   public int hashCode() {
-    return RGBToDifferenceChroma.class.hashCode() ^ inverse.hashCode();
+    return XYZToHunterLab.class.hashCode() ^ whitepoint.hashCode();
   }
 
   @Override
-  public DifferenceChromaToRGB<SO, O, SI> inverse() {
+  public HunterLabToXYZ inverse() {
     return inverse;
   }
 
   @Override
-  public SI getInputSpace() {
-    return inverse.getOutputSpace();
+  public CIE31 getInputSpace() {
+    return CIE31.SPACE;
   }
 
   @Override
-  public SO getOutputSpace() {
-    return inverse.getInputSpace();
+  public Hunter getOutputSpace() {
+    return labSpace;
   }
 
   @Override
@@ -97,19 +100,28 @@ public class RGBToDifferenceChroma<SI extends ColorSpace<RGB<SI>, SI>, SO extend
     Arguments.equals("input.length", 3, input.length);
     Arguments.equals("output.length", 3, output.length);
 
-    // Y from R, G, and B
-    output[0] =
-        inverse.kr * input[0] + (1.0 - inverse.kr - inverse.kb) * input[1] + inverse.kb * input[2];
-    // Cb from Y and B
-    output[1] = inverse.umax * (input[2] - output[0]) / (1.0 - inverse.kb);
-    // Cr from Y and R
-    output[2] = inverse.vmax * (input[0] - output[0]) / (1.0 - inverse.kr);
+    double xp = input[0] / whitepoint.x();
+    double yp = input[1] / whitepoint.y();
+    double rootYP = Math.sqrt(yp);
+    double zp = input[2] / whitepoint.z();
+
+    output[0] = 100.0 * rootYP;
+    output[1] = ka * (xp - yp) / rootYP;
+    output[2] = kb * (yp - zp) / rootYP;
+
     return true;
   }
 
   @Override
   public String toString() {
-    return String.format("RGB -> Yb*r* (kb: %.3f, kr: %.3f, b-max: %.3f, r-max: %.3f)", inverse.kb,
-        inverse.kr, inverse.umax, inverse.vmax);
+    return String.format("XYZ -> Hunter Lab (whitepoint: %s)", whitepoint);
+  }
+
+  static double calculateKA(XYZ<CIE31> whitepoint) {
+    return 175.0 / 198.04 * (whitepoint.x() + whitepoint.y());
+  }
+
+  static double calculateKB(XYZ<CIE31> whitepoint) {
+    return 70.0 / 218.11 * (whitepoint.y() + whitepoint.z());
   }
 }

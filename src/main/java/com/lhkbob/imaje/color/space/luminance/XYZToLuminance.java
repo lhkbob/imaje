@@ -29,30 +29,30 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.luminance;
 
 import com.lhkbob.imaje.color.Luminance;
 import com.lhkbob.imaje.color.XYZ;
-import com.lhkbob.imaje.color.space.luminance.Linear;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-public class LuminanceToXYZ implements ColorTransform<Linear, Luminance<Linear>, CIE31, XYZ<CIE31>> {
+public class XYZToLuminance implements ColorTransform<CIE31, XYZ<CIE31>, Linear, Luminance<Linear>> {
   private final Linear lumSpace;
   private final XYZ<CIE31> whitepoint; // cached from lumSpace
-  private final XYZToLuminance inverse;
+  private final LuminanceToXYZ inverse;
 
-  public LuminanceToXYZ(Linear lumSpace) {
+  public XYZToLuminance(Linear lumSpace) {
     this.lumSpace = lumSpace;
-    this.whitepoint = lumSpace.getReferenceWhitepoint();
-    inverse = new XYZToLuminance(this);
+    whitepoint = lumSpace.getReferenceWhitepoint();
+    inverse = new LuminanceToXYZ(this);
   }
 
-  LuminanceToXYZ(XYZToLuminance inverse) {
-    lumSpace = inverse.getOutputSpace();
+  XYZToLuminance(LuminanceToXYZ inverse) {
+    lumSpace = inverse.getInputSpace();
     whitepoint = lumSpace.getReferenceWhitepoint();
     this.inverse = inverse;
   }
@@ -62,46 +62,44 @@ public class LuminanceToXYZ implements ColorTransform<Linear, Luminance<Linear>,
     if (o == this) {
       return true;
     }
-    if (!(o instanceof LuminanceToXYZ)) {
+    if (!(o instanceof XYZToLuminance)) {
       return false;
     }
-    return ((LuminanceToXYZ) o).lumSpace.equals(lumSpace);
+    return ((XYZToLuminance) o).lumSpace.equals(lumSpace);
   }
 
   @Override
   public int hashCode() {
-    return LuminanceToXYZ.class.hashCode() ^ lumSpace.hashCode();
+    return XYZToLuminance.class.hashCode() ^ lumSpace.hashCode();
   }
 
   @Override
-  public XYZToLuminance inverse() {
-    return inverse;
+  public LuminanceToXYZ inverse() {
+    return inverse();
   }
 
   @Override
-  public Linear getInputSpace() {
-    return lumSpace;
-  }
-
-  @Override
-  public CIE31 getOutputSpace() {
+  public CIE31 getInputSpace() {
     return CIE31.SPACE;
   }
 
   @Override
-  public boolean applyUnchecked(double[] input, double[] output) {
-    Arguments.equals("input.length", 1, input.length);
-    Arguments.equals("output.length", 3, output.length);
+  public Linear getOutputSpace() {
+    return lumSpace;
+  }
 
-    output[0] = whitepoint.x() * input[0];
-    output[1] = whitepoint.y() * input[0];
-    output[2] = whitepoint.z() * input[0];
+  @Override
+  public boolean applyUnchecked(double[] input, double[] output) {
+    Arguments.equals("input.length", 3, input.length);
+    Arguments.equals("output.length", 1, output.length);
+
+    output[0] = input[1] / whitepoint.y();
 
     return true;
   }
 
   @Override
   public String toString() {
-    return String.format("Luminance -> XYZ Transform (whitepoint: %s)", whitepoint);
+    return String.format("XYZ -> Luminance Transform (whitepoint: %s)", whitepoint);
   }
 }

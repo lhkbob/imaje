@@ -29,11 +29,10 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
 
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.ColorSpace;
-import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Arrays;

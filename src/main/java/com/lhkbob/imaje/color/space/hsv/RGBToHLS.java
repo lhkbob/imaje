@@ -29,81 +29,57 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.hsv;
 
 import com.lhkbob.imaje.color.ColorSpace;
-import com.lhkbob.imaje.color.XYZ;
-import com.lhkbob.imaje.color.Yxy;
-import com.lhkbob.imaje.color.space.xyz.YxySpace;
-import com.lhkbob.imaje.util.Arguments;
+import com.lhkbob.imaje.color.HLS;
+import com.lhkbob.imaje.color.RGB;
 
 /**
+ *
  */
-public class XYZToYxy<S extends ColorSpace<XYZ<S>, S>> implements ColorTransform<S, XYZ<S>, YxySpace<S>, Yxy<S>> {
-  private final YxySpace<S> outputSpace;
-  private final YxyToXYZ<S> inverse;
+public class RGBToHLS<S extends ColorSpace<RGB<S>, S>> extends AbstractRGBToHueTransform<S, HLSSpace<S>, HLS<S>> {
+  private final HLSToRGB<S> inverse;
 
-  public XYZToYxy(YxySpace<S> outputSpace) {
-    Arguments.notNull("outputSpace", outputSpace);
-
-    this.outputSpace = outputSpace;
-    inverse = new YxyToXYZ<>(this);
+  public RGBToHLS(HLSSpace<S> outputSpace) {
+    super(outputSpace.getRGBSpace(), outputSpace);
+    inverse = new HLSToRGB<>(this);
   }
 
-  XYZToYxy(YxyToXYZ<S> inverse) {
-    outputSpace = inverse.getInputSpace();
+  RGBToHLS(HLSToRGB<S> inverse) {
+    super(inverse.getOutputSpace(), inverse.getInputSpace());
     this.inverse = inverse;
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (!(o instanceof XYZToYxy)) {
-      return false;
-    }
-    return ((XYZToYxy<?>) o).outputSpace.equals(outputSpace);
-  }
-
-  @Override
-  public int hashCode() {
-    return XYZToYxy.class.hashCode() ^ outputSpace.hashCode();
-  }
-
-  @Override
-  public YxyToXYZ<S> inverse() {
+  public HLSToRGB<S> inverse() {
     return inverse;
   }
 
   @Override
-  public S getInputSpace() {
-    return outputSpace.getXYZSpace();
-  }
-
-  @Override
-  public YxySpace<S> getOutputSpace() {
-    return outputSpace;
-  }
-
-  @Override
-  public boolean applyUnchecked(double[] input, double[] output) {
-    Arguments.equals("input.length", 3, input.length);
-    Arguments.equals("output.length", 3, output.length);
-
-    double sum = input[0] + input[1] + input[2];
-    // Y from Y
-    output[0] = input[1];
-    // x from X, Y, and Z
-    output[1] = input[0] / sum;
-    // y from X, Y, and Z
-    output[2] = input[1] / sum;
-
-    return true;
-  }
-
-  @Override
   public String toString() {
-    return "XYZ -> Yxy Transform";
+    return "RGB -> HLS Transform";
   }
+
+  @Override
+  protected void fromHueMinMax(double[] output) {
+    double hue = output[0];
+    double c = output[2] - output[1];
+    double saturation;
+    double lightness = 0.5 * (output[2] + output[1]);
+    if (c < EPS) {
+      // Neutral color, use hue = 0 arbitrarily
+      hue = 0.0;
+      saturation = 0.0;
+    } else {
+      hue *= 60.0; // Scale hue to 0 to 360 degrees
+      saturation = c / (1.0 - Math.abs(2.0 * lightness - 1.0));
+    }
+
+    output[0] = hue;
+    output[1] = lightness;
+    output[2] = saturation;
+  }
+
+  private static final double EPS = 1e-8;
 }

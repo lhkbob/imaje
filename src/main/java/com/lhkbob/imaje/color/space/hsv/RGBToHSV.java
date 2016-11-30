@@ -29,68 +29,57 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.hsv;
 
-import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.HSV;
 import com.lhkbob.imaje.color.RGB;
-import com.lhkbob.imaje.color.transform.ColorTransform;
-import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-public abstract class AbstractRGBToHueTransform<SI extends ColorSpace<RGB<SI>, SI>, SO extends ColorSpace<O, SO>, O extends Color<O, SO>> implements ColorTransform<SI, RGB<SI>, SO, O> {
-  private final SI inputSpace;
-  private final SO outputSpace;
+public class RGBToHSV<S extends ColorSpace<RGB<S>, S>> extends AbstractRGBToHueTransform<S, HSVSpace<S>, HSV<S>> {
+  private final HSVToRGB<S> inverse;
 
-  public AbstractRGBToHueTransform(SI inputSpace, SO outputSpace) {
-    Arguments.notNull("inputSpace", inputSpace);
-    Arguments.notNull("outputSpace", outputSpace);
+  public RGBToHSV(HSVSpace<S> outputSpace) {
+    super(outputSpace.getRGBSpace(), outputSpace);
+    inverse = new HSVToRGB<>(this);
+  }
 
-    this.inputSpace = inputSpace;
-    this.outputSpace = outputSpace;
+  RGBToHSV(HSVToRGB<S> inverse) {
+    super(inverse.getOutputSpace(), inverse.getInputSpace());
+    this.inverse = inverse;
   }
 
   @Override
-  public SI getInputSpace() {
-    return inputSpace;
+  public HSVToRGB<S> inverse() {
+    return inverse;
   }
 
   @Override
-  public SO getOutputSpace() {
-    return outputSpace;
+  public String toString() {
+    return "RGB -> HSV Transform";
   }
 
   @Override
-  public boolean applyUnchecked(double[] input, double[] output) {
-    Arguments.equals("input.length", 3, input.length);
-    Arguments.equals("output.length", 3, output.length);
-
-    double hue, min, max;
-    if (input[0] >= input[1] && input[0] >= input[2]) {
-      // Red is the largest component
-      max = input[0];
-      min = Math.min(input[1], input[2]);
-      hue = ((input[1] - input[2]) / (max - min)) % 6.0;
-    } else if (input[1] >= input[2]) {
-      // Green is the largest component
-      max = input[1];
-      min = Math.min(input[0], input[2]);
-      hue = (input[2] - input[0]) / (max - min) + 2.0;
+  protected void fromHueMinMax(double[] output) {
+    double hue = output[0];
+    double c = output[2] - output[1];
+    double saturation;
+    double value = output[2];
+    if (c < EPS) {
+      // Neutral color, use hue = 0 arbitrarily
+      hue = 0.0;
+      saturation = 0.0;
     } else {
-      // Blue is the largest component
-      max = input[2];
-      min = Math.min(input[0], input[1]);
-      hue = (input[0] - input[1]) / (max - min) + 4.0;
+      hue *= 60.0; // Scale hue to 0 to 360 degrees
+      saturation = c / value;
     }
 
     output[0] = hue;
-    output[1] = min;
-    output[2] = max;
-    fromHueMinMax(output);
-    return true;
+    output[1] = saturation;
+    output[2] = value;
   }
 
-  protected abstract void fromHueMinMax(double[] output);
+  private static final double EPS = 1e-8;
 }

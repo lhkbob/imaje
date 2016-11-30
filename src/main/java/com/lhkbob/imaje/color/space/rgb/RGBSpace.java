@@ -6,7 +6,6 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.Yxy;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.curves.Curve;
-import com.lhkbob.imaje.color.transform.RGBToXYZ;
 import com.lhkbob.imaje.util.Arguments;
 
 /**

@@ -29,43 +29,68 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.hsv;
 
+import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.ColorSpace;
-import com.lhkbob.imaje.color.HLS;
 import com.lhkbob.imaje.color.RGB;
-import com.lhkbob.imaje.color.space.hsv.HLSSpace;
+import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-public class HLSToRGB<S extends ColorSpace<RGB<S>, S>> extends AbstractHueToRGBTransform<HLSSpace<S>, HLS<S>, S> {
-  private final RGBToHLS<S> inverse;
+public abstract class AbstractRGBToHueTransform<SI extends ColorSpace<RGB<SI>, SI>, SO extends ColorSpace<O, SO>, O extends Color<O, SO>> implements ColorTransform<SI, RGB<SI>, SO, O> {
+  private final SI inputSpace;
+  private final SO outputSpace;
 
-  public HLSToRGB(HLSSpace<S> inputSpace) {
-    super(inputSpace,inputSpace.getRGBSpace());
-    inverse = new RGBToHLS<>(this);
-  }
+  public AbstractRGBToHueTransform(SI inputSpace, SO outputSpace) {
+    Arguments.notNull("inputSpace", inputSpace);
+    Arguments.notNull("outputSpace", outputSpace);
 
-  HLSToRGB(RGBToHLS<S> inverse) {
-    super(inverse.getOutputSpace(), inverse.getInputSpace());
-    this.inverse = inverse;
-  }
-
-  @Override
-  protected void toHueChromaM(double[] input, double[] hcm) {
-    hcm[0] = input[0]; // hue
-    hcm[1] = (1.0 - Math.abs(2.0 * input[1] - 1.0)) * input[2]; // chroma
-    hcm[2] = input[1] - 0.5 * hcm[1]; // m
+    this.inputSpace = inputSpace;
+    this.outputSpace = outputSpace;
   }
 
   @Override
-  public RGBToHLS<S> inverse() {
-    return inverse;
+  public SI getInputSpace() {
+    return inputSpace;
   }
 
   @Override
-  public String toString() {
-    return "HLS -> RGB Transform";
+  public SO getOutputSpace() {
+    return outputSpace;
   }
+
+  @Override
+  public boolean applyUnchecked(double[] input, double[] output) {
+    Arguments.equals("input.length", 3, input.length);
+    Arguments.equals("output.length", 3, output.length);
+
+    double hue, min, max;
+    if (input[0] >= input[1] && input[0] >= input[2]) {
+      // Red is the largest component
+      max = input[0];
+      min = Math.min(input[1], input[2]);
+      hue = ((input[1] - input[2]) / (max - min)) % 6.0;
+    } else if (input[1] >= input[2]) {
+      // Green is the largest component
+      max = input[1];
+      min = Math.min(input[0], input[2]);
+      hue = (input[2] - input[0]) / (max - min) + 2.0;
+    } else {
+      // Blue is the largest component
+      max = input[2];
+      min = Math.min(input[0], input[1]);
+      hue = (input[0] - input[1]) / (max - min) + 4.0;
+    }
+
+    output[0] = hue;
+    output[1] = min;
+    output[2] = max;
+    fromHueMinMax(output);
+    return true;
+  }
+
+  protected abstract void fromHueMinMax(double[] output);
 }

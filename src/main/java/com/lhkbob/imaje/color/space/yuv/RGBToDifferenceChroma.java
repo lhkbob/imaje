@@ -29,32 +29,34 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.yuv;
 
-import com.lhkbob.imaje.color.Luminance;
-import com.lhkbob.imaje.color.XYZ;
-import com.lhkbob.imaje.color.space.luminance.Linear;
-import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.RGB;
+import com.lhkbob.imaje.color.YCbCr;
+import com.lhkbob.imaje.color.YUV;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-public class XYZToLuminance implements ColorTransform<CIE31, XYZ<CIE31>, Linear, Luminance<Linear>> {
-  private final Linear lumSpace;
-  private final XYZ<CIE31> whitepoint; // cached from lumSpace
-  private final LuminanceToXYZ inverse;
+public class RGBToDifferenceChroma<SI extends ColorSpace<RGB<SI>, SI>, SO extends ColorSpace<O, SO>, O extends Color<O, SO>> implements ColorTransform<SI, RGB<SI>, SO, O> {
+  private final DifferenceChromaToRGB<SO, O, SI> inverse;
 
-  public XYZToLuminance(Linear lumSpace) {
-    this.lumSpace = lumSpace;
-    whitepoint = lumSpace.getReferenceWhitepoint();
-    inverse = new LuminanceToXYZ(this);
+  RGBToDifferenceChroma(DifferenceChromaToRGB<SO, O, SI> inverse) {
+    this.inverse = inverse;
   }
 
-  XYZToLuminance(LuminanceToXYZ inverse) {
-    lumSpace = inverse.getInputSpace();
-    whitepoint = lumSpace.getReferenceWhitepoint();
-    this.inverse = inverse;
+  public static <S extends ColorSpace<RGB<S>, S>> RGBToDifferenceChroma<S, YCbCrSpace<S>, YCbCr<S>> newRGBToYCbCr(
+      YCbCrSpace<S> yCbCrSpace, double kb, double kr) {
+    return DifferenceChromaToRGB.newYCbCrToRGB(yCbCrSpace, kb, kr).inverse();
+  }
+
+  public static <S extends ColorSpace<RGB<S>, S>> RGBToDifferenceChroma<S, YUVSpace<S>, YUV<S>> newYUVToRGB(
+      YUVSpace<S> yuvSpace, double kb, double kr) {
+    return DifferenceChromaToRGB.newYUVToRGB(yuvSpace, kb, kr).inverse();
   }
 
   @Override
@@ -62,44 +64,51 @@ public class XYZToLuminance implements ColorTransform<CIE31, XYZ<CIE31>, Linear,
     if (o == this) {
       return true;
     }
-    if (!(o instanceof XYZToLuminance)) {
+    if (!(o instanceof RGBToDifferenceChroma)) {
       return false;
     }
-    return ((XYZToLuminance) o).lumSpace.equals(lumSpace);
+    RGBToDifferenceChroma c = (RGBToDifferenceChroma) o;
+    return c.inverse.equals(inverse);
   }
 
   @Override
   public int hashCode() {
-    return XYZToLuminance.class.hashCode() ^ lumSpace.hashCode();
+    return RGBToDifferenceChroma.class.hashCode() ^ inverse.hashCode();
   }
 
   @Override
-  public LuminanceToXYZ inverse() {
-    return inverse();
+  public DifferenceChromaToRGB<SO, O, SI> inverse() {
+    return inverse;
   }
 
   @Override
-  public CIE31 getInputSpace() {
-    return CIE31.SPACE;
+  public SI getInputSpace() {
+    return inverse.getOutputSpace();
   }
 
   @Override
-  public Linear getOutputSpace() {
-    return lumSpace;
+  public SO getOutputSpace() {
+    return inverse.getInputSpace();
   }
 
   @Override
   public boolean applyUnchecked(double[] input, double[] output) {
     Arguments.equals("input.length", 3, input.length);
-    Arguments.equals("output.length", 1, output.length);
+    Arguments.equals("output.length", 3, output.length);
 
-    output[0] = input[1] / whitepoint.y();
-
+    // Y from R, G, and B
+    output[0] =
+        inverse.kr * input[0] + (1.0 - inverse.kr - inverse.kb) * input[1] + inverse.kb * input[2];
+    // Cb from Y and B
+    output[1] = inverse.umax * (input[2] - output[0]) / (1.0 - inverse.kb);
+    // Cr from Y and R
+    output[2] = inverse.vmax * (input[0] - output[0]) / (1.0 - inverse.kr);
     return true;
   }
 
   @Override
   public String toString() {
-    return String.format("XYZ -> Luminance Transform (whitepoint: %s)", whitepoint);
+    return String.format("RGB -> Yb*r* (kb: %.3f, kr: %.3f, b-max: %.3f, r-max: %.3f)", inverse.kb,
+        inverse.kr, inverse.umax, inverse.vmax);
   }
 }

@@ -7,8 +7,7 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.rgb.SRGB;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.ColorTransform;
-import com.lhkbob.imaje.color.transform.general.Composition;
-import com.lhkbob.imaje.color.transform.HLSToRGB;
+import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.util.Arguments;
 
 /**

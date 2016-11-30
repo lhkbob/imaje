@@ -29,40 +29,31 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.lab;
 
 import com.lhkbob.imaje.color.Lab;
 import com.lhkbob.imaje.color.XYZ;
-import com.lhkbob.imaje.color.space.lab.Hunter;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-public class HunterLabToXYZ implements ColorTransform<Hunter, Lab<Hunter>, CIE31, XYZ<CIE31>> {
-  private final double invKA;
-  private final double invKB;
-  private final XYZ<CIE31> whitepoint; // cached from labSpace
+public class XYZToCIELAB implements ColorTransform<CIE31, XYZ<CIE31>, CIE, Lab<CIE>> {
+  private final XYZ<CIE31> referenceWhitepoint; // cached from labSpace
+  private final CIE labSpace;
+  private final CIELABToXYZ inverse;
 
-  private final Hunter labSpace;
-  private final XYZToHunterLab inverse;
-
-  public HunterLabToXYZ(Hunter labSpace) {
+  public XYZToCIELAB(CIE labSpace) {
+    this.referenceWhitepoint = labSpace.getReferenceWhitepoint();
     this.labSpace = labSpace;
-    this.whitepoint = labSpace.getReferenceWhitepoint();
-    invKA = 1.0 / XYZToHunterLab.calculateKA(whitepoint);
-    invKB = 1.0 / XYZToHunterLab.calculateKB(whitepoint);
-
-    inverse = new XYZToHunterLab(this);
+    inverse = new CIELABToXYZ(this);
   }
 
-  HunterLabToXYZ(XYZToHunterLab inverse) {
-    labSpace = inverse.getOutputSpace();
-    whitepoint = labSpace.getReferenceWhitepoint();
-    invKA = 1.0 / XYZToHunterLab.calculateKA(whitepoint);
-    invKB = 1.0 / XYZToHunterLab.calculateKB(whitepoint);
-
+  XYZToCIELAB(CIELABToXYZ inverse) {
+    labSpace = inverse.getInputSpace();
+    referenceWhitepoint = labSpace.getReferenceWhitepoint();
     this.inverse = inverse;
   }
 
@@ -71,30 +62,30 @@ public class HunterLabToXYZ implements ColorTransform<Hunter, Lab<Hunter>, CIE31
     if (o == this) {
       return true;
     }
-    if (!(o instanceof HunterLabToXYZ)) {
+    if (!(o instanceof XYZToCIELAB)) {
       return false;
     }
-    return ((HunterLabToXYZ) o).labSpace.equals(labSpace);
+    return ((XYZToCIELAB) o).labSpace.equals(labSpace);
   }
 
   @Override
   public int hashCode() {
-    return HunterLabToXYZ.class.hashCode() ^ labSpace.hashCode();
+    return XYZToCIELAB.class.hashCode() ^ labSpace.hashCode();
   }
 
   @Override
-  public XYZToHunterLab inverse() {
+  public CIELABToXYZ inverse() {
     return inverse;
   }
 
   @Override
-  public Hunter getInputSpace() {
-    return labSpace;
+  public CIE31 getInputSpace() {
+    return CIE31.SPACE;
   }
 
   @Override
-  public CIE31 getOutputSpace() {
-    return CIE31.SPACE;
+  public CIE getOutputSpace() {
+    return labSpace;
   }
 
   @Override
@@ -102,20 +93,31 @@ public class HunterLabToXYZ implements ColorTransform<Hunter, Lab<Hunter>, CIE31
     Arguments.equals("input.length", 3, input.length);
     Arguments.equals("output.length", 3, output.length);
 
-    double rootYP = input[0] / 100.0;
-    double yp = rootYP * rootYP;
-    double xp = input[1] * rootYP * invKA + yp;
-    double zp = yp - input[2] * rootYP * invKB;
+    double fx = f(input[0] / referenceWhitepoint.x());
+    double fy = f(input[1] / referenceWhitepoint.y());
+    double fz = f(input[2] / referenceWhitepoint.z());
 
-    output[0] = xp * whitepoint.x();
-    output[1] = yp * whitepoint.y();
-    output[2] = zp * whitepoint.z();
+    output[0] = 116.0 * fy - 16.0; // L*
+    output[1] = 500 * (fx - fy); // a*
+    output[2] = 200 * (fy - fz); // b*
 
     return true;
   }
 
   @Override
   public String toString() {
-    return String.format("Hunter Lab -> XYZ (whitepoint: %s)", whitepoint);
+    return String.format("XYZ -> CIELAB Transform (whitepoint: %s)", referenceWhitepoint);
   }
+
+  static double f(double r) {
+    if (r > LINEAR_THRESHOLD) {
+      return Math.cbrt(r);
+    } else {
+      return LINEAR_SLOPE * r + LINEAR_OFFSET;
+    }
+  }
+
+  static final double LINEAR_OFFSET = 4.0 / 29.0; // ~0.138
+  static final double LINEAR_SLOPE = Math.pow(29.0 / 6.0, 2.0) / 3.0; // ~7.787
+  static final double LINEAR_THRESHOLD = Math.pow(6.0 / 29.0, 3.0); // ~0.009
 }

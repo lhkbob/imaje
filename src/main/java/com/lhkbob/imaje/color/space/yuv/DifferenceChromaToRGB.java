@@ -29,15 +29,14 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.yuv;
 
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.YCbCr;
 import com.lhkbob.imaje.color.YUV;
-import com.lhkbob.imaje.color.space.yuv.YCbCrSpace;
-import com.lhkbob.imaje.color.space.yuv.YUVSpace;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**

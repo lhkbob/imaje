@@ -29,58 +29,42 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.hsv;
 
 import com.lhkbob.imaje.color.ColorSpace;
-import com.lhkbob.imaje.color.HSV;
+import com.lhkbob.imaje.color.HLS;
 import com.lhkbob.imaje.color.RGB;
-import com.lhkbob.imaje.color.space.hsv.HSVSpace;
 
 /**
  *
  */
-public class RGBToHSV<S extends ColorSpace<RGB<S>, S>> extends AbstractRGBToHueTransform<S, HSVSpace<S>, HSV<S>> {
-  private final HSVToRGB<S> inverse;
+public class HLSToRGB<S extends ColorSpace<RGB<S>, S>> extends AbstractHueToRGBTransform<HLSSpace<S>, HLS<S>, S> {
+  private final RGBToHLS<S> inverse;
 
-  public RGBToHSV(HSVSpace<S> outputSpace) {
-    super(outputSpace.getRGBSpace(), outputSpace);
-    inverse = new HSVToRGB<>(this);
+  public HLSToRGB(HLSSpace<S> inputSpace) {
+    super(inputSpace,inputSpace.getRGBSpace());
+    inverse = new RGBToHLS<>(this);
   }
 
-  RGBToHSV(HSVToRGB<S> inverse) {
+  HLSToRGB(RGBToHLS<S> inverse) {
     super(inverse.getOutputSpace(), inverse.getInputSpace());
     this.inverse = inverse;
   }
 
   @Override
-  public HSVToRGB<S> inverse() {
+  protected void toHueChromaM(double[] input, double[] hcm) {
+    hcm[0] = input[0]; // hue
+    hcm[1] = (1.0 - Math.abs(2.0 * input[1] - 1.0)) * input[2]; // chroma
+    hcm[2] = input[1] - 0.5 * hcm[1]; // m
+  }
+
+  @Override
+  public RGBToHLS<S> inverse() {
     return inverse;
   }
 
   @Override
   public String toString() {
-    return "RGB -> HSV Transform";
+    return "HLS -> RGB Transform";
   }
-
-  @Override
-  protected void fromHueMinMax(double[] output) {
-    double hue = output[0];
-    double c = output[2] - output[1];
-    double saturation;
-    double value = output[2];
-    if (c < EPS) {
-      // Neutral color, use hue = 0 arbitrarily
-      hue = 0.0;
-      saturation = 0.0;
-    } else {
-      hue *= 60.0; // Scale hue to 0 to 360 degrees
-      saturation = c / value;
-    }
-
-    output[0] = hue;
-    output[1] = saturation;
-    output[2] = value;
-  }
-
-  private static final double EPS = 1e-8;
 }

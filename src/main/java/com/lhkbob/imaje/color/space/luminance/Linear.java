@@ -5,7 +5,6 @@ import com.lhkbob.imaje.color.Luminance;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.Illuminants;
-import com.lhkbob.imaje.color.transform.LuminanceToXYZ;
 
 /**
  * Linear

@@ -8,8 +8,8 @@ import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.color.transform.Illuminants;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.color.transform.curves.UnitGammaFunction;
-import com.lhkbob.imaje.color.transform.general.Composition;
-import com.lhkbob.imaje.color.transform.general.CurveTransform;
+import com.lhkbob.imaje.color.transform.Composition;
+import com.lhkbob.imaje.color.transform.CurveTransform;
 
 import java.util.Collections;
 

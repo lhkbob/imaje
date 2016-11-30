@@ -29,15 +29,13 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.lab;
 
 import com.lhkbob.imaje.color.CIELUV;
 import com.lhkbob.imaje.color.XYZ;
-import com.lhkbob.imaje.color.space.lab.CIELUVSpace;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
-
-import static com.lhkbob.imaje.color.transform.XYZToCIELAB.f;
 
 /**
  *
@@ -102,7 +100,7 @@ public class XYZToCIELUV implements ColorTransform<CIE31, XYZ<CIE31>, CIELUVSpac
 
     double up = uPrime(input[0], input[1], input[2]);
     double vp = vPrime(input[0], input[1], input[2]);
-    output[0] = 116.0 * f(input[1] / referenceWhitepoint.y()) - 16.0; // L*
+    output[0] = 116.0 * XYZToCIELAB.f(input[1] / referenceWhitepoint.y()) - 16.0; // L*
     output[1] = 13.0 * output[0] * (up - uWhite); // u*
     output[2] = 13.0 * output[0] * (vp - vWhite); // v*
 

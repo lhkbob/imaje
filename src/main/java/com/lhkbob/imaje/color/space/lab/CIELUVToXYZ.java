@@ -29,31 +29,43 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.lab;
 
-import com.lhkbob.imaje.color.Lab;
+import com.lhkbob.imaje.color.CIELUV;
 import com.lhkbob.imaje.color.XYZ;
-import com.lhkbob.imaje.color.space.lab.CIE;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-public class CIELABToXYZ implements ColorTransform<CIE, Lab<CIE>, CIE31, XYZ<CIE31>> {
-  private final CIE labSpace;
-  private final XYZ<CIE31> referenceWhitepoint; // cached from CIE
-  private final XYZToCIELAB inverse;
+public class CIELUVToXYZ implements ColorTransform<CIELUVSpace, CIELUV, CIE31, XYZ<CIE31>> {
+  private final XYZ<CIE31> referenceWhitepoint; // cached from luvSpace
+  private final double uWhite, vWhite;
+  private final XYZToCIELUV inverse;
+  private final CIELUVSpace luvSpace;
 
-  public CIELABToXYZ(CIE labSpace) {
-    this.referenceWhitepoint = labSpace.getReferenceWhitepoint();
-    this.labSpace = labSpace;
-    inverse = new XYZToCIELAB(this);
+  public CIELUVToXYZ(CIELUVSpace luvSpace) {
+    this.luvSpace = luvSpace;
+    this.referenceWhitepoint = luvSpace.getReferenceWhitepoint();
+
+    uWhite = XYZToCIELUV
+        .uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
+    vWhite = XYZToCIELUV
+        .vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
+
+    inverse = new XYZToCIELUV(this);
   }
 
-  CIELABToXYZ(XYZToCIELAB inverse) {
-    labSpace = inverse.getOutputSpace();
-    referenceWhitepoint = labSpace.getReferenceWhitepoint();
+  CIELUVToXYZ(XYZToCIELUV inverse) {
+    luvSpace = inverse.getOutputSpace();
+    referenceWhitepoint = luvSpace.getReferenceWhitepoint();
+
+    uWhite = XYZToCIELUV
+        .uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
+    vWhite = XYZToCIELUV
+        .vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
     this.inverse = inverse;
   }
 
@@ -62,25 +74,25 @@ public class CIELABToXYZ implements ColorTransform<CIE, Lab<CIE>, CIE31, XYZ<CIE
     if (o == this) {
       return true;
     }
-    if (!(o instanceof CIELABToXYZ)) {
+    if (!(o instanceof CIELUVToXYZ)) {
       return false;
     }
-    return ((CIELABToXYZ) o).labSpace.equals(labSpace);
+    return ((CIELUVToXYZ) o).luvSpace.equals(luvSpace);
   }
 
   @Override
   public int hashCode() {
-    return CIELABToXYZ.class.hashCode() ^ labSpace.hashCode();
+    return CIELUVToXYZ.class.hashCode() ^ luvSpace.hashCode();
   }
 
   @Override
-  public XYZToCIELAB inverse() {
+  public XYZToCIELUV inverse() {
     return inverse;
   }
 
   @Override
-  public CIE getInputSpace() {
-    return labSpace;
+  public CIELUVSpace getInputSpace() {
+    return luvSpace;
   }
 
   @Override
@@ -93,33 +105,22 @@ public class CIELABToXYZ implements ColorTransform<CIE, Lab<CIE>, CIE31, XYZ<CIE
     Arguments.equals("input.length", 3, input.length);
     Arguments.equals("output.length", 3, output.length);
 
-    double lp = L_SCALE * (input[0] + 16.0);
-    // X from L and a
-    output[0] = referenceWhitepoint.x() * inverseF(lp + A_SCALE * input[1]);
-    // Y from L
-    output[1] = referenceWhitepoint.y() * inverseF(lp);
-    // Z from L and b
-    output[2] = referenceWhitepoint.z() * inverseF(lp - B_SCALE * input[2]);
+    double up = input[1] / (13.0 * input[0]) + uWhite;
+    double vp = input[2] / (13.0 * input[0]) + vWhite;
+
+    // Y from L*
+    output[1] = referenceWhitepoint.y() * CIELABToXYZ.inverseF(CIELABToXYZ.L_SCALE * (input[0] + 16.0));
+    double denom = 9.0 * output[1] / vp;
+    // X from Y, up, and denom
+    output[0] = 0.25 * up * denom;
+    // Z from Y, X, and denom
+    output[2] = (denom - output[0] - 15.0 * output[1]) / 3.0;
 
     return true;
   }
 
   @Override
   public String toString() {
-    return String.format("CIELAB -> XYZ Transform (whitepoint: %s)", referenceWhitepoint);
+    return String.format("L*u*v* -> XYZ Transform (whitepoint: %s)", referenceWhitepoint);
   }
-
-  static double inverseF(double t) {
-    if (t > LINEAR_THRESHOLD) {
-      return t * t * t;
-    } else {
-      return LINEAR_SLOPE * (t - LINEAR_OFFSET);
-    }
-  }
-  static final double A_SCALE = 1.0 / 500.0;
-  static final double B_SCALE = 1.0 / 200.0;
-  static final double LINEAR_OFFSET = 4.0 / 29.0; // ~0.138
-  static final double LINEAR_THRESHOLD = 6.0 / 29.0;
-  static final double LINEAR_SLOPE = 3.0 * LINEAR_THRESHOLD * LINEAR_THRESHOLD;
-  static final double L_SCALE = 1.0 / 116.0;
 }

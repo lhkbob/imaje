@@ -29,59 +29,72 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.lab;
 
-import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.Lab;
 import com.lhkbob.imaje.color.XYZ;
-import com.lhkbob.imaje.color.Yxy;
-import com.lhkbob.imaje.color.space.xyz.YxySpace;
+import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
+ *
  */
-public class YxyToXYZ<S extends ColorSpace<XYZ<S>, S>> implements ColorTransform<YxySpace<S>, Yxy<S>, S, XYZ<S>> {
-  private final YxySpace<S> inputSpace;
-  private final XYZToYxy<S> inverse;
+public class HunterLabToXYZ implements ColorTransform<Hunter, Lab<Hunter>, CIE31, XYZ<CIE31>> {
+  private final double invKA;
+  private final double invKB;
+  private final XYZ<CIE31> whitepoint; // cached from labSpace
 
-  public YxyToXYZ(YxySpace<S> inputSpace) {
-    Arguments.notNull("inputSpace", inputSpace);
+  private final Hunter labSpace;
+  private final XYZToHunterLab inverse;
 
-    this.inputSpace = inputSpace;
-    inverse = new XYZToYxy<>(this);
+  public HunterLabToXYZ(Hunter labSpace) {
+    this.labSpace = labSpace;
+    this.whitepoint = labSpace.getReferenceWhitepoint();
+    invKA = 1.0 / XYZToHunterLab.calculateKA(whitepoint);
+    invKB = 1.0 / XYZToHunterLab.calculateKB(whitepoint);
+
+    inverse = new XYZToHunterLab(this);
   }
 
-  YxyToXYZ(XYZToYxy<S> inverse) {
-    inputSpace = inverse.getOutputSpace();
+  HunterLabToXYZ(XYZToHunterLab inverse) {
+    labSpace = inverse.getOutputSpace();
+    whitepoint = labSpace.getReferenceWhitepoint();
+    invKA = 1.0 / XYZToHunterLab.calculateKA(whitepoint);
+    invKB = 1.0 / XYZToHunterLab.calculateKB(whitepoint);
+
     this.inverse = inverse;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (o == this)
+    if (o == this) {
       return true;
-    if (!(o instanceof YxyToXYZ))
+    }
+    if (!(o instanceof HunterLabToXYZ)) {
       return false;
-    return ((YxyToXYZ<?>) o).inputSpace.equals(inputSpace);
+    }
+    return ((HunterLabToXYZ) o).labSpace.equals(labSpace);
   }
 
   @Override
   public int hashCode() {
-    return YxyToXYZ.class.hashCode() ^ inputSpace.hashCode();
+    return HunterLabToXYZ.class.hashCode() ^ labSpace.hashCode();
   }
 
   @Override
-  public XYZToYxy<S> inverse() {
+  public XYZToHunterLab inverse() {
     return inverse;
   }
 
   @Override
-  public YxySpace<S> getInputSpace() {
-    return inputSpace;
+  public Hunter getInputSpace() {
+    return labSpace;
   }
 
   @Override
-  public S getOutputSpace() {
-    return inputSpace.getXYZSpace();
+  public CIE31 getOutputSpace() {
+    return CIE31.SPACE;
   }
 
   @Override
@@ -89,17 +102,20 @@ public class YxyToXYZ<S extends ColorSpace<XYZ<S>, S>> implements ColorTransform
     Arguments.equals("input.length", 3, input.length);
     Arguments.equals("output.length", 3, output.length);
 
-    // X from Y, x, and y
-    output[0] = input[0] * input[1] / input[2];
-    // Y from Y
-    output[1] = input[0];
-    // Z from Y, y, and x
-    output[2] = input[0] * (1.0 - input[1] - input[2]) / input[2];
+    double rootYP = input[0] / 100.0;
+    double yp = rootYP * rootYP;
+    double xp = input[1] * rootYP * invKA + yp;
+    double zp = yp - input[2] * rootYP * invKB;
+
+    output[0] = xp * whitepoint.x();
+    output[1] = yp * whitepoint.y();
+    output[2] = zp * whitepoint.z();
+
     return true;
   }
 
   @Override
   public String toString() {
-    return "Yxy -> XYZ Transform";
+    return String.format("Hunter Lab -> XYZ (whitepoint: %s)", whitepoint);
   }
 }

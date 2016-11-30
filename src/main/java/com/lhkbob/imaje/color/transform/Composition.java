@@ -1,8 +1,7 @@
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
 
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.ColorSpace;
-import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**

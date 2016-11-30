@@ -29,38 +29,31 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.luminance;
 
-import com.lhkbob.imaje.color.Lab;
+import com.lhkbob.imaje.color.Luminance;
 import com.lhkbob.imaje.color.XYZ;
-import com.lhkbob.imaje.color.space.lab.Hunter;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-public class XYZToHunterLab implements ColorTransform<CIE31, XYZ<CIE31>, Hunter, Lab<Hunter>> {
-  private final double ka;
-  private final double kb;
-  private final XYZ<CIE31> whitepoint; // cached from labSpace
-  private final Hunter labSpace;
-  private final HunterLabToXYZ inverse;
+public class LuminanceToXYZ implements ColorTransform<Linear, Luminance<Linear>, CIE31, XYZ<CIE31>> {
+  private final Linear lumSpace;
+  private final XYZ<CIE31> whitepoint; // cached from lumSpace
+  private final XYZToLuminance inverse;
 
-  public XYZToHunterLab(Hunter labSpace) {
-    this.labSpace = labSpace;
-    this.whitepoint = labSpace.getReferenceWhitepoint();
-    ka = calculateKA(whitepoint);
-    kb = calculateKB(whitepoint);
-
-    inverse = new HunterLabToXYZ(this);
+  public LuminanceToXYZ(Linear lumSpace) {
+    this.lumSpace = lumSpace;
+    this.whitepoint = lumSpace.getReferenceWhitepoint();
+    inverse = new XYZToLuminance(this);
   }
 
-  XYZToHunterLab(HunterLabToXYZ inverse) {
-    labSpace = inverse.getInputSpace();
-    whitepoint = labSpace.getReferenceWhitepoint();
-    ka = calculateKA(whitepoint);
-    kb = calculateKB(whitepoint);
+  LuminanceToXYZ(XYZToLuminance inverse) {
+    lumSpace = inverse.getOutputSpace();
+    whitepoint = lumSpace.getReferenceWhitepoint();
     this.inverse = inverse;
   }
 
@@ -69,59 +62,46 @@ public class XYZToHunterLab implements ColorTransform<CIE31, XYZ<CIE31>, Hunter,
     if (o == this) {
       return true;
     }
-    if (!(o instanceof XYZToHunterLab)) {
+    if (!(o instanceof LuminanceToXYZ)) {
       return false;
     }
-    return ((XYZToHunterLab) o).whitepoint.equals(whitepoint);
+    return ((LuminanceToXYZ) o).lumSpace.equals(lumSpace);
   }
 
   @Override
   public int hashCode() {
-    return XYZToHunterLab.class.hashCode() ^ whitepoint.hashCode();
+    return LuminanceToXYZ.class.hashCode() ^ lumSpace.hashCode();
   }
 
   @Override
-  public HunterLabToXYZ inverse() {
+  public XYZToLuminance inverse() {
     return inverse;
   }
 
   @Override
-  public CIE31 getInputSpace() {
+  public Linear getInputSpace() {
+    return lumSpace;
+  }
+
+  @Override
+  public CIE31 getOutputSpace() {
     return CIE31.SPACE;
   }
 
   @Override
-  public Hunter getOutputSpace() {
-    return labSpace;
-  }
-
-  @Override
   public boolean applyUnchecked(double[] input, double[] output) {
-    Arguments.equals("input.length", 3, input.length);
+    Arguments.equals("input.length", 1, input.length);
     Arguments.equals("output.length", 3, output.length);
 
-    double xp = input[0] / whitepoint.x();
-    double yp = input[1] / whitepoint.y();
-    double rootYP = Math.sqrt(yp);
-    double zp = input[2] / whitepoint.z();
-
-    output[0] = 100.0 * rootYP;
-    output[1] = ka * (xp - yp) / rootYP;
-    output[2] = kb * (yp - zp) / rootYP;
+    output[0] = whitepoint.x() * input[0];
+    output[1] = whitepoint.y() * input[0];
+    output[2] = whitepoint.z() * input[0];
 
     return true;
   }
 
   @Override
   public String toString() {
-    return String.format("XYZ -> Hunter Lab (whitepoint: %s)", whitepoint);
-  }
-
-  static double calculateKA(XYZ<CIE31> whitepoint) {
-    return 175.0 / 198.04 * (whitepoint.x() + whitepoint.y());
-  }
-
-  static double calculateKB(XYZ<CIE31> whitepoint) {
-    return 70.0 / 218.11 * (whitepoint.y() + whitepoint.z());
+    return String.format("Luminance -> XYZ Transform (whitepoint: %s)", whitepoint);
   }
 }

@@ -29,46 +29,29 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.xyz;
 
-import com.lhkbob.imaje.color.CIELUV;
+import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.XYZ;
-import com.lhkbob.imaje.color.space.lab.CIELUVSpace;
-import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.Yxy;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
-import static com.lhkbob.imaje.color.transform.CIELABToXYZ.L_SCALE;
-import static com.lhkbob.imaje.color.transform.CIELABToXYZ.inverseF;
-
 /**
- *
  */
-public class CIELUVToXYZ implements ColorTransform<CIELUVSpace, CIELUV, CIE31, XYZ<CIE31>> {
-  private final XYZ<CIE31> referenceWhitepoint; // cached from luvSpace
-  private final double uWhite, vWhite;
-  private final XYZToCIELUV inverse;
-  private final CIELUVSpace luvSpace;
+public class XYZToYxy<S extends ColorSpace<XYZ<S>, S>> implements ColorTransform<S, XYZ<S>, YxySpace<S>, Yxy<S>> {
+  private final YxySpace<S> outputSpace;
+  private final YxyToXYZ<S> inverse;
 
-  public CIELUVToXYZ(CIELUVSpace luvSpace) {
-    this.luvSpace = luvSpace;
-    this.referenceWhitepoint = luvSpace.getReferenceWhitepoint();
+  public XYZToYxy(YxySpace<S> outputSpace) {
+    Arguments.notNull("outputSpace", outputSpace);
 
-    uWhite = XYZToCIELUV
-        .uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
-    vWhite = XYZToCIELUV
-        .vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
-
-    inverse = new XYZToCIELUV(this);
+    this.outputSpace = outputSpace;
+    inverse = new YxyToXYZ<>(this);
   }
 
-  CIELUVToXYZ(XYZToCIELUV inverse) {
-    luvSpace = inverse.getOutputSpace();
-    referenceWhitepoint = luvSpace.getReferenceWhitepoint();
-
-    uWhite = XYZToCIELUV
-        .uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
-    vWhite = XYZToCIELUV
-        .vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
+  XYZToYxy(YxyToXYZ<S> inverse) {
+    outputSpace = inverse.getInputSpace();
     this.inverse = inverse;
   }
 
@@ -77,30 +60,30 @@ public class CIELUVToXYZ implements ColorTransform<CIELUVSpace, CIELUV, CIE31, X
     if (o == this) {
       return true;
     }
-    if (!(o instanceof CIELUVToXYZ)) {
+    if (!(o instanceof XYZToYxy)) {
       return false;
     }
-    return ((CIELUVToXYZ) o).luvSpace.equals(luvSpace);
+    return ((XYZToYxy<?>) o).outputSpace.equals(outputSpace);
   }
 
   @Override
   public int hashCode() {
-    return CIELUVToXYZ.class.hashCode() ^ luvSpace.hashCode();
+    return XYZToYxy.class.hashCode() ^ outputSpace.hashCode();
   }
 
   @Override
-  public XYZToCIELUV inverse() {
+  public YxyToXYZ<S> inverse() {
     return inverse;
   }
 
   @Override
-  public CIELUVSpace getInputSpace() {
-    return luvSpace;
+  public S getInputSpace() {
+    return outputSpace.getXYZSpace();
   }
 
   @Override
-  public CIE31 getOutputSpace() {
-    return CIE31.SPACE;
+  public YxySpace<S> getOutputSpace() {
+    return outputSpace;
   }
 
   @Override
@@ -108,22 +91,19 @@ public class CIELUVToXYZ implements ColorTransform<CIELUVSpace, CIELUV, CIE31, X
     Arguments.equals("input.length", 3, input.length);
     Arguments.equals("output.length", 3, output.length);
 
-    double up = input[1] / (13.0 * input[0]) + uWhite;
-    double vp = input[2] / (13.0 * input[0]) + vWhite;
-
-    // Y from L*
-    output[1] = referenceWhitepoint.y() * inverseF(L_SCALE * (input[0] + 16.0));
-    double denom = 9.0 * output[1] / vp;
-    // X from Y, up, and denom
-    output[0] = 0.25 * up * denom;
-    // Z from Y, X, and denom
-    output[2] = (denom - output[0] - 15.0 * output[1]) / 3.0;
+    double sum = input[0] + input[1] + input[2];
+    // Y from Y
+    output[0] = input[1];
+    // x from X, Y, and Z
+    output[1] = input[0] / sum;
+    // y from X, Y, and Z
+    output[2] = input[1] / sum;
 
     return true;
   }
 
   @Override
   public String toString() {
-    return String.format("L*u*v* -> XYZ Transform (whitepoint: %s)", referenceWhitepoint);
+    return "XYZ -> Yxy Transform";
   }
 }

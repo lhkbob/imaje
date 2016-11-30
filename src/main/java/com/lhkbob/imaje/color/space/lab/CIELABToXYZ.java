@@ -29,30 +29,30 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
+package com.lhkbob.imaje.color.space.lab;
 
 import com.lhkbob.imaje.color.Lab;
 import com.lhkbob.imaje.color.XYZ;
-import com.lhkbob.imaje.color.space.lab.CIE;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-public class XYZToCIELAB implements ColorTransform<CIE31, XYZ<CIE31>, CIE, Lab<CIE>> {
-  private final XYZ<CIE31> referenceWhitepoint; // cached from labSpace
+public class CIELABToXYZ implements ColorTransform<CIE, Lab<CIE>, CIE31, XYZ<CIE31>> {
   private final CIE labSpace;
-  private final CIELABToXYZ inverse;
+  private final XYZ<CIE31> referenceWhitepoint; // cached from CIE
+  private final XYZToCIELAB inverse;
 
-  public XYZToCIELAB(CIE labSpace) {
+  public CIELABToXYZ(CIE labSpace) {
     this.referenceWhitepoint = labSpace.getReferenceWhitepoint();
     this.labSpace = labSpace;
-    inverse = new CIELABToXYZ(this);
+    inverse = new XYZToCIELAB(this);
   }
 
-  XYZToCIELAB(CIELABToXYZ inverse) {
-    labSpace = inverse.getInputSpace();
+  CIELABToXYZ(XYZToCIELAB inverse) {
+    labSpace = inverse.getOutputSpace();
     referenceWhitepoint = labSpace.getReferenceWhitepoint();
     this.inverse = inverse;
   }
@@ -62,30 +62,30 @@ public class XYZToCIELAB implements ColorTransform<CIE31, XYZ<CIE31>, CIE, Lab<C
     if (o == this) {
       return true;
     }
-    if (!(o instanceof XYZToCIELAB)) {
+    if (!(o instanceof CIELABToXYZ)) {
       return false;
     }
-    return ((XYZToCIELAB) o).labSpace.equals(labSpace);
+    return ((CIELABToXYZ) o).labSpace.equals(labSpace);
   }
 
   @Override
   public int hashCode() {
-    return XYZToCIELAB.class.hashCode() ^ labSpace.hashCode();
+    return CIELABToXYZ.class.hashCode() ^ labSpace.hashCode();
   }
 
   @Override
-  public CIELABToXYZ inverse() {
+  public XYZToCIELAB inverse() {
     return inverse;
   }
 
   @Override
-  public CIE31 getInputSpace() {
-    return CIE31.SPACE;
+  public CIE getInputSpace() {
+    return labSpace;
   }
 
   @Override
-  public CIE getOutputSpace() {
-    return labSpace;
+  public CIE31 getOutputSpace() {
+    return CIE31.SPACE;
   }
 
   @Override
@@ -93,31 +93,33 @@ public class XYZToCIELAB implements ColorTransform<CIE31, XYZ<CIE31>, CIE, Lab<C
     Arguments.equals("input.length", 3, input.length);
     Arguments.equals("output.length", 3, output.length);
 
-    double fx = f(input[0] / referenceWhitepoint.x());
-    double fy = f(input[1] / referenceWhitepoint.y());
-    double fz = f(input[2] / referenceWhitepoint.z());
-
-    output[0] = 116.0 * fy - 16.0; // L*
-    output[1] = 500 * (fx - fy); // a*
-    output[2] = 200 * (fy - fz); // b*
+    double lp = L_SCALE * (input[0] + 16.0);
+    // X from L and a
+    output[0] = referenceWhitepoint.x() * inverseF(lp + A_SCALE * input[1]);
+    // Y from L
+    output[1] = referenceWhitepoint.y() * inverseF(lp);
+    // Z from L and b
+    output[2] = referenceWhitepoint.z() * inverseF(lp - B_SCALE * input[2]);
 
     return true;
   }
 
   @Override
   public String toString() {
-    return String.format("XYZ -> CIELAB Transform (whitepoint: %s)", referenceWhitepoint);
+    return String.format("CIELAB -> XYZ Transform (whitepoint: %s)", referenceWhitepoint);
   }
 
-  static double f(double r) {
-    if (r > LINEAR_THRESHOLD) {
-      return Math.cbrt(r);
+  static double inverseF(double t) {
+    if (t > LINEAR_THRESHOLD) {
+      return t * t * t;
     } else {
-      return LINEAR_SLOPE * r + LINEAR_OFFSET;
+      return LINEAR_SLOPE * (t - LINEAR_OFFSET);
     }
   }
-
+  static final double A_SCALE = 1.0 / 500.0;
+  static final double B_SCALE = 1.0 / 200.0;
   static final double LINEAR_OFFSET = 4.0 / 29.0; // ~0.138
-  static final double LINEAR_SLOPE = Math.pow(29.0 / 6.0, 2.0) / 3.0; // ~7.787
-  static final double LINEAR_THRESHOLD = Math.pow(6.0 / 29.0, 3.0); // ~0.009
+  static final double LINEAR_THRESHOLD = 6.0 / 29.0;
+  static final double LINEAR_SLOPE = 3.0 * LINEAR_THRESHOLD * LINEAR_THRESHOLD;
+  static final double L_SCALE = 1.0 / 116.0;
 }

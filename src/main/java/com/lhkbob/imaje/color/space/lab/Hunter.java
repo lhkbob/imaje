@@ -4,7 +4,6 @@ import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.Lab;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.HunterLabToXYZ;
 import com.lhkbob.imaje.color.transform.Illuminants;
 
 /**
