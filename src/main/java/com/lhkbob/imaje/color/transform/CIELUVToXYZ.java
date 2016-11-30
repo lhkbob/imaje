@@ -43,26 +43,31 @@ import static com.lhkbob.imaje.color.transform.CIELABToXYZ.inverseF;
 /**
  *
  */
-public class LuvToXYZ implements ColorTransform<CIELUVSpace, CIELUV, CIE31, XYZ<CIE31>> {
+public class CIELUVToXYZ implements ColorTransform<CIELUVSpace, CIELUV, CIE31, XYZ<CIE31>> {
   private final XYZ<CIE31> referenceWhitepoint;
   private final double uWhite, vWhite;
-  private final XYZToLuv inverse;
+  private final XYZToCIELUV inverse;
+  private final CIELUVSpace luvSpace;
 
-  public LuvToXYZ(XYZ<CIE31> referenceWhitepoint) {
+  public CIELUVToXYZ(CIELUVSpace luvSpace, XYZ<CIE31> referenceWhitepoint) {
+    Arguments.notNull("luvSpace", luvSpace);
+
+    this.luvSpace = luvSpace;
     this.referenceWhitepoint = referenceWhitepoint.clone();
-    uWhite = XYZToLuv
+    uWhite = XYZToCIELUV
         .uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
-    vWhite = XYZToLuv
+    vWhite = XYZToCIELUV
         .vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
 
-    inverse = new XYZToLuv(this);
+    inverse = new XYZToCIELUV(this);
   }
 
-  LuvToXYZ(XYZToLuv inverse) {
+  CIELUVToXYZ(XYZToCIELUV inverse) {
+    luvSpace = inverse.getOutputSpace();
     referenceWhitepoint = inverse.getReferenceWhitepoint();
-    uWhite = XYZToLuv
+    uWhite = XYZToCIELUV
         .uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
-    vWhite = XYZToLuv
+    vWhite = XYZToCIELUV
         .vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
     this.inverse = inverse;
   }
@@ -76,25 +81,25 @@ public class LuvToXYZ implements ColorTransform<CIELUVSpace, CIELUV, CIE31, XYZ<
     if (o == this) {
       return true;
     }
-    if (!(o instanceof LuvToXYZ)) {
+    if (!(o instanceof CIELUVToXYZ)) {
       return false;
     }
-    return ((LuvToXYZ) o).referenceWhitepoint.equals(referenceWhitepoint);
+    return ((CIELUVToXYZ) o).referenceWhitepoint.equals(referenceWhitepoint);
   }
 
   @Override
   public int hashCode() {
-    return LuvToXYZ.class.hashCode() ^ referenceWhitepoint.hashCode();
+    return CIELUVToXYZ.class.hashCode() ^ referenceWhitepoint.hashCode();
   }
 
   @Override
-  public XYZToLuv inverse() {
+  public XYZToCIELUV inverse() {
     return inverse;
   }
 
   @Override
   public CIELUVSpace getInputSpace() {
-    return CIELUVSpace.SPACE;
+    return luvSpace;
   }
 
   @Override

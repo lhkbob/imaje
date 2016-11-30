@@ -42,19 +42,24 @@ import static com.lhkbob.imaje.color.transform.XYZToCIELAB.f;
 /**
  *
  */
-public class XYZToLuv implements ColorTransform<CIE31, XYZ<CIE31>, CIELUVSpace, CIELUV> {
+public class XYZToCIELUV implements ColorTransform<CIE31, XYZ<CIE31>, CIELUVSpace, CIELUV> {
   private final XYZ<CIE31> referenceWhitepoint;
   private final double uWhite, vWhite;
-  private final LuvToXYZ inverse;
+  private final CIELUVToXYZ inverse;
+  private final CIELUVSpace luvSpace;
 
-  public XYZToLuv(XYZ<CIE31> referenceWhitepoint) {
+  public XYZToCIELUV(CIELUVSpace luvSpace, XYZ<CIE31> referenceWhitepoint) {
+    Arguments.notNull("luvSpace", luvSpace);
+
+    this.luvSpace = luvSpace;
     this.referenceWhitepoint = referenceWhitepoint;
     uWhite = uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
     vWhite = vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
-    inverse = new LuvToXYZ(this);
+    inverse = new CIELUVToXYZ(this);
   }
 
-  XYZToLuv(LuvToXYZ inverse) {
+  XYZToCIELUV(CIELUVToXYZ inverse) {
+    luvSpace = inverse.getInputSpace();
     referenceWhitepoint = inverse.getReferenceWhitepoint();
     uWhite = uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
     vWhite = vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
@@ -70,19 +75,19 @@ public class XYZToLuv implements ColorTransform<CIE31, XYZ<CIE31>, CIELUVSpace, 
     if (o == this) {
       return true;
     }
-    if (!(o instanceof XYZToLuv)) {
+    if (!(o instanceof XYZToCIELUV)) {
       return false;
     }
-    return ((XYZToLuv) o).referenceWhitepoint.equals(referenceWhitepoint);
+    return ((XYZToCIELUV) o).referenceWhitepoint.equals(referenceWhitepoint);
   }
 
   @Override
   public int hashCode() {
-    return XYZToLuv.class.hashCode() ^ referenceWhitepoint.hashCode();
+    return XYZToCIELUV.class.hashCode() ^ referenceWhitepoint.hashCode();
   }
 
   @Override
-  public LuvToXYZ inverse() {
+  public CIELUVToXYZ inverse() {
     return inverse;
   }
 
@@ -93,7 +98,7 @@ public class XYZToLuv implements ColorTransform<CIE31, XYZ<CIE31>, CIELUVSpace, 
 
   @Override
   public CIELUVSpace getOutputSpace() {
-    return CIELUVSpace.SPACE;
+    return luvSpace;
   }
 
   @Override
