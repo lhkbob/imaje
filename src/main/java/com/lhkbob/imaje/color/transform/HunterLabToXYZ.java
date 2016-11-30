@@ -29,29 +29,46 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
 
+import com.lhkbob.imaje.color.Lab;
 import com.lhkbob.imaje.color.XYZ;
-
-import static com.lhkbob.imaje.color.transform.general.XYZToHunterLab.calculateKA;
-import static com.lhkbob.imaje.color.transform.general.XYZToHunterLab.calculateKB;
+import com.lhkbob.imaje.color.space.lab.Hunter;
+import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-public class HunterLabToXYZ implements Transform {
+public class HunterLabToXYZ implements ColorTransform<Hunter, Lab<Hunter>, CIE31, XYZ<CIE31>> {
   private final double invKA;
   private final double invKB;
-  private final XYZ whitepoint;
+  private final XYZ<CIE31> whitepoint;
 
-  public HunterLabToXYZ(XYZ whitepoint) {
-    this(whitepoint, false);
+  private final Hunter labSpace;
+  private final XYZToHunterLab inverse;
+
+  public HunterLabToXYZ(Hunter labSpace, XYZ<CIE31> whitepoint) {
+    Arguments.notNull("labSpace", labSpace);
+    this.labSpace = labSpace;
+    this.whitepoint = whitepoint.clone();
+    invKA = 1.0 / XYZToHunterLab.calculateKA(whitepoint);
+    invKB = 1.0 / XYZToHunterLab.calculateKB(whitepoint);
+
+    inverse = new XYZToHunterLab(this);
   }
 
-  HunterLabToXYZ(XYZ whitepoint, boolean ownWhite) {
-    this.whitepoint = (ownWhite ? whitepoint : whitepoint.clone());
-    invKA = 1.0 / calculateKA(whitepoint);
-    invKB = 1.0 / calculateKB(whitepoint);
+  HunterLabToXYZ(XYZToHunterLab inverse) {
+    labSpace = inverse.getOutputSpace();
+    whitepoint = inverse.getReferenceWhitepoint();
+    invKA = 1.0 / XYZToHunterLab.calculateKA(whitepoint);
+    invKB = 1.0 / XYZToHunterLab.calculateKB(whitepoint);
+
+    this.inverse = inverse;
+  }
+
+  public XYZ<CIE31> getReferenceWhitepoint() {
+    return whitepoint.clone();
   }
 
   @Override
@@ -66,38 +83,29 @@ public class HunterLabToXYZ implements Transform {
   }
 
   @Override
-  public int getInputChannels() {
-    return 3;
-  }
-
-  @Override
-  public HunterLabToXYZ getLocallySafeInstance() {
-    return this;
-  }
-
-  @Override
-  public int getOutputChannels() {
-    return 3;
-  }
-
-  @Override
   public int hashCode() {
-    return whitepoint.hashCode();
+    return HunterLabToXYZ.class.hashCode() ^ whitepoint.hashCode();
   }
 
   @Override
-  public XYZToHunterLab inverted() {
-    return new XYZToHunterLab(whitepoint, true);
+  public XYZToHunterLab inverse() {
+    return inverse;
   }
 
   @Override
-  public String toString() {
-    return String.format("Hunter Lab -> XYZ (whitepoint: %s)", whitepoint);
+  public Hunter getInputSpace() {
+    return labSpace;
   }
 
   @Override
-  public void transform(double[] input, double[] output) {
-    Transform.validateDimensions(this, input, output);
+  public CIE31 getOutputSpace() {
+    return CIE31.SPACE;
+  }
+
+  @Override
+  public boolean applyUnchecked(double[] input, double[] output) {
+    Arguments.equals("input.length", 3, input.length);
+    Arguments.equals("output.length", 3, output.length);
 
     double rootYP = input[0] / 100.0;
     double yp = rootYP * rootYP;
@@ -107,5 +115,12 @@ public class HunterLabToXYZ implements Transform {
     output[0] = xp * whitepoint.x();
     output[1] = yp * whitepoint.y();
     output[2] = zp * whitepoint.z();
+
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("Hunter Lab -> XYZ (whitepoint: %s)", whitepoint);
   }
 }
