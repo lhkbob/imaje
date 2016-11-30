@@ -70,7 +70,7 @@ public class LuminanceToXYZ implements ColorTransform<Linear, Luminance<Linear>,
 
   @Override
   public int hashCode() {
-    return LuminanceToXYZ.class.hashCode() ^ whitepoint.hashCode();
+    return LuminanceToXYZ.class.hashCode() ^ lumSpace.hashCode();
   }
 
   @Override

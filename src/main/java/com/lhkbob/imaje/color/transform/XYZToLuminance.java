@@ -70,7 +70,7 @@ public class XYZToLuminance implements ColorTransform<CIE31, XYZ<CIE31>, Linear,
 
   @Override
   public int hashCode() {
-    return XYZToLuminance.class.hashCode() ^ whitepoint.hashCode();
+    return XYZToLuminance.class.hashCode() ^ lumSpace.hashCode();
   }
 
   @Override
