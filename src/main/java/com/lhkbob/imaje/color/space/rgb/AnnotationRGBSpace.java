@@ -1,6 +1,5 @@
 package com.lhkbob.imaje.color.space.rgb;
 
-import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.Yxy;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.Illuminants;
@@ -22,6 +21,10 @@ import com.lhkbob.imaje.color.transform.curves.UnitGammaFunction;
  * coordinate system). If it is not annotated with {@link Primaries} then the REC BT 709 primaries
  * are used as a default. If it is not annotated with {@link Illuminant}, then the whitepoint is
  * defined as a D65 source with luminance of 1.0.
+ *
+ * Because all properties of the RGB space are provided via annotations, subclasses of
+ * AnnotationRGBSpace should be declared final, have a private constructor, and expose a singleton
+ * instance.
  *
  * @author Michael Ludwig
  */
@@ -50,8 +53,6 @@ public abstract class AnnotationRGBSpace<S extends AnnotationRGBSpace<S>> extend
       whitepoint = Illuminants.newD65(1.0);
     }
 
-    XYZ<CIE31> whiteXYZ = whitepoint.getColorSpace().getXYZTransform().apply(whitepoint);
-
     // Gamma
     Gamma gamma = getClass().getAnnotation(Gamma.class);
     Curve gammaCurve;
@@ -66,7 +67,7 @@ public abstract class AnnotationRGBSpace<S extends AnnotationRGBSpace<S>> extend
     }
 
 
-    initialize(whiteXYZ, r, g, b, gammaCurve);
+    initialize(whitepoint.toXYZ(), r, g, b, gammaCurve);
   }
 
   private static Yxy<CIE31> fromIlluminant(Illuminant illum) {

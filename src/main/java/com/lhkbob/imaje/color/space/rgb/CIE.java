@@ -11,6 +11,9 @@ import com.lhkbob.imaje.color.RGB;
  * space represents a standard with no additional parameters, it has no public constructor and is
  * exposed as a singleton: {@link #SPACE}.
  *
+ * The name `CIE` was used instead of `CIERGB` do eliminate redundancy when it is combined with
+ * the `RGB` color name: `RGB<CIE>` instead of `RGB<CIERGB>`.
+ *
  * @author Michael Ludwig
  */
 @Gamma(gamma = 1.0)
