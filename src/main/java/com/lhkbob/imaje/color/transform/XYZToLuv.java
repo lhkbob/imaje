@@ -29,23 +29,40 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
 
+import com.lhkbob.imaje.color.CIELUV;
 import com.lhkbob.imaje.color.XYZ;
+import com.lhkbob.imaje.color.space.lab.CIELUVSpace;
+import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.util.Arguments;
 
-import static com.lhkbob.imaje.color.transform.general.XYZToCIELab.f;
+import static com.lhkbob.imaje.color.transform.XYZToCIELAB.f;
 
 /**
  *
  */
-public class XYZToLuv implements Transform {
-  private final XYZ referenceWhitepoint;
+public class XYZToLuv implements ColorTransform<CIE31, XYZ<CIE31>, CIELUVSpace, CIELUV> {
+  private final XYZ<CIE31> referenceWhitepoint;
   private final double uWhite, vWhite;
+  private final LuvToXYZ inverse;
 
-  public XYZToLuv(XYZ referenceWhitepoint) {
+  public XYZToLuv(XYZ<CIE31> referenceWhitepoint) {
     this.referenceWhitepoint = referenceWhitepoint;
     uWhite = uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
     vWhite = vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
+    inverse = new LuvToXYZ(this);
+  }
+
+  XYZToLuv(LuvToXYZ inverse) {
+    referenceWhitepoint = inverse.getReferenceWhitepoint();
+    uWhite = uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
+    vWhite = vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
+    this.inverse = inverse;
+  }
+
+  public XYZ<CIE31> getReferenceWhitepoint() {
+    return referenceWhitepoint.clone();
   }
 
   @Override
@@ -60,45 +77,42 @@ public class XYZToLuv implements Transform {
   }
 
   @Override
-  public int getInputChannels() {
-    return 3;
-  }
-
-  @Override
-  public XYZToLuv getLocallySafeInstance() {
-    // This is purely functional (with constant parameters) so the instance can be used by any thread
-    return this;
-  }
-
-  @Override
-  public int getOutputChannels() {
-    return 3;
-  }
-
-  @Override
   public int hashCode() {
-    return referenceWhitepoint.hashCode();
+    return XYZToLuv.class.hashCode() ^ referenceWhitepoint.hashCode();
   }
 
   @Override
-  public LuvToXYZ inverted() {
-    return new LuvToXYZ(referenceWhitepoint);
+  public LuvToXYZ inverse() {
+    return inverse;
   }
 
   @Override
-  public String toString() {
-    return String.format("XYZ -> L*u*v* Transform (whitepoint: %s)", referenceWhitepoint);
+  public CIE31 getInputSpace() {
+    return CIE31.SPACE;
   }
 
   @Override
-  public void transform(double[] input, double[] output) {
-    Transform.validateDimensions(this, input, output);
+  public CIELUVSpace getOutputSpace() {
+    return CIELUVSpace.SPACE;
+  }
+
+  @Override
+  public boolean applyUnchecked(double[] input, double[] output) {
+    Arguments.equals("input.length", 3, input.length);
+    Arguments.equals("output.length", 3, output.length);
 
     double up = uPrime(input[0], input[1], input[2]);
     double vp = vPrime(input[0], input[1], input[2]);
     output[0] = 116.0 * f(input[1] / referenceWhitepoint.y()) - 16.0; // L*
     output[1] = 13.0 * output[0] * (up - uWhite); // u*
     output[2] = 13.0 * output[0] * (vp - vWhite); // v*
+
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("XYZ -> L*u*v* Transform (whitepoint: %s)", referenceWhitepoint);
   }
 
   static double uPrime(double x, double y, double z) {
