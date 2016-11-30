@@ -29,7 +29,9 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.annot;
+package com.lhkbob.imaje.util;
+
+import com.lhkbob.imaje.color.space.rgb.Illuminant;
 
 import java.util.Set;
 
@@ -42,7 +44,7 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 /**
- *
+ * FIXME move this to util package
  */
 @SupportedAnnotationTypes("com.lhkbob.imaje.color.annot.Illuminant")
 public class IlluminantValidator extends AbstractProcessor {
