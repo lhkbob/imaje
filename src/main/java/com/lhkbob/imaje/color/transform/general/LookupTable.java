@@ -31,6 +31,9 @@
  */
 package com.lhkbob.imaje.color.transform.general;
 
+import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Arrays;
@@ -38,25 +41,24 @@ import java.util.Arrays;
 /**
  *
  */
-public class LookupTable implements Transform {
-  private final double[] axisAlphas; // working space for n alpha values from input channel to grid cell
+public class LookupTable<SA extends ColorSpace<A, SA>, A extends Color<A, SA>, SB extends ColorSpace<B, SB>, B extends Color<B, SB>> implements ColorTransform<SA, A, SB, B> {
   private final int[] gridOffsets; // indexed by input channel
   private final int[] gridSizes;
   private final int[] hyperCubeOffsets; // indexed by hypercube index
-  private final int inputChannels;
-  private final int outputChannels;
+  private final SA inSpace;
+  private final SB outSpace;
   private final double[] values;
-  private final double[] weights; // working space for 2^n hypercube corners during interpolation
 
-  public LookupTable(int inputChannels, int outputChannels, int gridSize, double[] values) {
-    this(inputChannels, outputChannels, createSimpleSizes(inputChannels, gridSize), values);
+  public LookupTable(SA inSpace, SB outSpace, int gridSize, double[] values) {
+    this(inSpace, outSpace, createSimpleSizes(inSpace.getChannelCount(), gridSize), values);
   }
 
-  public LookupTable(int inputChannels, int outputChannels, int[] gridSizes, double[] values) {
+  public LookupTable(SA inSpace, SB outSpace, int[] gridSizes, double[] values) {
     Arguments.notNull("gridSizes", gridSizes);
     Arguments.notNull("values", values);
-    Arguments.isPositive("inputChannels", inputChannels);
-    Arguments.isPositive("outputChannels", outputChannels);
+
+    int inputChannels = inSpace.getChannelCount();
+    int outputChannels = outSpace.getChannelCount();
     Arguments.equals("gridSizes.length", inputChannels, gridSizes.length);
 
     int expected = outputChannels;
@@ -65,8 +67,8 @@ public class LookupTable implements Transform {
     }
     Arguments.equals("values.length", expected, values.length);
 
-    this.inputChannels = inputChannels;
-    this.outputChannels = outputChannels;
+    this.inSpace = inSpace;
+    this.outSpace = outSpace;
     this.gridSizes = Arrays.copyOf(gridSizes, gridSizes.length);
     this.values = Arrays.copyOf(values, values.length);
 
@@ -88,23 +90,6 @@ public class LookupTable implements Transform {
       }
       power *= 2;
     }
-
-    weights = new double[1 << inputChannels];
-    axisAlphas = new double[inputChannels];
-  }
-
-  private LookupTable(LookupTable toClone) {
-    // Read-only data that was calculated at construction time
-    gridOffsets = toClone.gridOffsets;
-    gridSizes = toClone.gridSizes;
-    hyperCubeOffsets = toClone.hyperCubeOffsets;
-    inputChannels = toClone.inputChannels;
-    outputChannels = toClone.outputChannels;
-    values = toClone.values;
-
-    // Working storage during transform
-    axisAlphas = new double[toClone.axisAlphas.length];
-    weights = new double[toClone.weights.length];
   }
 
   @Override
@@ -113,43 +98,45 @@ public class LookupTable implements Transform {
   }
 
   @Override
-  public int getInputChannels() {
-    return inputChannels;
-  }
-
-  @Override
-  public Transform getLocallySafeInstance() {
-    // The majority of a lookup-table's data is constant, except for two working arrays. Use this
-    // private constructor to share data references where possible and allocate new safe member
-    // instances for the working arrays.
-    return new LookupTable(this);
-  }
-
-  @Override
-  public int getOutputChannels() {
-    return outputChannels;
-  }
-
-  @Override
   public int hashCode() {
     return System.identityHashCode(this);
   }
 
   @Override
-  public Transform inverted() {
-    // FIXME is this even a reasonable thing to implement for a CLUT?
-    return null;
+  public LookupTable<SB, B, SA, A> inverse() {
+    // FIXME implement this somehow, brute force reconstruction of another table? creation of
+    // an explicit inverse (e.g. also provided in ICC profile)
+    throw new UnsupportedOperationException("Inverse is unavailable for look up tables");
+  }
+
+  @Override
+  public SA getInputSpace() {
+    return inSpace;
+  }
+
+  @Override
+  public SB getOutputSpace() {
+    return outSpace;
   }
 
   @Override
   public String toString() {
-    return String.format("CLUT (in: %d, out: %d,  grid: %s,)", inputChannels, outputChannels,
+    return String.format("CLUT (in: %d, out: %d,  grid: %s,)", inSpace.getChannelCount(), outSpace.getChannelCount(),
         Arrays.toString(gridSizes));
   }
 
   @Override
-  public void transform(double[] input, double[] output) {
-    Transform.validateDimensions(this, input, output);
+  public boolean applyUnchecked(double[] input, double[] output) {
+    int inputChannels = inSpace.getChannelCount();
+    int outputChannels = outSpace.getChannelCount();
+    Arguments.equals("input.length", inputChannels, input.length);
+    Arguments.equals("output.length", outputChannels, output.length);
+
+    // working space for n alpha values from input channel to grid cell
+    double[] axisAlphas = new double[inputChannels];
+    // working space for 2^n hypercube corners during interpolation
+    double[] weights = new double[1 << inputChannels];
+
 
     // Calculate offset into the grid for the lowest corner of hypercube, and calculate the
     // alpha value = input - axis for each dimension.
@@ -201,6 +188,8 @@ public class LookupTable implements Transform {
         output[o] += w * values[d + o];
       }
     }
+
+    return true;
   }
 
   private static int[] createSimpleSizes(int inputChannels, int gridSize) {

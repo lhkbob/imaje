@@ -31,40 +31,79 @@
  */
 package com.lhkbob.imaje.color.transform.general;
 
+import com.lhkbob.imaje.color.Color;
+import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.util.Arguments;
+
 /**
  *
  */
-public class Identity implements Transform {
-  private final int channels;
+public class Identity<SA extends ColorSpace<A, SA>, A extends Color<A, SA>, SB extends ColorSpace<B, SB>, B extends Color<B, SB>> implements ColorTransform<SA, A, SB, B> {
+  private final SA inSpace;
+  private final SB outSpace;
+  private final Identity<SB, B, SA, A> inverse;
 
-  public Identity(int channels) {
-    this.channels = channels;
+  public Identity(SA inSpace, SB outSpace) {
+    Arguments.equals("channel count", inSpace.getChannelCount(), outSpace.getChannelCount());
+    this.inSpace = inSpace;
+    this.outSpace = outSpace;
+    inverse = new Identity<>(this);
+  }
+
+  private Identity(Identity<SB, B, SA, A> inverse) {
+    inSpace = inverse.getOutputSpace();
+    outSpace = inverse.getInputSpace();
+    this.inverse = inverse;
   }
 
   @Override
-  public int getInputChannels() {
-    return channels;
+  public Identity<SB, B, SA, A> inverse() {
+    return inverse;
   }
 
   @Override
-  public Identity getLocallySafeInstance() {
-    return this;
+  public SA getInputSpace() {
+    return inSpace;
   }
 
   @Override
-  public int getOutputChannels() {
-    return channels;
+  public SB getOutputSpace() {
+    return outSpace;
   }
 
   @Override
-  public Identity inverted() {
-    return this;
-  }
+  public boolean applyUnchecked(double[] input, double[] output) {
+    Arguments.equals("input.length", inSpace.getChannelCount(), input.length);
+    Arguments.equals("output.length", outSpace.getChannelCount(), output.length);
 
-  @Override
-  public void transform(double[] input, double[] output) {
     // Copy input to output
-    Transform.validateDimensions(this, input, output);
-    System.arraycopy(input, 0, output, 0, channels);
+    System.arraycopy(input, 0, output, 0, input.length);
+    return true;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof Identity)) {
+      return false;
+    }
+    Identity i = (Identity) o;
+    return i.inSpace.equals(inSpace) && i.outSpace.equals(outSpace);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 17;
+    result = 31 * result + inSpace.hashCode();
+    result = 31 * result + outSpace.hashCode();
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("Identity %s -> %s", inSpace, outSpace);
   }
 }
