@@ -32,7 +32,6 @@
 package com.lhkbob.imaje.color.transform;
 
 import com.lhkbob.imaje.color.Yxy;
-import com.lhkbob.imaje.color.space.rgb.Illuminant;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 
 /**
@@ -40,58 +39,6 @@ import com.lhkbob.imaje.color.space.xyz.CIE31;
  */
 public final class Illuminants {
   private Illuminants() {}
-
-  public static Yxy<CIE31> fromIlluminant(Illuminant illum) {
-    double l = illum.luminance();
-    switch (illum.type()) {
-    case A:
-      return newA(l);
-    case B:
-      return newB(l);
-    case C:
-      return newC(l);
-    case D50:
-      return newD50(l);
-    case D55:
-      return newD55(l);
-    case D65:
-      return newD65(l);
-    case D75:
-      return newD75(l);
-    case E:
-      return newE(l);
-    case F1:
-      return newF1(l);
-    case F2:
-      return newF2(l);
-    case F3:
-      return newF3(l);
-    case F4:
-      return newF4(l);
-    case F5:
-      return newF5(l);
-    case F6:
-      return newF6(l);
-    case F7:
-      return newF7(l);
-    case F8:
-      return newF8(l);
-    case F9:
-      return newF9(l);
-    case F10:
-      return newF10(l);
-    case F11:
-      return newF11(l);
-    case F12:
-      return newF12(l);
-    case TEMPERATURE:
-      return newCorrelatedColorTemperature(illum.temperature(), l);
-    case CHROMATICITY:
-      return Yxy.newCIE31(l, illum.chromaticity().x(), illum.chromaticity().y());
-    default:
-      throw new IllegalArgumentException("Unsupported illuminant type: " + illum.type());
-    }
-  }
 
   public static Yxy<CIE31> newA(double luminance) {
     return Yxy.newCIE31(luminance, 0.44757, 0.40745);
