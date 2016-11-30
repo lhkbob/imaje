@@ -29,19 +29,32 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform.general;
+package com.lhkbob.imaje.color.transform;
 
+import com.lhkbob.imaje.color.Luminance;
 import com.lhkbob.imaje.color.XYZ;
+import com.lhkbob.imaje.color.space.luminance.Linear;
+import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-public class LuminanceToXYZ implements Transform {
-  private final XYZ whitepoint;
+public class LuminanceToXYZ implements ColorTransform<Linear, Luminance<Linear>, CIE31, XYZ<CIE31>> {
+  private final Linear lumSpace;
+  private final XYZ<CIE31> whitepoint; // cached from lumSpace
+  private final XYZToLuminance inverse;
 
-  public LuminanceToXYZ(XYZ whitepoint) {
-    this.whitepoint = whitepoint.clone();
+  public LuminanceToXYZ(Linear lumSpace) {
+    this.lumSpace = lumSpace;
+    this.whitepoint = lumSpace.getReferenceWhitepoint();
+    inverse = new XYZToLuminance(this);
+  }
+
+  LuminanceToXYZ(XYZToLuminance inverse) {
+    lumSpace = inverse.getOutputSpace();
+    whitepoint = lumSpace.getReferenceWhitepoint();
+    this.inverse = inverse;
   }
 
   @Override
@@ -52,46 +65,43 @@ public class LuminanceToXYZ implements Transform {
     if (!(o instanceof LuminanceToXYZ)) {
       return false;
     }
-    return ((LuminanceToXYZ) o).whitepoint.equals(whitepoint);
-  }
-
-  @Override
-  public int getInputChannels() {
-    return 1;
-  }
-
-  @Override
-  public LuminanceToXYZ getLocallySafeInstance() {
-    // This is purely functional (with constant parameters) so the instance can be used by any thread
-    return this;
-  }
-
-  @Override
-  public int getOutputChannels() {
-    return 3;
+    return ((LuminanceToXYZ) o).lumSpace.equals(lumSpace);
   }
 
   @Override
   public int hashCode() {
-    return whitepoint.hashCode();
+    return LuminanceToXYZ.class.hashCode() ^ whitepoint.hashCode();
   }
 
   @Override
-  public XYZToLuminance inverted() {
-    return new XYZToLuminance(whitepoint);
+  public XYZToLuminance inverse() {
+    return inverse;
+  }
+
+  @Override
+  public Linear getInputSpace() {
+    return lumSpace;
+  }
+
+  @Override
+  public CIE31 getOutputSpace() {
+    return CIE31.SPACE;
+  }
+
+  @Override
+  public boolean applyUnchecked(double[] input, double[] output) {
+    Arguments.equals("input.length", 1, input.length);
+    Arguments.equals("output.length", 3, output.length);
+
+    output[0] = whitepoint.x() * input[0];
+    output[1] = whitepoint.y() * input[0];
+    output[2] = whitepoint.z() * input[0];
+
+    return true;
   }
 
   @Override
   public String toString() {
     return String.format("Luminance -> XYZ Transform (whitepoint: %s)", whitepoint);
-  }
-
-  @Override
-  public void transform(double[] input, double[] output) {
-    Transform.validateDimensions(this, input, output);
-
-    output[0] = whitepoint.x() * input[0];
-    output[1] = whitepoint.y() * input[0];
-    output[2] = whitepoint.z() * input[0];
   }
 }
