@@ -43,15 +43,13 @@ import com.lhkbob.imaje.util.Arguments;
 public class XYZToHunterLab implements ColorTransform<CIE31, XYZ<CIE31>, Hunter, Lab<Hunter>> {
   private final double ka;
   private final double kb;
-  private final XYZ<CIE31> whitepoint;
+  private final XYZ<CIE31> whitepoint; // cached from labSpace
   private final Hunter labSpace;
   private final HunterLabToXYZ inverse;
 
-  public XYZToHunterLab(Hunter labSpace, XYZ<CIE31> whitepoint) {
-    Arguments.notNull("labSpace", labSpace);
-
+  public XYZToHunterLab(Hunter labSpace) {
     this.labSpace = labSpace;
-    this.whitepoint = whitepoint.clone();
+    this.whitepoint = labSpace.getReferenceWhitepoint();
     ka = calculateKA(whitepoint);
     kb = calculateKB(whitepoint);
 
@@ -60,14 +58,10 @@ public class XYZToHunterLab implements ColorTransform<CIE31, XYZ<CIE31>, Hunter,
 
   XYZToHunterLab(HunterLabToXYZ inverse) {
     labSpace = inverse.getInputSpace();
-    whitepoint = inverse.getReferenceWhitepoint();
+    whitepoint = labSpace.getReferenceWhitepoint();
     ka = calculateKA(whitepoint);
     kb = calculateKB(whitepoint);
     this.inverse = inverse;
-  }
-
-  public XYZ<CIE31> getReferenceWhitepoint() {
-    return whitepoint.clone();
   }
 
   @Override

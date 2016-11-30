@@ -43,15 +43,14 @@ import com.lhkbob.imaje.util.Arguments;
 public class HunterLabToXYZ implements ColorTransform<Hunter, Lab<Hunter>, CIE31, XYZ<CIE31>> {
   private final double invKA;
   private final double invKB;
-  private final XYZ<CIE31> whitepoint;
+  private final XYZ<CIE31> whitepoint; // cached from labSpace
 
   private final Hunter labSpace;
   private final XYZToHunterLab inverse;
 
-  public HunterLabToXYZ(Hunter labSpace, XYZ<CIE31> whitepoint) {
-    Arguments.notNull("labSpace", labSpace);
+  public HunterLabToXYZ(Hunter labSpace) {
     this.labSpace = labSpace;
-    this.whitepoint = whitepoint.clone();
+    this.whitepoint = labSpace.getReferenceWhitepoint();
     invKA = 1.0 / XYZToHunterLab.calculateKA(whitepoint);
     invKB = 1.0 / XYZToHunterLab.calculateKB(whitepoint);
 
@@ -60,15 +59,11 @@ public class HunterLabToXYZ implements ColorTransform<Hunter, Lab<Hunter>, CIE31
 
   HunterLabToXYZ(XYZToHunterLab inverse) {
     labSpace = inverse.getOutputSpace();
-    whitepoint = inverse.getReferenceWhitepoint();
+    whitepoint = labSpace.getReferenceWhitepoint();
     invKA = 1.0 / XYZToHunterLab.calculateKA(whitepoint);
     invKB = 1.0 / XYZToHunterLab.calculateKB(whitepoint);
 
     this.inverse = inverse;
-  }
-
-  public XYZ<CIE31> getReferenceWhitepoint() {
-    return whitepoint.clone();
   }
 
   @Override
@@ -79,12 +74,12 @@ public class HunterLabToXYZ implements ColorTransform<Hunter, Lab<Hunter>, CIE31
     if (!(o instanceof HunterLabToXYZ)) {
       return false;
     }
-    return ((HunterLabToXYZ) o).whitepoint.equals(whitepoint);
+    return ((HunterLabToXYZ) o).labSpace.equals(labSpace);
   }
 
   @Override
   public int hashCode() {
-    return HunterLabToXYZ.class.hashCode() ^ whitepoint.hashCode();
+    return HunterLabToXYZ.class.hashCode() ^ labSpace.hashCode();
   }
 
   @Override
