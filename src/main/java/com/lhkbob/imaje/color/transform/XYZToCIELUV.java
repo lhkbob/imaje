@@ -43,16 +43,14 @@ import static com.lhkbob.imaje.color.transform.XYZToCIELAB.f;
  *
  */
 public class XYZToCIELUV implements ColorTransform<CIE31, XYZ<CIE31>, CIELUVSpace, CIELUV> {
-  private final XYZ<CIE31> referenceWhitepoint;
+  private final XYZ<CIE31> referenceWhitepoint; // cached from luvSpace
   private final double uWhite, vWhite;
   private final CIELUVToXYZ inverse;
   private final CIELUVSpace luvSpace;
 
-  public XYZToCIELUV(CIELUVSpace luvSpace, XYZ<CIE31> referenceWhitepoint) {
-    Arguments.notNull("luvSpace", luvSpace);
-
+  public XYZToCIELUV(CIELUVSpace luvSpace) {
     this.luvSpace = luvSpace;
-    this.referenceWhitepoint = referenceWhitepoint;
+    this.referenceWhitepoint = luvSpace.getReferenceWhitepoint();
     uWhite = uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
     vWhite = vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
     inverse = new CIELUVToXYZ(this);
@@ -60,14 +58,10 @@ public class XYZToCIELUV implements ColorTransform<CIE31, XYZ<CIE31>, CIELUVSpac
 
   XYZToCIELUV(CIELUVToXYZ inverse) {
     luvSpace = inverse.getInputSpace();
-    referenceWhitepoint = inverse.getReferenceWhitepoint();
+    referenceWhitepoint = luvSpace.getReferenceWhitepoint();
     uWhite = uPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
     vWhite = vPrime(referenceWhitepoint.x(), referenceWhitepoint.y(), referenceWhitepoint.z());
     this.inverse = inverse;
-  }
-
-  public XYZ<CIE31> getReferenceWhitepoint() {
-    return referenceWhitepoint.clone();
   }
 
   @Override
@@ -78,12 +72,12 @@ public class XYZToCIELUV implements ColorTransform<CIE31, XYZ<CIE31>, CIELUVSpac
     if (!(o instanceof XYZToCIELUV)) {
       return false;
     }
-    return ((XYZToCIELUV) o).referenceWhitepoint.equals(referenceWhitepoint);
+    return ((XYZToCIELUV) o).luvSpace.equals(luvSpace);
   }
 
   @Override
   public int hashCode() {
-    return XYZToCIELUV.class.hashCode() ^ referenceWhitepoint.hashCode();
+    return XYZToCIELUV.class.hashCode() ^ luvSpace.hashCode();
   }
 
   @Override
