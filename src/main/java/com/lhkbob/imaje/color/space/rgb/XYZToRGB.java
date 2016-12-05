@@ -45,75 +45,130 @@ import org.ejml.alg.fixed.FixedOps3;
 import org.ejml.data.FixedMatrix3_64F;
 import org.ejml.data.FixedMatrix3x3_64F;
 
+import java.util.Objects;
+
 /**
+ * XYZToRGB
+ * ========
  *
+ * Color transform from {@link XYZ} to {@link RGB}, described by a 3x3 linear transformation and an
+ * encoding gamma function applied to each channel.
+ *
+ * @author Michael Ludwig
  */
 public class XYZToRGB<I extends ColorSpace<XYZ<I>, I>, O extends ColorSpace<RGB<O>, O>> implements ColorTransform<I, XYZ<I>, O, RGB<O>> {
-  private final Curve invGammaCurve;
+  private final Curve encodingGammaCurve;
+  private final RGBToXYZ<O, I> inverse;
+  private final O rgbSpace;
+  private final I xyzSpace;
   private final FixedMatrix3x3_64F xyzToLinearRGB;
 
-  private final RGBToXYZ<O, I> inverse;
+  /**
+   * Create a new XYZToRGB transform between the XYZ and RGB spaces. The transformation is
+   * the composition of the 3x3 matrix, `xyzToLinear`, and then applying `encodingGamma` to each
+   * of the resulting linear RGB channels. If either `xyzToLinear` or `encodingGamma` are not
+   * invertable, then {@link #inverse()} will return `null`.
+   *
+   * `encodingGamma` can be null to skip that step and keep the coordinates in a linear space.
+   *
+   * @param xyzSpace The XYZ space
+   * @param rgbSpace The RGB space
+   * @param xyzToLinear The linear transformation from XYZ to linear RGB
+   * @param encodingGamma The optional gamma encoding from linear to non-linear RGB
+   */
+  public XYZToRGB(
+      I xyzSpace, O rgbSpace, FixedMatrix3x3_64F xyzToLinear,
+      @Arguments.Nullable Curve encodingGamma) {
+    Arguments.notNull("xyzSpace", xyzSpace);
+    Arguments.notNull("rgbSpace", rgbSpace);
+    this.xyzSpace = xyzSpace;
+    this.rgbSpace = rgbSpace;
+    xyzToLinearRGB = xyzToLinear.copy();
+    encodingGammaCurve = encodingGamma;
 
-  XYZToRGB(RGBToXYZ<O, I> inverse) {
-    this.inverse = inverse;
-    FixedMatrix3x3_64F rgbToXYZ = inverse.getLinearRGBToXYZ();
-    xyzToLinearRGB = new FixedMatrix3x3_64F();
-    FixedOps3.invert(rgbToXYZ, xyzToLinearRGB);
-
-    Curve gamma = inverse.getGammaCurve();
-    if (gamma == null) {
-      invGammaCurve = null;
+    // Calculate inverse
+    FixedMatrix3x3_64F rgbToXYZ = new FixedMatrix3x3_64F();
+    if (FixedOps3.invert(xyzToLinear, rgbToXYZ)) {
+      // Try and invert the gamma function
+      if (encodingGamma == null) {
+        // There is no gamma to invert so inverse is available
+        inverse = new RGBToXYZ<>(this, rgbToXYZ, null);
+      } else {
+        Curve decodingGamma = encodingGamma.inverted();
+        if (decodingGamma != null) {
+          inverse = new RGBToXYZ<>(this, rgbToXYZ, decodingGamma);
+        } else {
+          inverse = null;
+        }
+      }
     } else {
-      invGammaCurve = gamma.inverted();
+      // Could not invert the 3x3 linear conversion, so inverse is not available
+      inverse = null;
     }
   }
 
+  XYZToRGB(
+      RGBToXYZ<O, I> inverse, FixedMatrix3x3_64F xyzToLinearRGB,
+      @Arguments.Nullable Curve encodingGammaCurve) {
+    xyzSpace = inverse.getOutputSpace();
+    rgbSpace = inverse.getInputSpace();
+    this.inverse = inverse;
+    this.xyzToLinearRGB = xyzToLinearRGB;
+    this.encodingGammaCurve = encodingGammaCurve;
+  }
+
+  /**
+   * Create a new transformation from XYZ to RGB based on the provided whitepoint and tristimulus
+   * values the for red, green, and blue primaries of the space. While it possible to create a
+   * transformation for an RGB space with non-standard primaries, that should be avoided. RGB
+   * space definitions should use the primary and whitepoint that are defined in their standard
+   * so that the transformation is meaningful.
+   *
+   * The transformation between XYZ and RGB is calculated by forming a matrix from the chromaticity
+   * coordinates of the primaries (including the `z` chromaticity). This matrix is then scaled so
+   * that `matrix * whitepoint = [1,1,1]`. The luminance of the primaries is ignored for this
+   * purpose; it depends on their chromaticities and the luminance of the whitepoint.
+   *
+   * The transformation can include a decoding gamma transformation from the non-linear RGB
+   * coordinates to linear RGB. `null` can be provided for this function to denote the identity
+   * transformation.
+   *
+   * Calling this factory method is equivalent to calling {@link RGBToXYZ#newRGBToXYZ(ColorSpace,
+   * XYZ, Yxy, Yxy, Yxy, Curve)} and then returning its inverse, if the inverse exists. If there is
+   * no such inverse given the gamma curve and primaries then an exception is thrown.
+   *
+   * @param rgbSpace
+   *     The RGB space of the transformation
+   * @param whitepoint
+   *     The whitepoint defining the transformation
+   * @param redPrimary
+   *     The chromaticity coordinates of the red primary (ignores `Y`)
+   * @param greenPrimary
+   *     The chromaticity coordinates of the green primary (ignores `Y`)
+   * @param bluePrimary
+   *     The chromaticity coordinates of the blue primary (ignores `Y`)
+   * @param gammaCurve
+   *     The decoding gamma curve from non-linear to linear RGB
+   * @param <I>
+   *     The RGB space
+   * @param <O>
+   *     The XYZ space (determined by `whitepoint`)
+   * @throws IllegalArgumentException
+   *     if the the primaries and gamma curve do not form
+   *     a computabe XYZ to RGB transformation (e.g. when the RGB to XYZ transform is not
+   *     invertable).
+   */
   public static <I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<O>, O>> XYZToRGB<O, I> newXYZToRGB(
       I rgbSpace, XYZ<O> whitepoint, Yxy<O> redPrimary, Yxy<O> greenPrimary, Yxy<O> bluePrimary,
       @Arguments.Nullable Curve gammaCurve) {
     RGBToXYZ<I, O> rgbToXYZ = RGBToXYZ
         .newRGBToXYZ(rgbSpace, whitepoint, redPrimary, greenPrimary, bluePrimary, gammaCurve);
-    return rgbToXYZ.inverse();
-  }
-
-  public FixedMatrix3x3_64F getXYZToLinearRGB() {
-    return xyzToLinearRGB.copy();
-  }
-
-  public Curve getInverseGammaCurve() {
-    return invGammaCurve;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
+    XYZToRGB<O, I> xyzToRGB = rgbToXYZ.inverse();
+    if (xyzToRGB == null) {
+      throw new IllegalArgumentException(
+          "Primaries, whitepoint, and gamma curve do not create a valid XYZ to RGB conversion");
     }
-    if (!(o instanceof XYZToRGB)) {
-      return false;
-    }
-    XYZToRGB t = (XYZToRGB) o;
-    return t.inverse.equals(inverse);
-  }
-
-  @Override
-  public int hashCode() {
-    return XYZToRGB.class.hashCode() ^ inverse.hashCode();
-  }
-
-  @Override
-  public RGBToXYZ<O, I> inverse() {
-    return inverse;
-  }
-
-  @Override
-  public I getInputSpace() {
-    return inverse.getOutputSpace();
-  }
-
-  @Override
-  public O getOutputSpace() {
-    return inverse.getInputSpace();
+    return xyzToRGB;
   }
 
   @Override
@@ -128,16 +183,90 @@ public class XYZToRGB<I extends ColorSpace<XYZ<I>, I>, O extends ColorSpace<RGB<
     FixedOps3.mult(xyzToLinearRGB, in, out);
 
     // Apply gamma correction
-    if (invGammaCurve != null) {
-      output[0] = invGammaCurve.evaluate(clampToCurveDomain(out.a1));
-      output[1] = invGammaCurve.evaluate(clampToCurveDomain(out.a2));
-      output[2] = invGammaCurve.evaluate(clampToCurveDomain(out.a3));
+    if (encodingGammaCurve != null) {
+      output[0] = encodingGammaCurve.evaluate(clampToCurveDomain(out.a1));
+      output[1] = encodingGammaCurve.evaluate(clampToCurveDomain(out.a2));
+      output[2] = encodingGammaCurve.evaluate(clampToCurveDomain(out.a3));
     } else {
       output[0] = out.a1;
       output[1] = out.a2;
       output[2] = out.a3;
     }
     return true;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof XYZToRGB)) {
+      return false;
+    }
+    XYZToRGB t = (XYZToRGB) o;
+    if (!Objects.equals(t.xyzSpace, xyzSpace) || !Objects.equals(t.rgbSpace, rgbSpace)) {
+      return false;
+    }
+    if (!Objects.equals(t.encodingGammaCurve, encodingGammaCurve)) {
+      return false;
+    }
+
+    return Double.compare(t.xyzToLinearRGB.a11, xyzToLinearRGB.a11) == 0
+        && Double.compare(t.xyzToLinearRGB.a12, xyzToLinearRGB.a12) == 0
+        && Double.compare(t.xyzToLinearRGB.a13, xyzToLinearRGB.a13) == 0
+        && Double.compare(t.xyzToLinearRGB.a21, xyzToLinearRGB.a21) == 0
+        && Double.compare(t.xyzToLinearRGB.a22, xyzToLinearRGB.a22) == 0
+        && Double.compare(t.xyzToLinearRGB.a23, xyzToLinearRGB.a23) == 0
+        && Double.compare(t.xyzToLinearRGB.a31, xyzToLinearRGB.a31) == 0
+        && Double.compare(t.xyzToLinearRGB.a32, xyzToLinearRGB.a32) == 0
+        && Double.compare(t.xyzToLinearRGB.a33, xyzToLinearRGB.a33) == 0;
+  }
+
+  /**
+   * @return The gamma function that encodes linear to non-linear values, or null if there is no
+   * gamma conversion
+   */
+  public Curve getEncodingGammaFunction() {
+    return encodingGammaCurve;
+  }
+
+  @Override
+  public I getInputSpace() {
+    return xyzSpace;
+  }
+
+  @Override
+  public O getOutputSpace() {
+    return rgbSpace;
+  }
+
+  /**
+   * @return The 3x3 transformation from XYZ tristimulus to linear RGB values.
+   */
+  public FixedMatrix3x3_64F getXYZToLinearRGB() {
+    return xyzToLinearRGB.copy();
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Double.hashCode(xyzToLinearRGB.a11);
+    result = 31 * result + Double.hashCode(xyzToLinearRGB.a12);
+    result = 31 * result + Double.hashCode(xyzToLinearRGB.a13);
+    result = 31 * result + Double.hashCode(xyzToLinearRGB.a21);
+    result = 31 * result + Double.hashCode(xyzToLinearRGB.a22);
+    result = 31 * result + Double.hashCode(xyzToLinearRGB.a23);
+    result = 31 * result + Double.hashCode(xyzToLinearRGB.a31);
+    result = 31 * result + Double.hashCode(xyzToLinearRGB.a32);
+    result = 31 * result + Double.hashCode(xyzToLinearRGB.a33);
+    result = 31 * result + (encodingGammaCurve != null ? encodingGammaCurve.hashCode() : 0);
+    result = 31 * result + xyzSpace.hashCode();
+    result = 31 * result + rgbSpace.hashCode();
+    return result;
+  }
+
+  @Override
+  public RGBToXYZ<O, I> inverse() {
+    return inverse;
   }
 
   @Override
@@ -159,14 +288,14 @@ public class XYZToRGB<I extends ColorSpace<XYZ<I>, I>, O extends ColorSpace<RGB<
     }
     sb.append(']');
 
-    if (invGammaCurve != null) {
-      sb.append("\n  gamma correct: ").append(invGammaCurve);
+    if (encodingGammaCurve != null) {
+      sb.append("\n  gamma correct: ").append(encodingGammaCurve);
     }
     return sb.toString();
   }
 
   private double clampToCurveDomain(double c) {
-    // Only called when invGammaCurve is not null
-    return Functions.clamp(c, invGammaCurve.getDomainMin(), invGammaCurve.getDomainMax());
+    // Only called when encodingGammaCurve is not null
+    return Functions.clamp(c, encodingGammaCurve.getDomainMin(), encodingGammaCurve.getDomainMax());
   }
 }

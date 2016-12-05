@@ -13,6 +13,7 @@ import com.lhkbob.imaje.util.Arguments;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Linear
@@ -96,8 +97,14 @@ public class Linear<S extends RGBSpace<S>> implements ColorSpace<RGB<Linear<S>>,
     RGBToXYZ<S, CIE31> baseTransform = rgbSpace.getXYZTransform();
     // The gamma curve in baseTransform goes from non-linear to linear, but we want the curve
     // that goes from linear to non-linear for use with linearTransform.
-    Curve invGamma = (baseTransform.getGammaCurve() == null ? null
-        : baseTransform.getGammaCurve().inverted());
+    Curve invGamma;
+    if (baseTransform.getDecodingGammaFunction() == null)
+      invGamma = null;
+    else {
+      invGamma = baseTransform.getDecodingGammaFunction().inverted();
+      if (invGamma == null)
+        throw new IllegalStateException("Gamma curve is not invertable");
+    }
 
     DenseMatrix64F rgbToXYZ = new DenseMatrix64F(3, 3);
     rgbToXYZ.set(baseTransform.getLinearRGBToXYZ());
@@ -113,6 +120,13 @@ public class Linear<S extends RGBSpace<S>> implements ColorSpace<RGB<Linear<S>>,
    */
   public ColorTransform<Linear<S>, RGB<Linear<S>>, S, RGB<S>> getGammaEncoder() {
     return linearTransform;
+  }
+
+  /**
+   * @return The color transform from the non-linear RGB space to the linearized coordinate system
+   */
+  public ColorTransform<S, RGB<S>, Linear<S>, RGB<Linear<S>>> getGammaDecoder() {
+    return linearTransform.inverse();
   }
 
   @Override
@@ -143,7 +157,7 @@ public class Linear<S extends RGBSpace<S>> implements ColorSpace<RGB<Linear<S>>,
     if (!(o instanceof Linear)) {
       return false;
     }
-    return ((Linear<?>) o).rgbSpace.equals(rgbSpace);
+    return Objects.equals(((Linear<?>) o).rgbSpace, rgbSpace);
   }
 
   @Override
