@@ -37,12 +37,26 @@ import com.lhkbob.imaje.color.Yxy;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
+ * XYZToYxy
+ * ========
+ *
+ * Color transformation from {@link XYZ} to {@link Yxy}.
+ *
+ * @author Michael Ludwig
  */
 public class XYZToYxy<S extends ColorSpace<XYZ<S>, S>> implements ColorTransform<S, XYZ<S>, YxySpace<S>, Yxy<S>> {
   private final YxySpace<S> outputSpace;
   private final YxyToXYZ<S> inverse;
 
+  /**
+   * Create a transformation for the given YxySpace.
+   *
+   * @param outputSpace
+   *     The output space of this transformation (implicitly defines the input space)
+   */
   public XYZToYxy(YxySpace<S> outputSpace) {
     Arguments.notNull("outputSpace", outputSpace);
 
@@ -63,7 +77,7 @@ public class XYZToYxy<S extends ColorSpace<XYZ<S>, S>> implements ColorTransform
     if (!(o instanceof XYZToYxy)) {
       return false;
     }
-    return ((XYZToYxy<?>) o).outputSpace.equals(outputSpace);
+    return Objects.equals(((XYZToYxy<?>) o).outputSpace, outputSpace);
   }
 
   @Override
