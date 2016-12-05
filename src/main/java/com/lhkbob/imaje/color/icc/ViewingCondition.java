@@ -33,6 +33,8 @@ package com.lhkbob.imaje.color.icc;
 
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  *
  */
@@ -64,8 +66,8 @@ public final class ViewingCondition {
       return false;
     }
     ViewingCondition c = (ViewingCondition) o;
-    return c.description.equals(description) && c.illuminantType.equals(illuminantType)
-        && c.illuminant.equals(illuminant) && c.surround.equals(surround);
+    return Objects.equals(c.description, description) && Objects.equals(c.illuminantType, illuminantType)
+        && Objects.equals(c.illuminant, illuminant) && Objects.equals(c.surround, surround);
   }
 
   public GenericColorValue getIlluminant() {

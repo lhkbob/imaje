@@ -32,7 +32,7 @@
 package com.lhkbob.imaje.color.icc;
 
 import com.lhkbob.imaje.color.icc.reader.ProfileReader;
-import com.lhkbob.imaje.color.transform.general.Matrix;
+import com.lhkbob.imaje.color.transform.MatrixTransform;
 import com.lhkbob.imaje.color.transform.general.Transform;
 
 import java.io.File;
@@ -49,7 +49,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * TODO: Move this into the space package and define several adapters that go from the
+ * colors/generics to XYZ
  */
 public final class Profile {
   public static class Builder {
@@ -61,7 +62,7 @@ public final class Profile {
     private ColorSpace bSide;
     private ZonedDateTime calibrationTime;
     private String charTarget;
-    private Matrix chromaticAdaptation;
+    private MatrixTransform chromaticAdaptation;
     private Colorant chromaticity;
     private List<NamedColor> colorantInTable;
     private List<NamedColor> colorantOutTable;
@@ -129,7 +130,7 @@ public final class Profile {
       return this;
     }
 
-    public Builder setChromaticAdaptation(Matrix matrix) {
+    public Builder setChromaticAdaptation(MatrixTransform matrix) {
       chromaticAdaptation = matrix;
       return this;
     }
@@ -287,7 +288,7 @@ public final class Profile {
         calibrationTime = creationTime;
       }
       if (chromaticAdaptation == null) {
-        chromaticAdaptation = Matrix.IDENTITY_3X3;
+        chromaticAdaptation = MatrixTransform.IDENTITY_3X3;
       }
 
       if (colorimetricIntent == null) {
@@ -571,7 +572,7 @@ public final class Profile {
   private final Map<RenderingIntent, Transform> bToATransforms;
   private final ZonedDateTime calibrationTime;
   private final String charTarget;
-  private final Matrix chromaticAdaptation;
+  private final MatrixTransform chromaticAdaptation;
   private final Colorant chromaticity;
   private final List<NamedColor> colorantInTable;
   private final List<NamedColor> colorantOutTable;
@@ -600,7 +601,7 @@ public final class Profile {
 
   private Profile(
       ColorSpace aSide, ColorSpace bSide, ZonedDateTime calibrationTime, String charTarget,
-      Matrix chromaticAdaptation, Colorant chromaticity, List<NamedColor> colorantInTable,
+      MatrixTransform chromaticAdaptation, Colorant chromaticity, List<NamedColor> colorantInTable,
       List<NamedColor> colorantOutTable, ColorimetricIntent colorimetricIntent,
       LocalizedString copyright, ZonedDateTime creationTime, Signature creator,
       ProfileDescription description, long flags, Transform gamutTest, GenericColorValue illuminant,
@@ -702,7 +703,7 @@ public final class Profile {
     return charTarget;
   }
 
-  public Matrix getChromaticAdaptation() {
+  public MatrixTransform getChromaticAdaptation() {
     return chromaticAdaptation;
   }
 

@@ -31,6 +31,8 @@
  */
 package com.lhkbob.imaje.color.icc;
 
+import java.util.Objects;
+
 /**
  *
  */
@@ -49,7 +51,7 @@ public enum PrimaryPlatform {
 
   public static PrimaryPlatform fromSignature(Signature sig) {
     for (PrimaryPlatform v : values()) {
-      if (v.getSignature().equals(sig)) {
+      if (Objects.equals(v.getSignature(), sig)) {
         return v;
       }
     }

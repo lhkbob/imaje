@@ -33,10 +33,10 @@ package com.lhkbob.imaje.color.icc.reader;
 
 import com.lhkbob.imaje.color.icc.Signature;
 import com.lhkbob.imaje.color.transform.curves.Curve;
-import com.lhkbob.imaje.color.transform.general.Composition;
-import com.lhkbob.imaje.color.transform.general.Curves;
-import com.lhkbob.imaje.color.transform.general.LookupTable;
-import com.lhkbob.imaje.color.transform.general.Matrix;
+import com.lhkbob.imaje.color.transform.Composition;
+import com.lhkbob.imaje.color.transform.CurveTransform;
+import com.lhkbob.imaje.color.transform.LookupTable;
+import com.lhkbob.imaje.color.transform.MatrixTransform;
 import com.lhkbob.imaje.color.transform.general.Transform;
 
 import java.nio.ByteBuffer;
@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextS15Fixed16Number;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextSignature;
@@ -203,7 +204,7 @@ public final class LUTTypeParser implements TagParser<Transform> {
     return new LookupTable(inputChannels, outputChannels, gridSizes, values);
   }
 
-  private Curves readCurveBlock(
+  private CurveTransform readCurveBlock(
       Signature tag, Header header, ByteBuffer data, int start, int curveCount,
       Map<Integer, Curve> cache, Map<Integer, Integer> sizes) {
     // There are inputChannels count curves stored sequentially as a fully formed tag type
@@ -225,9 +226,9 @@ public final class LUTTypeParser implements TagParser<Transform> {
         skip(data, 4); // reserved
 
         TagParser<Curve> curveParser;
-        if (type.equals(CurveTypeParser.SIGNATURE)) {
+        if (Objects.equals(type, CurveTypeParser.SIGNATURE)) {
           curveParser = new CurveTypeParser();
-        } else if (type.equals(ParametricCurveTypeParser.SIGNATURE)) {
+        } else if (Objects.equals(type, ParametricCurveTypeParser.SIGNATURE)) {
           curveParser = new ParametricCurveTypeParser();
         } else {
           throw new IllegalStateException("Unsupported signature for curve: " + type);
@@ -245,10 +246,10 @@ public final class LUTTypeParser implements TagParser<Transform> {
       curves.add(curve);
     }
 
-    return new Curves(curves);
+    return new CurveTransform(curves);
   }
 
-  private Matrix readMatrixBlock(ByteBuffer data, int start) {
+  private MatrixTransform readMatrixBlock(ByteBuffer data, int start) {
     data.position(start);
 
     // The first 9 values are row-major for a 3x3 matrix
@@ -263,6 +264,6 @@ public final class LUTTypeParser implements TagParser<Transform> {
     }
     skipToBoundary(data);
 
-    return new Matrix(3, 3, matrix, translation);
+    return new MatrixTransform(3, 3, matrix, translation);
   }
 }

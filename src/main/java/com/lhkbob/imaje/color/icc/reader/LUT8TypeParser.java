@@ -34,10 +34,10 @@ package com.lhkbob.imaje.color.icc.reader;
 import com.lhkbob.imaje.color.icc.ColorSpace;
 import com.lhkbob.imaje.color.icc.Signature;
 import com.lhkbob.imaje.color.transform.curves.UniformlySampledCurve;
-import com.lhkbob.imaje.color.transform.general.Composition;
-import com.lhkbob.imaje.color.transform.general.Curves;
-import com.lhkbob.imaje.color.transform.general.LookupTable;
-import com.lhkbob.imaje.color.transform.general.Matrix;
+import com.lhkbob.imaje.color.transform.Composition;
+import com.lhkbob.imaje.color.transform.CurveTransform;
+import com.lhkbob.imaje.color.transform.LookupTable;
+import com.lhkbob.imaje.color.transform.MatrixTransform;
 import com.lhkbob.imaje.color.transform.general.Transform;
 
 import java.nio.ByteBuffer;
@@ -90,7 +90,7 @@ public final class LUT8TypeParser implements TagParser<Transform> {
       }
       // The matrix values were specified as row-major in the profile data so no
       // reordering is necessary
-      transformStages.add(new Matrix(3, 3, matrix));
+      transformStages.add(new MatrixTransform(3, 3, matrix));
     }
 
     // Input tables
@@ -103,7 +103,7 @@ public final class LUT8TypeParser implements TagParser<Transform> {
       // This constructor copies the data array so we can reuse our local variable
       inputTable.add(new UniformlySampledCurve(0.0, 1.0, inputTableEntries));
     }
-    transformStages.add(new Curves(inputTable));
+    transformStages.add(new CurveTransform(inputTable));
 
     // CLUT
     double[] clutEntries = new double[(int) Math.pow(gridSize, inputChannels) * outputChannels];
@@ -122,7 +122,7 @@ public final class LUT8TypeParser implements TagParser<Transform> {
       // This constructor copies the data array so we can reuse our local variable
       outputTable.add(new UniformlySampledCurve(0.0, 1.0, outputTableEntries));
     }
-    transformStages.add(new Curves(outputTable));
+    transformStages.add(new CurveTransform(outputTable));
 
     // Add a denormalizing stage
     transformStages.add(forward ? header.getBSideColorSpace().getNormalizingFunction().inverted()

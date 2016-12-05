@@ -47,12 +47,12 @@ import com.lhkbob.imaje.color.icc.RenderingIntentGamut;
 import com.lhkbob.imaje.color.icc.Signature;
 import com.lhkbob.imaje.color.icc.ViewingCondition;
 import com.lhkbob.imaje.color.transform.curves.Curve;
-import com.lhkbob.imaje.color.transform.general.Composition;
-import com.lhkbob.imaje.color.transform.general.Curves;
-import com.lhkbob.imaje.color.transform.general.LuminanceToXYZ;
-import com.lhkbob.imaje.color.transform.general.Matrix;
+import com.lhkbob.imaje.color.transform.Composition;
+import com.lhkbob.imaje.color.transform.CurveTransform;
+import com.lhkbob.imaje.color.space.luminance.LuminanceToXYZ;
+import com.lhkbob.imaje.color.transform.MatrixTransform;
 import com.lhkbob.imaje.color.transform.general.Transform;
-import com.lhkbob.imaje.color.transform.general.XYZToCIELab;
+import com.lhkbob.imaje.color.space.lab.XYZToCIELAB;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -157,7 +157,7 @@ public final class ProfileReader {
         throw new IllegalStateException(
             "Chromatic adaptation tag must contain 9 values, not: " + adaptation.length);
       }
-      b.setChromaticAdaptation(new Matrix(3, 3, adaptation));
+      b.setChromaticAdaptation(new MatrixTransform(3, 3, adaptation));
     }
 
     // Reorder colorant tables by the colorantOrder tag if it's provided, otherwise order is
@@ -290,7 +290,7 @@ public final class ProfileReader {
     // All 6 properties must be provided to have a valid trc/matrix transform
     if (matrixRed != null && matrixGreen != null && matrixBlue != null && trcRed != null
         && trcGreen != null && trcBlue != null) {
-      Curves linearization = new Curves(Arrays.asList(trcRed, trcGreen, trcBlue));
+      CurveTransform linearization = new CurveTransform(Arrays.asList(trcRed, trcGreen, trcBlue));
       double[] matrix = new double[] {
           matrixRed.getChannel(0), matrixGreen.getChannel(0), matrixBlue.getChannel(0),
           matrixRed.getChannel(1), matrixGreen.getChannel(1), matrixBlue.getChannel(1),
@@ -300,7 +300,7 @@ public final class ProfileReader {
       // Include channel normalizations
       return new Composition(Arrays
           .asList(header.getASideColorSpace().getNormalizingFunction(), linearization,
-              new Matrix(3, 3, matrix),
+              new MatrixTransform(3, 3, matrix),
               header.getBSideColorSpace().getNormalizingFunction().inverted()));
     }
 
@@ -308,7 +308,7 @@ public final class ProfileReader {
     Curve trcGray = tags.getTagValue(Tag.GRAY_TRC);
     if (trcGray != null) {
       List<Transform> stages = new ArrayList<>();
-      stages.add(new Curves(Collections.singletonList(trcGray)));
+      stages.add(new CurveTransform(Collections.singletonList(trcGray)));
       // Scale the gray curve into XYZ space
       GenericColorValue white = getSingleColor(tags, Tag.MEDIA_WHITE_POINT);
       if (white == null) {
@@ -319,7 +319,7 @@ public final class ProfileReader {
       stages.add(new LuminanceToXYZ(whiteXYZ));
       // Possibly convert from XYZ to LAB
       if (header.getBSideColorSpace() == ColorSpace.CIELAB) {
-        stages.add(new XYZToCIELab(whiteXYZ));
+        stages.add(new XYZToCIELAB(whiteXYZ));
       }
       return new Composition(stages);
     }

@@ -37,6 +37,7 @@ import com.lhkbob.imaje.util.Arguments;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  *
@@ -131,7 +132,7 @@ public final class ResponseCurveSet {
     if (!(o instanceof ResponseCurveSet)) {
       return false;
     }
-    return ((ResponseCurveSet) o).responseCurves.equals(responseCurves);
+    return Objects.equals(((ResponseCurveSet) o).responseCurves, responseCurves);
   }
 
   public int getChannelCount() {

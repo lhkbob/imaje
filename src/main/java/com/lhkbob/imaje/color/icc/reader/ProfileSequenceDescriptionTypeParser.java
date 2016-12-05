@@ -41,6 +41,7 @@ import com.lhkbob.imaje.color.icc.Signature;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextSignature;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextUInt32Number;
@@ -94,9 +95,9 @@ public final class ProfileSequenceDescriptionTypeParser implements TagParser<Lis
     Signature type = nextSignature(data);
     skip(data, 4); // reserved
 
-    if (type.equals(TextDescriptionTagParser.SIGNATURE)) {
+    if (Objects.equals(type, TextDescriptionTagParser.SIGNATURE)) {
       return new TextDescriptionTagParser().parse(tag, header, data);
-    } else if (type.equals(MultiLocalizedUnicodeTypeParser.SIGNATURE)) {
+    } else if (Objects.equals(type, MultiLocalizedUnicodeTypeParser.SIGNATURE)) {
       return new MultiLocalizedUnicodeTypeParser().parse(tag, header, data);
     } else {
       return null;

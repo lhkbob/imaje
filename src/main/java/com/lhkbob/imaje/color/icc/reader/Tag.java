@@ -51,6 +51,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextSignature;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.skip;
@@ -229,8 +230,8 @@ public final class Tag<T> {
       return false;
     }
     Tag t = (Tag) o;
-    return t.signature.equals(signature) && t.typeSignature.equals(typeSignature) && t.data
-        .equals(data);
+    return Objects.equals(t.signature, signature) && Objects.equals(t.typeSignature, typeSignature) && Objects
+        .equals(t.data, data);
   }
 
   public T getData() {

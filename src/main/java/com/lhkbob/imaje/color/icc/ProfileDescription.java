@@ -33,6 +33,8 @@ package com.lhkbob.imaje.color.icc;
 
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  *
  */
@@ -84,10 +86,10 @@ public final class ProfileDescription {
     }
 
     ProfileDescription p = (ProfileDescription) o;
-    return p.id.equals(id) && p.description.equals(description) && p.deviceManufacturer
-        .equals(deviceManufacturer) && p.deviceModel.equals(deviceModel) && p.attributes
-        .equals(attributes) && p.technology.equals(technology) && p.manufacturerDesc
-        .equals(manufacturerDesc) && p.modelDesc.equals(modelDesc);
+    return Objects.equals(p.id, id) && Objects.equals(p.description, description) && Objects
+        .equals(p.deviceManufacturer, deviceManufacturer) && Objects.equals(p.deviceModel, deviceModel) && Objects
+        .equals(p.attributes, attributes) && Objects.equals(p.technology, technology) && Objects
+        .equals(p.manufacturerDesc, manufacturerDesc) && Objects.equals(p.modelDesc, modelDesc);
   }
 
   public DeviceAttributes getDeviceAttributes() {

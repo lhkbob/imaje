@@ -33,6 +33,8 @@ package com.lhkbob.imaje.color.icc;
 
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  *
  */
@@ -64,8 +66,9 @@ public final class Measurement {
       return false;
     }
     Measurement m = (Measurement) o;
-    return m.geometry.equals(geometry) && m.illuminant.equals(illuminant) && m.measurement
-        .equals(measurement) && m.observer.equals(observer) && Double.compare(m.flare, flare) == 0;
+    return Objects.equals(m.geometry, geometry) && Objects.equals(m.illuminant, illuminant) && Objects
+        .equals(m.measurement, measurement) && Objects.equals(m.observer, observer)
+        && Double.compare(m.flare, flare) == 0;
   }
 
   public double getFlareValue() {

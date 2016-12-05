@@ -39,10 +39,10 @@ import com.lhkbob.imaje.color.transform.curves.GammaFunction;
 import com.lhkbob.imaje.color.transform.curves.LogGammaFunction;
 import com.lhkbob.imaje.color.transform.curves.PiecewiseCurve;
 import com.lhkbob.imaje.color.transform.curves.UniformlySampledCurve;
-import com.lhkbob.imaje.color.transform.general.Composition;
-import com.lhkbob.imaje.color.transform.general.Curves;
-import com.lhkbob.imaje.color.transform.general.LookupTable;
-import com.lhkbob.imaje.color.transform.general.Matrix;
+import com.lhkbob.imaje.color.transform.Composition;
+import com.lhkbob.imaje.color.transform.CurveTransform;
+import com.lhkbob.imaje.color.transform.LookupTable;
+import com.lhkbob.imaje.color.transform.MatrixTransform;
 import com.lhkbob.imaje.color.transform.general.Transform;
 
 import java.nio.ByteBuffer;
@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextFloat32Number;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextPositionNumber;
@@ -162,7 +163,7 @@ public final class MultiProcessElementsTypeParser implements TagParser<Transform
     pos.configureBuffer(data, start);
 
     Signature sig = nextSignature(data);
-    if (!CURVE_SEGMENT_SIGNATURE.equals(sig)) {
+    if (!Objects.equals(CURVE_SEGMENT_SIGNATURE, sig)) {
       throw new IllegalStateException("Expected data of type 'curf' but was: " + sig);
     }
     skip(data, 4); // reserved
@@ -193,11 +194,11 @@ public final class MultiProcessElementsTypeParser implements TagParser<Transform
         Signature type = nextSignature(data);
         data.position(segmentStart);
 
-        if (type.equals(FORMULA_CURVE_SIGNATURE)) {
+        if (Objects.equals(type, FORMULA_CURVE_SIGNATURE)) {
           Curve f = readFormulaCurveSegment(data);
           // Wrap in a domain window so it's only defined on the breakpoint interval
           segments.add(new DomainWindow(f, domains[i], domains[i + 1]));
-        } else if (type.equals(SAMPLED_CURVE_SIGNATURE)) {
+        } else if (Objects.equals(type, SAMPLED_CURVE_SIGNATURE)) {
           if (i == 0 || i == (segmentCount - 1)) {
             throw new IllegalStateException(
                 "Sampled curve segments are not allowed to be first or last segment");
@@ -219,7 +220,7 @@ public final class MultiProcessElementsTypeParser implements TagParser<Transform
     }
   }
 
-  private Curves readCurveSetElement(
+  private CurveTransform readCurveSetElement(
       ByteBuffer data, int inputChannels, int outputChannels) {
     if (inputChannels != outputChannels) {
       throw new IllegalStateException(
@@ -250,7 +251,7 @@ public final class MultiProcessElementsTypeParser implements TagParser<Transform
     }
 
     skipToBoundary(data);
-    return new Curves(curves);
+    return new CurveTransform(curves);
   }
 
   private Transform readExpansionElement(ByteBuffer data) {
@@ -261,7 +262,7 @@ public final class MultiProcessElementsTypeParser implements TagParser<Transform
 
   private Curve readFormulaCurveSegment(ByteBuffer data) {
     Signature sig = nextSignature(data);
-    if (!FORMULA_CURVE_SIGNATURE.equals(sig)) {
+    if (!Objects.equals(FORMULA_CURVE_SIGNATURE, sig)) {
       throw new IllegalStateException("Expected data of type 'parf' but was: " + sig);
     }
     skip(data, 4); // reserved
@@ -301,7 +302,7 @@ public final class MultiProcessElementsTypeParser implements TagParser<Transform
     return values;
   }
 
-  private Matrix readMatrixElement(ByteBuffer data, int inputChannels, int outputChannels) {
+  private MatrixTransform readMatrixElement(ByteBuffer data, int inputChannels, int outputChannels) {
     double[] matrix = new double[inputChannels * outputChannels];
     double[] translation = new double[outputChannels];
 
@@ -315,7 +316,7 @@ public final class MultiProcessElementsTypeParser implements TagParser<Transform
     }
     skipToBoundary(data);
 
-    return new Matrix(outputChannels, inputChannels, matrix, translation);
+    return new MatrixTransform(outputChannels, inputChannels, matrix, translation);
   }
 
   private Transform readProcessElement(
@@ -327,16 +328,16 @@ public final class MultiProcessElementsTypeParser implements TagParser<Transform
     int inputChannels = nextUInt16Number(data);
     int outputChannels = nextUInt16Number(data);
 
-    if (MATRIX_SIGNATURE.equals(signature)) {
+    if (Objects.equals(MATRIX_SIGNATURE, signature)) {
       return readMatrixElement(data, inputChannels, outputChannels);
-    } else if (CLUT_SIGNATURE.equals(signature)) {
+    } else if (Objects.equals(CLUT_SIGNATURE, signature)) {
       return readCLUTElement(data, inputChannels, outputChannels);
-    } else if (EACS_SIGNATURE.equals(signature)) {
+    } else if (Objects.equals(EACS_SIGNATURE, signature)) {
       readExpansionElement(data);
       return null;
-    } else if (BACS_SIGNATURE.equals(signature)) {
+    } else if (Objects.equals(BACS_SIGNATURE, signature)) {
       return readExpansionElement(data);
-    } else if (CURVE_SIGNATURE.equals(signature)) {
+    } else if (Objects.equals(CURVE_SIGNATURE, signature)) {
       return readCurveSetElement(data, inputChannels, outputChannels);
     } else {
       // Unknown process element
@@ -347,7 +348,7 @@ public final class MultiProcessElementsTypeParser implements TagParser<Transform
   private Curve readSampledCurveSegment(
       ByteBuffer data, double firstBreakpoint, double firstValue, double secondBreakpoint) {
     Signature sig = nextSignature(data);
-    if (!SAMPLED_CURVE_SIGNATURE.equals(sig)) {
+    if (!Objects.equals(SAMPLED_CURVE_SIGNATURE, sig)) {
       throw new IllegalStateException("Expected data of type 'samf' but was: " + sig);
     }
     skip(data, 4); // reserved

@@ -31,6 +31,8 @@
  */
 package com.lhkbob.imaje.color.icc;
 
+import java.util.Objects;
+
 /**
  *
  */
@@ -78,7 +80,7 @@ public enum ProfileClass {
 
   public static ProfileClass fromSignature(Signature sig) {
     for (ProfileClass v : values()) {
-      if (v.getSignature().equals(sig)) {
+      if (Objects.equals(v.getSignature(), sig)) {
         return v;
       }
     }

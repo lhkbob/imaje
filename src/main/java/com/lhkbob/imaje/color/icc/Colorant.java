@@ -34,6 +34,7 @@ package com.lhkbob.imaje.color.icc;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  *
@@ -75,13 +76,13 @@ public final class Colorant {
   }
 
   public String getName() {
-    if (ITU_R_BT_709_2.equals(this)) {
+    if (Objects.equals(ITU_R_BT_709_2, this)) {
       return "ITU_R_BT_709_2";
-    } else if (SMPTE_RP145.equals(this)) {
+    } else if (Objects.equals(SMPTE_RP145, this)) {
       return "SMPTE_RP145";
-    } else if (EBU_TECH_3213_E.equals(this)) {
+    } else if (Objects.equals(EBU_TECH_3213_E, this)) {
       return "EBU_TECH_3213_E";
-    } else if (P22.equals(this)) {
+    } else if (Objects.equals(P22, this)) {
       return "P22";
     } else {
       return null;

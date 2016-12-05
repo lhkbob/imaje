@@ -42,6 +42,7 @@ import com.lhkbob.imaje.color.icc.Signature;
 
 import java.nio.ByteBuffer;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextDateTimeNumber;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextSignature;
@@ -110,7 +111,7 @@ public final class Header {
     int dataStart = data.position();
     data.limit(dataStart + 40).position(dataStart + 36);
     Signature signature = nextSignature(data);
-    if (!PROFILE_SIGNATURE.equals(signature)) {
+    if (!Objects.equals(PROFILE_SIGNATURE, signature)) {
       throw new IllegalArgumentException(
           "Header does not contain expected signature ('acsp') at required byte position: "
               + signature);

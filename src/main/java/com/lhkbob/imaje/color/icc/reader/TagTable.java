@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextPositionNumber;
 import static com.lhkbob.imaje.color.icc.reader.ICCDataTypeUtil.nextSignature;
@@ -105,7 +106,7 @@ public final class TagTable {
       return false;
     }
 
-    return ((TagTable) o).tags.equals(tags);
+    return Objects.equals(((TagTable) o).tags, tags);
   }
 
   @SuppressWarnings("unchecked")

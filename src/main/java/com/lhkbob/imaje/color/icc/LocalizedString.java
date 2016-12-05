@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  *
@@ -69,7 +70,7 @@ public final class LocalizedString {
       return false;
     }
     LocalizedString s = (LocalizedString) o;
-    return s.defaultKey.equals(defaultKey) && s.localizedText.equals(localizedText);
+    return Objects.equals(s.defaultKey, defaultKey) && Objects.equals(s.localizedText, localizedText);
   }
 
   public Map<Locale, String> getAllLocalizations() {
@@ -88,7 +89,7 @@ public final class LocalizedString {
 
     // Otherwise search for any record with the same language <code></code>
     for (Locale k : localizedText.keySet()) {
-      if (k.getLanguage().equals(key.getLanguage())) {
+      if (Objects.equals(k.getLanguage(), key.getLanguage())) {
         return localizedText.get(k);
       }
     }

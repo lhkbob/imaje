@@ -31,6 +31,8 @@
  */
 package com.lhkbob.imaje.color.icc;
 
+import java.util.Objects;
+
 /**
  *
  */
@@ -46,7 +48,7 @@ public enum RenderingIntentGamut {
 
   public static RenderingIntentGamut fromSignature(Signature sig) {
     for (RenderingIntentGamut v : values()) {
-      if (v.getSignature().equals(sig)) {
+      if (Objects.equals(v.getSignature(), sig)) {
         return v;
       }
     }

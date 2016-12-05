@@ -31,6 +31,8 @@
  */
 package com.lhkbob.imaje.color.icc;
 
+import java.util.Objects;
+
 /**
  *
  */
@@ -68,7 +70,7 @@ public enum MeasurementUnit {
 
   public static MeasurementUnit fromSignature(Signature s) {
     for (MeasurementUnit v : values()) {
-      if (v.getSignature().equals(s)) {
+      if (Objects.equals(v.getSignature(), s)) {
         return v;
       }
     }

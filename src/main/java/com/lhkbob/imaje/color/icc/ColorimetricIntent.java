@@ -31,6 +31,8 @@
  */
 package com.lhkbob.imaje.color.icc;
 
+import java.util.Objects;
+
 /**
  *
  */
@@ -50,7 +52,7 @@ public enum ColorimetricIntent {
 
   public static ColorimetricIntent fromSignature(Signature sig) {
     for (ColorimetricIntent v : values()) {
-      if (v.getSignature().equals(sig)) {
+      if (Objects.equals(v.getSignature(), sig)) {
         return v;
       }
     }

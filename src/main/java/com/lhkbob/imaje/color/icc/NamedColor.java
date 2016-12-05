@@ -33,6 +33,8 @@ package com.lhkbob.imaje.color.icc;
 
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  *
  */
@@ -65,8 +67,8 @@ public final class NamedColor {
     }
 
     NamedColor that = (NamedColor) o;
-    return name.equals(that.name) && pcs.equals(that.pcs) && !(device != null ? !device
-        .equals(that.device) : that.device != null);
+    return Objects.equals(name, that.name) && Objects.equals(pcs, that.pcs) && !(device != null ? !Objects
+        .equals(device, that.device) : that.device != null);
   }
 
   public GenericColorValue getDeviceColor() {
