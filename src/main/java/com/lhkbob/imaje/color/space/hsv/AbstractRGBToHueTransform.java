@@ -37,6 +37,8 @@ import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  * AbstractRGBToHueTransform
  * =========================
@@ -66,6 +68,27 @@ public abstract class AbstractRGBToHueTransform<SI extends ColorSpace<RGB<SI>, S
 
     this.inputSpace = inputSpace;
     this.outputSpace = outputSpace;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!getClass().isInstance(o)) {
+      return false;
+    }
+    AbstractRGBToHueTransform t = (AbstractRGBToHueTransform) o;
+    return Objects.equals(t.inputSpace, inputSpace) && Objects.equals(t.outputSpace, outputSpace);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 17;
+    result += 31 * result + getClass().hashCode();
+    result += 31 * result + inputSpace.hashCode();
+    result += 31 * result + outputSpace.hashCode();
+    return result;
   }
 
   @Override
