@@ -37,6 +37,8 @@ import com.lhkbob.imaje.data.DataView;
 import com.lhkbob.imaje.data.NumericData;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  * CustomBinaryData
  * ================
@@ -116,7 +118,7 @@ public class CustomBinaryData<T extends BitData> extends NumericData<T> implemen
   public void set(long writeIndex, DataBuffer data, long readIndex, long length) {
     if (data instanceof CustomBinaryData) {
       CustomBinaryData<?> custom = (CustomBinaryData<?>) data;
-      if (custom.converter.equals(converter)) {
+      if (Objects.equals(custom.converter, converter)) {
         // These are compatible representations so instead of fallback back to the
         // element-by-element numeric conversion implementation, do a copy directly between this and
         // data's underlying bit sources.

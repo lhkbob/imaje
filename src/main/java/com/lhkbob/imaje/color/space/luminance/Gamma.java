@@ -12,6 +12,7 @@ import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.color.transform.CurveTransform;
 
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Gamma
@@ -99,7 +100,7 @@ public class Gamma implements ColorSpace<Luminance<Gamma>, Gamma> {
       return false;
     }
     Gamma g = (Gamma) o;
-    return g.baseSpace.equals(baseSpace) && g.gammaDecoder.equals(gammaDecoder);
+    return Objects.equals(g.baseSpace, baseSpace) && Objects.equals(g.gammaDecoder, gammaDecoder);
   }
 
   @Override

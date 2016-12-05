@@ -37,6 +37,8 @@ import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  * HunterLabToXYZ
  * ==============
@@ -85,7 +87,7 @@ public class HunterLabToXYZ implements ColorTransform<Hunter, Lab<Hunter>, CIE31
     if (!(o instanceof HunterLabToXYZ)) {
       return false;
     }
-    return ((HunterLabToXYZ) o).labSpace.equals(labSpace);
+    return Objects.equals(((HunterLabToXYZ) o).labSpace, labSpace);
   }
 
   @Override

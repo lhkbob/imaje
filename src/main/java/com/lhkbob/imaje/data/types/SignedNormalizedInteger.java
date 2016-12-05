@@ -33,6 +33,8 @@ package com.lhkbob.imaje.data.types;
 
 import com.lhkbob.imaje.util.Functions;
 
+import java.util.Objects;
+
 /**
  * SignedNormalizedInteger
  * =======================
@@ -108,7 +110,7 @@ public class SignedNormalizedInteger implements BinaryRepresentation {
     if (!(o instanceof SignedNormalizedInteger)) {
       return false;
     }
-    return ((SignedNormalizedInteger) o).unnormalized.equals(unnormalized);
+    return Objects.equals(((SignedNormalizedInteger) o).unnormalized, unnormalized);
   }
 
   @Override

@@ -169,11 +169,11 @@ public class UnsignedSharedExponent {
   @Override
   public int hashCode() {
     int result = 17;
-    result += 31 * result + Long.hashCode(exponentMask);
-    result += 31 * result + Long.hashCode(exponentBias);
-    result += 31 * result + Double.hashCode(maxComponentValues);
+    result = 31 * result + Long.hashCode(exponentMask);
+    result = 31 * result + Long.hashCode(exponentBias);
+    result = 31 * result + Double.hashCode(maxComponentValues);
     for (int i = 0; i < mantissaMasks.length; i++) {
-      result += 31 * result + Long.hashCode(mantissaMasks[i]);
+      result = 31 * result + Long.hashCode(mantissaMasks[i]);
     }
     return result;
   }

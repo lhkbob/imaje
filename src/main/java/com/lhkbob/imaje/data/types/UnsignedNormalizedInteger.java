@@ -33,6 +33,8 @@ package com.lhkbob.imaje.data.types;
 
 import com.lhkbob.imaje.util.Functions;
 
+import java.util.Objects;
+
 /**
  * UnsignedNormalizedInteger
  * =======================
@@ -106,7 +108,7 @@ public class UnsignedNormalizedInteger implements BinaryRepresentation {
       return false;
     }
 
-    return ((UnsignedNormalizedInteger) o).unnormalized.equals(unnormalized);
+    return Objects.equals(((UnsignedNormalizedInteger) o).unnormalized, unnormalized);
   }
 
   @Override

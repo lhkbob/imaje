@@ -37,6 +37,8 @@ import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  * XYZToHunterLab
  * ==============
@@ -84,7 +86,7 @@ public class XYZToHunterLab implements ColorTransform<CIE31, XYZ<CIE31>, Hunter,
     if (!(o instanceof XYZToHunterLab)) {
       return false;
     }
-    return ((XYZToHunterLab) o).whitepoint.equals(whitepoint);
+    return Objects.equals(((XYZToHunterLab) o).whitepoint, whitepoint);
   }
 
   @Override

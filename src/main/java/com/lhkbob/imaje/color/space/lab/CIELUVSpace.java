@@ -6,6 +6,8 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.Illuminants;
 
+import java.util.Objects;
+
 /**
  * CIELUVSpace
  * ===
@@ -88,7 +90,7 @@ public class CIELUVSpace implements ColorSpace<CIELUV, CIELUVSpace> {
     if (!(o instanceof CIELUVSpace)) {
       return false;
     }
-    return ((CIELUVSpace) o).referenceWhitepoint.equals(referenceWhitepoint);
+    return Objects.equals(((CIELUVSpace) o).referenceWhitepoint, referenceWhitepoint);
   }
 
   @Override

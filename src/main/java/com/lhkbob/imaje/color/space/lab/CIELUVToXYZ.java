@@ -37,6 +37,8 @@ import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  * CIELUVToXYZ
  * ===========
@@ -88,7 +90,7 @@ public class CIELUVToXYZ implements ColorTransform<CIELUVSpace, CIELUV, CIE31, X
     if (!(o instanceof CIELUVToXYZ)) {
       return false;
     }
-    return ((CIELUVToXYZ) o).luvSpace.equals(luvSpace);
+    return Objects.equals(((CIELUVToXYZ) o).luvSpace, luvSpace);
   }
 
   @Override

@@ -38,6 +38,7 @@ import com.lhkbob.imaje.util.Arguments;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Objects;
 
 /**
  * ByteBufferData
@@ -124,12 +125,12 @@ public class ByteBufferData extends ByteData implements DataView<ByteBuffer> {
 
   @Override
   public boolean isBigEndian() {
-    return buffer.order().equals(ByteOrder.BIG_ENDIAN);
+    return Objects.equals(buffer.order(), ByteOrder.BIG_ENDIAN);
   }
 
   @Override
   public boolean isGPUAccessible() {
-    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
+    return buffer.isDirect() && Objects.equals(buffer.order(), ByteOrder.nativeOrder());
   }
 
   @Override

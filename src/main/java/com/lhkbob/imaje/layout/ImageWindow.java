@@ -182,10 +182,10 @@ public final class ImageWindow implements Cloneable, Iterable<ImageCoordinate> {
   @Override
   public int hashCode() {
     int result = 17;
-    result += 31 * result + Integer.hashCode(x);
-    result += 31 * result + Integer.hashCode(y);
-    result += 31 * result + Integer.hashCode(width);
-    result += 31 * result + Integer.hashCode(height);
+    result = 31 * result + Integer.hashCode(x);
+    result = 31 * result + Integer.hashCode(y);
+    result = 31 * result + Integer.hashCode(width);
+    result = 31 * result + Integer.hashCode(height);
     return result;
   }
 

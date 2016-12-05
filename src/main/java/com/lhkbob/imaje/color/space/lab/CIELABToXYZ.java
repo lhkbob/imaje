@@ -37,6 +37,8 @@ import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  * CIELABToXYZ
  * ===========
@@ -76,7 +78,7 @@ public class CIELABToXYZ implements ColorTransform<CIE, Lab<CIE>, CIE31, XYZ<CIE
     if (!(o instanceof CIELABToXYZ)) {
       return false;
     }
-    return ((CIELABToXYZ) o).labSpace.equals(labSpace);
+    return Objects.equals(((CIELABToXYZ) o).labSpace, labSpace);
   }
 
   @Override

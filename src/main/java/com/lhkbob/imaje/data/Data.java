@@ -62,6 +62,7 @@ import com.lhkbob.imaje.data.types.UnsignedNormalizedInteger;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.nio.ByteOrder;
+import java.util.Objects;
 
 /**
  * Data
@@ -223,17 +224,17 @@ public final class Data {
      */
     default NumericData<?> newData(BinaryRepresentation format, long length) {
       // If the binary representation is natively supported, use them directly
-      if (format.equals(SFLOAT32)) {
+      if (Objects.equals(format, SFLOAT32)) {
         return newFloatData(length);
-      } else if (format.equals(SFLOAT64)) {
+      } else if (Objects.equals(format, SFLOAT64)) {
         return newDoubleData(length);
-      } else if (format.equals(SINT8)) {
+      } else if (Objects.equals(format, SINT8)) {
         return new ByteData.Numeric(newByteData(length));
-      } else if (format.equals(SINT16)) {
+      } else if (Objects.equals(format, SINT16)) {
         return new ShortData.Numeric(newShortData(length));
-      } else if (format.equals(SINT32)) {
+      } else if (Objects.equals(format, SINT32)) {
         return new IntData.Numeric(newIntData(length));
-      } else if (format.equals(SINT64)) {
+      } else if (Objects.equals(format, SINT64)) {
         return new LongData.Numeric(newLongData(length));
       }
 
@@ -365,7 +366,7 @@ public final class Data {
    * @return True if the system's byte order is big endian
    */
   public static boolean isNativeBigEndian() {
-    return ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
+    return Objects.equals(ByteOrder.nativeOrder(), ByteOrder.BIG_ENDIAN);
   }
 
   /**

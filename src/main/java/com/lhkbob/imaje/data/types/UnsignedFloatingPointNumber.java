@@ -33,6 +33,8 @@ package com.lhkbob.imaje.data.types;
 
 import com.lhkbob.imaje.util.Functions;
 
+import java.util.Objects;
+
 /**
  * UnsignedFloatingPointNumber
  * ===========================
@@ -171,7 +173,7 @@ public class UnsignedFloatingPointNumber implements BinaryRepresentation {
     if (!(o instanceof UnsignedFloatingPointNumber)) {
       return false;
     }
-    return ((UnsignedFloatingPointNumber) o).base.equals(base);
+    return Objects.equals(((UnsignedFloatingPointNumber) o).base, base);
   }
 
   @Override

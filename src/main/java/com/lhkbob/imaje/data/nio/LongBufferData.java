@@ -38,6 +38,7 @@ import com.lhkbob.imaje.util.Arguments;
 
 import java.nio.ByteOrder;
 import java.nio.LongBuffer;
+import java.util.Objects;
 
 /**
  * LongBufferData
@@ -124,12 +125,12 @@ public class LongBufferData extends LongData implements DataView<LongBuffer> {
 
   @Override
   public boolean isBigEndian() {
-    return buffer.order().equals(ByteOrder.BIG_ENDIAN);
+    return Objects.equals(buffer.order(), ByteOrder.BIG_ENDIAN);
   }
 
   @Override
   public boolean isGPUAccessible() {
-    return buffer.isDirect() && buffer.order().equals(ByteOrder.nativeOrder());
+    return buffer.isDirect() && Objects.equals(buffer.order(), ByteOrder.nativeOrder());
   }
 
   @Override

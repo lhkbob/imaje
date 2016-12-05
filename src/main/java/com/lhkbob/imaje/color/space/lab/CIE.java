@@ -6,6 +6,8 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.Illuminants;
 
+import java.util.Objects;
+
 /**
  * CIE
  * ===
@@ -85,7 +87,7 @@ public class CIE implements ColorSpace<Lab<CIE>, CIE> {
     if (!(o instanceof CIE)) {
       return false;
     }
-    return ((CIE) o).referenceWhitepoint.equals(referenceWhitepoint);
+    return Objects.equals(((CIE) o).referenceWhitepoint, referenceWhitepoint);
   }
 
   @Override

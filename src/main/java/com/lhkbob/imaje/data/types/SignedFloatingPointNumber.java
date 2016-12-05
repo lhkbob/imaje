@@ -296,8 +296,8 @@ public class SignedFloatingPointNumber implements BinaryRepresentation {
   @Override
   public int hashCode() {
     int result = 17;
-    result += 31 * result + Long.hashCode(exponentMask);
-    result += 31 * result + Long.hashCode(mantissaMask);
+    result = 31 * result + Long.hashCode(exponentMask);
+    result = 31 * result + Long.hashCode(mantissaMask);
     return result;
   }
 

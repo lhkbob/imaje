@@ -6,6 +6,8 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.Illuminants;
 
+import java.util.Objects;
+
 /**
  * Linear
  * ======
@@ -80,7 +82,7 @@ public class Linear implements ColorSpace<Luminance<Linear>, Linear> {
     if (!(o instanceof Linear)) {
       return false;
     }
-    return ((Linear) o).referenceWhitepoint.equals(referenceWhitepoint);
+    return Objects.equals(((Linear) o).referenceWhitepoint, referenceWhitepoint);
   }
 
   @Override

@@ -10,6 +10,8 @@ import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  * HSVSpace
  * ========
@@ -107,7 +109,7 @@ public class HSVSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<HSV
       return false;
     }
     HSVSpace s = (HSVSpace) o;
-    return s.rgbSpace.equals(rgbSpace);
+    return Objects.equals(s.rgbSpace, rgbSpace);
   }
 
   @Override

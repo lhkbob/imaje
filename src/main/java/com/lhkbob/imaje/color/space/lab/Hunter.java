@@ -6,6 +6,8 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.Illuminants;
 
+import java.util.Objects;
+
 /**
  * Hunter
  * ======
@@ -85,7 +87,7 @@ public class Hunter implements ColorSpace<Lab<Hunter>, Hunter> {
     if (!(o instanceof Hunter)) {
       return false;
     }
-    return ((Hunter) o).referenceWhitepoint.equals(referenceWhitepoint);
+    return Objects.equals(((Hunter) o).referenceWhitepoint, referenceWhitepoint);
   }
 
   @Override
