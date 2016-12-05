@@ -38,7 +38,8 @@ public class YCbCrSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<Y
   /**
    * YCbCr space defined in terms of the {@link SMPTEC} RGB space.
    */
-  public static final YCbCrSpace<SMPTEC> SPACE_SMPTEC = new YCbCrSpace<>(SMPTEC.SPACE, 0.114, 0.299);
+  public static final YCbCrSpace<SMPTEC> SPACE_SMPTEC = new YCbCrSpace<>(
+      SMPTEC.SPACE, 0.114, 0.299);
   /**
    * YCbCr space defined in terms of the {@link HDTV} RGB space.
    */
@@ -66,7 +67,7 @@ public class YCbCrSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<Y
     Arguments.notNull("rgbSpace", rgbSpace);
 
     this.rgbSpace = rgbSpace;
-    toRGB = DifferenceChromaToRGB.newYCbCrToRGB(this, kb, kr);
+    toRGB = new DifferenceChromaToRGB<>(this, rgbSpace, kb, kr, 0.5, 0.5);
     toXYZ = new Composition<>(toRGB, rgbSpace.getXYZTransform());
   }
 
@@ -101,7 +102,7 @@ public class YCbCrSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<Y
 
   @Override
   public String getChannelName(int channel) {
-    switch(channel) {
+    switch (channel) {
     case 0:
       return "Y";
     case 1:

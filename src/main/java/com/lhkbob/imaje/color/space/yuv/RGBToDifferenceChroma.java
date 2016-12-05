@@ -39,24 +39,74 @@ import com.lhkbob.imaje.color.YUV;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
+ * RGBToDifferenceChroma
+ * =====================
  *
+ * Color transformation for difference chroma models like {@link YUV} or {@link YCbCr} to {@link
+ * RGB}.
+ *
+ * @author Michael Ludwig
  */
 public class RGBToDifferenceChroma<SI extends ColorSpace<RGB<SI>, SI>, SO extends ColorSpace<O, SO>, O extends Color<O, SO>> implements ColorTransform<SI, RGB<SI>, SO, O> {
+  private final SO yCbCrSpace;
+  private final SI rgbSpace;
+
+  private final double kb;
+  private final double kr;
+  private final double umax;
+  private final double vmax;
+
   private final DifferenceChromaToRGB<SO, O, SI> inverse;
 
-  RGBToDifferenceChroma(DifferenceChromaToRGB<SO, O, SI> inverse) {
+  /**
+   * Create a transformation from RGB to a difference chroma color space that is defined by
+   * the given difference weights `kb` and `kr` (for the blue and red channels respectively).
+   * `umax` and `vmax` determine the absolute value for the maximum values of the
+   * difference chroma channels.
+   *
+   * @param rgbSpace
+   *     The RGB space
+   * @param yCbCrSpace
+   *     The difference chroma space
+   * @param kb
+   *     The weight of the blue channel
+   * @param kr
+   *     The weight of the red channel
+   * @param umax
+   *     The max of the first difference chroma value
+   * @param vmax
+   *     The ma of the second difference chroma value
+   */
+  public RGBToDifferenceChroma(
+      SI rgbSpace, SO yCbCrSpace, double kb, double kr, double umax, double vmax) {
+    Arguments.notNull("yCbCrSpace", yCbCrSpace);
+    Arguments.notNull("rgbSpace", rgbSpace);
+
+    this.yCbCrSpace = yCbCrSpace;
+    this.rgbSpace = rgbSpace;
+
+    this.kr = kr;
+    this.kb = kb;
+    this.umax = umax;
+    this.vmax = vmax;
+
+    inverse = new DifferenceChromaToRGB<>(this, kb, kr, umax, vmax);
+  }
+
+  RGBToDifferenceChroma(
+      DifferenceChromaToRGB<SO, O, SI> inverse, double kb, double kr, double umax, double vmax) {
+    yCbCrSpace = inverse.getInputSpace();
+    rgbSpace = inverse.getOutputSpace();
+
+    this.kr = kr;
+    this.kb = kb;
+    this.umax = umax;
+    this.vmax = vmax;
+
     this.inverse = inverse;
-  }
-
-  public static <S extends ColorSpace<RGB<S>, S>> RGBToDifferenceChroma<S, YCbCrSpace<S>, YCbCr<S>> newRGBToYCbCr(
-      YCbCrSpace<S> yCbCrSpace, double kb, double kr) {
-    return DifferenceChromaToRGB.newYCbCrToRGB(yCbCrSpace, kb, kr).inverse();
-  }
-
-  public static <S extends ColorSpace<RGB<S>, S>> RGBToDifferenceChroma<S, YUVSpace<S>, YUV<S>> newYUVToRGB(
-      YUVSpace<S> yuvSpace, double kb, double kr) {
-    return DifferenceChromaToRGB.newYUVToRGB(yuvSpace, kb, kr).inverse();
   }
 
   @Override
@@ -68,12 +118,23 @@ public class RGBToDifferenceChroma<SI extends ColorSpace<RGB<SI>, SI>, SO extend
       return false;
     }
     RGBToDifferenceChroma c = (RGBToDifferenceChroma) o;
-    return c.inverse.equals(inverse);
+    if (!Objects.equals(c.yCbCrSpace, yCbCrSpace) || !Objects.equals(c.rgbSpace, rgbSpace)) {
+      return false;
+    }
+    return Double.compare(c.kr, kr) == 0 && Double.compare(c.kb, kb) == 0
+        && Double.compare(c.umax, umax) == 0 && Double.compare(c.vmax, vmax) == 0;
   }
 
   @Override
   public int hashCode() {
-    return RGBToDifferenceChroma.class.hashCode() ^ inverse.hashCode();
+    int result = RGBToDifferenceChroma.class.hashCode();
+    result = 31 * result + Double.hashCode(kr);
+    result = 31 * result + Double.hashCode(kb);
+    result = 31 * result + Double.hashCode(umax);
+    result = 31 * result + Double.hashCode(vmax);
+    result = 31 * result + yCbCrSpace.hashCode();
+    result = 31 * result + rgbSpace.hashCode();
+    return result;
   }
 
   @Override
@@ -97,18 +158,17 @@ public class RGBToDifferenceChroma<SI extends ColorSpace<RGB<SI>, SI>, SO extend
     Arguments.equals("output.length", 3, output.length);
 
     // Y from R, G, and B
-    output[0] =
-        inverse.kr * input[0] + (1.0 - inverse.kr - inverse.kb) * input[1] + inverse.kb * input[2];
+    output[0] = kr * input[0] + (1.0 - kr - kb) * input[1] + kb * input[2];
     // Cb from Y and B
-    output[1] = inverse.umax * (input[2] - output[0]) / (1.0 - inverse.kb);
+    output[1] = umax * (input[2] - output[0]) / (1.0 - kb);
     // Cr from Y and R
-    output[2] = inverse.vmax * (input[0] - output[0]) / (1.0 - inverse.kr);
+    output[2] = vmax * (input[0] - output[0]) / (1.0 - kr);
     return true;
   }
 
   @Override
   public String toString() {
-    return String.format("RGB -> Yb*r* (kb: %.3f, kr: %.3f, b-max: %.3f, r-max: %.3f)", inverse.kb,
-        inverse.kr, inverse.umax, inverse.vmax);
+    return String
+        .format("RGB -> Yb*r* (kb: %.3f, kr: %.3f, b-max: %.3f, r-max: %.3f)", kb, kr, umax, vmax);
   }
 }

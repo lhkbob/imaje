@@ -39,21 +39,49 @@ import com.lhkbob.imaje.color.YUV;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
- * YCbCr's range is [0, 1], [-0.5, 0.5], [-0.5, 0.5]
+ * DifferenceChromaToRGB
+ * =====================
+ *
+ * Color transformation for {@link RGB} to difference chroma models like {@link YUV} or {@link
+ * YCbCr}.
+ *
+ * @author Michael Ludwig
  */
 public class DifferenceChromaToRGB<SI extends ColorSpace<I, SI>, I extends Color<I, SI>, SO extends ColorSpace<RGB<SO>, SO>> implements ColorTransform<SI, I, SO, RGB<SO>> {
   private final SI yCbCrSpace;
   private final SO rgbSpace;
 
-  final double kb;
-  final double kr;
-  final double umax;
-  final double vmax;
+  private final double kb;
+  private final double kr;
+  private final double umax;
+  private final double vmax;
 
   private final RGBToDifferenceChroma<SO, SI, I> inverse;
 
-  private DifferenceChromaToRGB(SI yCbCrSpace, SO rgbSpace, double kb, double kr, double umax, double vmax) {
+  /**
+   * Create a transformation from a difference chroma color space to RGB that is defined by
+   * the given difference weights `kb` and `kr` (for the blue and red channels respectively).
+   * `umax` and `vmax` determine the absolute value for the maximum values of the
+   * difference chroma channels.
+   *
+   * @param yCbCrSpace
+   *     The difference chroma space
+   * @param rgbSpace
+   *     The RGB space
+   * @param kb
+   *     The weight of the blue channel
+   * @param kr
+   *     The weight of the red channel
+   * @param umax
+   *     The max of the first difference chroma value
+   * @param vmax
+   *     The ma of the second difference chroma value
+   */
+  public DifferenceChromaToRGB(
+      SI yCbCrSpace, SO rgbSpace, double kb, double kr, double umax, double vmax) {
     Arguments.notNull("yCbCrSpace", yCbCrSpace);
     Arguments.notNull("rgbSpace", rgbSpace);
 
@@ -65,17 +93,30 @@ public class DifferenceChromaToRGB<SI extends ColorSpace<I, SI>, I extends Color
     this.umax = umax;
     this.vmax = vmax;
 
-    inverse = new RGBToDifferenceChroma<>(this);
+    inverse = new RGBToDifferenceChroma<>(this, kb, kr, umax, vmax);
   }
 
-  public static <S extends ColorSpace<RGB<S>, S>> DifferenceChromaToRGB<YCbCrSpace<S>, YCbCr<S>, S> newYCbCrToRGB(YCbCrSpace<S> yCbCrSpace, double kb, double kr) {
+  DifferenceChromaToRGB(
+      RGBToDifferenceChroma<SO, SI, I> inverse, double kb, double kr, double umax, double vmax) {
+    yCbCrSpace = inverse.getOutputSpace();
+    rgbSpace = inverse.getInputSpace();
+
+    this.kb = kb;
+    this.kr = kr;
+    this.umax = umax;
+    this.vmax = vmax;
+
+    this.inverse = inverse;
+  }
+
+  /*public static <S extends ColorSpace<RGB<S>, S>> DifferenceChromaToRGB<YCbCrSpace<S>, YCbCr<S>, S> newYCbCrToRGB(YCbCrSpace<S> yCbCrSpace, double kb, double kr) {
     return new DifferenceChromaToRGB<>(yCbCrSpace, yCbCrSpace.getRGBSpace(), kb, kr, 0.5, 0.5);
   }
 
   public static <S extends ColorSpace<RGB<S>, S>> DifferenceChromaToRGB<YUVSpace<S>, YUV<S>, S> newYUVToRGB(
       YUVSpace<S> yuvSpace, double kb, double kr) {
     return new DifferenceChromaToRGB<>(yuvSpace, yuvSpace.getRGBSpace(), kb, kr, 0.436, 0.615);
-  }
+  }*/
 
   @Override
   public boolean equals(Object o) {
@@ -86,8 +127,9 @@ public class DifferenceChromaToRGB<SI extends ColorSpace<I, SI>, I extends Color
       return false;
     }
     DifferenceChromaToRGB c = (DifferenceChromaToRGB) o;
-    if (!c.yCbCrSpace.equals(yCbCrSpace) || !c.rgbSpace.equals(rgbSpace))
+    if (!Objects.equals(c.yCbCrSpace, yCbCrSpace) || !Objects.equals(c.rgbSpace, rgbSpace)) {
       return false;
+    }
     return Double.compare(c.kr, kr) == 0 && Double.compare(c.kb, kb) == 0
         && Double.compare(c.umax, umax) == 0 && Double.compare(c.vmax, vmax) == 0;
   }

@@ -12,6 +12,8 @@ import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  * YUVSpace
  * ========
@@ -69,7 +71,7 @@ public class YUVSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<YUV
     Arguments.notNull("rgbSpace", rgbSpace);
 
     this.rgbSpace = rgbSpace;
-    toRGB = DifferenceChromaToRGB.newYUVToRGB(this, kb, kr);
+    toRGB = new DifferenceChromaToRGB<>(this, rgbSpace, kb, kr, 0.436, 0.615);
     toXYZ = new Composition<>(toRGB, rgbSpace.getXYZTransform());
   }
 
@@ -126,7 +128,7 @@ public class YUVSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<YUV
     }
 
     YUVSpace s = (YUVSpace) o;
-    return s.rgbSpace.equals(rgbSpace) && s.toRGB.equals(toRGB);
+    return Objects.equals(s.rgbSpace, rgbSpace) && Objects.equals(s.toRGB, toRGB);
   }
 
   @Override
