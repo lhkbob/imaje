@@ -37,14 +37,28 @@ import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
+ * LuminanceToXYZ
+ * ==============
  *
+ * Color transform between {@link Linear} {@link Luminance} and {@link CIE31} {@link XYZ}.
+ *
+ * @author Michael Ludwig
  */
 public class LuminanceToXYZ implements ColorTransform<Linear, Luminance<Linear>, CIE31, XYZ<CIE31>> {
   private final Linear lumSpace;
   private final XYZ<CIE31> whitepoint; // cached from lumSpace
   private final XYZToLuminance inverse;
 
+  /**
+   * Create a transformation for the given Linear Luminance space, using its declared whitepoint
+   * for the conversion process.
+   *
+   * @param lumSpace
+   *     The color space
+   */
   public LuminanceToXYZ(Linear lumSpace) {
     this.lumSpace = lumSpace;
     this.whitepoint = lumSpace.getReferenceWhitepoint();
@@ -65,7 +79,7 @@ public class LuminanceToXYZ implements ColorTransform<Linear, Luminance<Linear>,
     if (!(o instanceof LuminanceToXYZ)) {
       return false;
     }
-    return ((LuminanceToXYZ) o).lumSpace.equals(lumSpace);
+    return Objects.equals(((LuminanceToXYZ) o).lumSpace, lumSpace);
   }
 
   @Override
