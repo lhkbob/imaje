@@ -38,7 +38,13 @@ import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
+ * XYZToHunterLab
+ * ==============
  *
+ * Color transformation from the {@link CIE31} {@link XYZ} space to the {@link Hunter} {@link Lab}
+ * space.
+ *
+ * @author Michael Ludwig
  */
 public class XYZToHunterLab implements ColorTransform<CIE31, XYZ<CIE31>, Hunter, Lab<Hunter>> {
   private final double ka;
@@ -47,6 +53,12 @@ public class XYZToHunterLab implements ColorTransform<CIE31, XYZ<CIE31>, Hunter,
   private final Hunter labSpace;
   private final HunterLabToXYZ inverse;
 
+  /**
+   * Create a new transformation.
+   *
+   * @param labSpace
+   *     The Hunter Lab space
+   */
   public XYZToHunterLab(Hunter labSpace) {
     this.labSpace = labSpace;
     this.whitepoint = labSpace.getReferenceWhitepoint();

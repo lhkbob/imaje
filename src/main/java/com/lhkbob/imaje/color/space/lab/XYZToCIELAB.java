@@ -38,13 +38,25 @@ import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
+ * XYZToCIELAB
+ * ===========
  *
+ * Color transformation from the {@link CIE31} {@link XYZ} space to the {@link CIE} {@link Lab}
+ * space.
+ *
+ * @author Michael Ludwig
  */
 public class XYZToCIELAB implements ColorTransform<CIE31, XYZ<CIE31>, CIE, Lab<CIE>> {
   private final XYZ<CIE31> referenceWhitepoint; // cached from labSpace
   private final CIE labSpace;
   private final CIELABToXYZ inverse;
 
+  /**
+   * Create a new transformation.
+   *
+   * @param labSpace
+   *     The CIE Lab space
+   */
   public XYZToCIELAB(CIE labSpace) {
     this.referenceWhitepoint = labSpace.getReferenceWhitepoint();
     this.labSpace = labSpace;

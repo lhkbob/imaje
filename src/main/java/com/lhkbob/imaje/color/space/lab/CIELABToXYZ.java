@@ -38,13 +38,24 @@ import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
+ * CIELABToXYZ
+ * ===========
  *
+ * Color transformation from a {@link CIE} {@link Lab} space to the {@link CIE31} {@link XYZ} space.
+ *
+ * @author Michael Ludwig
  */
 public class CIELABToXYZ implements ColorTransform<CIE, Lab<CIE>, CIE31, XYZ<CIE31>> {
   private final CIE labSpace;
   private final XYZ<CIE31> referenceWhitepoint; // cached from CIE
   private final XYZToCIELAB inverse;
 
+  /**
+   * Create a new transformation.
+   *
+   * @param labSpace
+   *     The CIE Lab space
+   */
   public CIELABToXYZ(CIE labSpace) {
     this.referenceWhitepoint = labSpace.getReferenceWhitepoint();
     this.labSpace = labSpace;
@@ -93,7 +104,7 @@ public class CIELABToXYZ implements ColorTransform<CIE, Lab<CIE>, CIE31, XYZ<CIE
     Arguments.equals("input.length", 3, input.length);
     Arguments.equals("output.length", 3, output.length);
 
-    double lp = L_SCALE * (input[0] + 16.0);
+    double lp = L_SCALE * (input[0] + L_OFFSET);
     // X from L and a
     output[0] = referenceWhitepoint.x() * inverseF(lp + A_SCALE * input[1]);
     // Y from L
@@ -116,10 +127,12 @@ public class CIELABToXYZ implements ColorTransform<CIE, Lab<CIE>, CIE31, XYZ<CIE
       return LINEAR_SLOPE * (t - LINEAR_OFFSET);
     }
   }
+
   static final double A_SCALE = 1.0 / 500.0;
   static final double B_SCALE = 1.0 / 200.0;
   static final double LINEAR_OFFSET = 4.0 / 29.0; // ~0.138
   static final double LINEAR_THRESHOLD = 6.0 / 29.0;
   static final double LINEAR_SLOPE = 3.0 * LINEAR_THRESHOLD * LINEAR_THRESHOLD;
   static final double L_SCALE = 1.0 / 116.0;
+  static final double L_OFFSET = 16.0;
 }

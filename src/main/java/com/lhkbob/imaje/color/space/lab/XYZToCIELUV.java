@@ -38,7 +38,12 @@ import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
+ * XYZToCIELUV
+ * ===========
  *
+ * Color transformation from the {@link CIE31} {@link XYZ} space to {@link CIELUV}.
+ *
+ * @author Michael Ludwig
  */
 public class XYZToCIELUV implements ColorTransform<CIE31, XYZ<CIE31>, CIELUVSpace, CIELUV> {
   private final XYZ<CIE31> referenceWhitepoint; // cached from luvSpace
@@ -46,6 +51,12 @@ public class XYZToCIELUV implements ColorTransform<CIE31, XYZ<CIE31>, CIELUVSpac
   private final CIELUVToXYZ inverse;
   private final CIELUVSpace luvSpace;
 
+  /**
+   * Create a new transformation.
+   *
+   * @param luvSpace
+   *     The LUV space
+   */
   public XYZToCIELUV(CIELUVSpace luvSpace) {
     this.luvSpace = luvSpace;
     this.referenceWhitepoint = luvSpace.getReferenceWhitepoint();
