@@ -8,7 +8,8 @@ package com.lhkbob.imaje.color;
  * subclasses and instances define the dimensionality of the space and provide factory methods for
  * creating vectors of the space. As a vector space, vectors can be added together and scaled by
  * real values. For simplicity, these operations are implemented unilaterally in {@link Vectors} as
- * static functions.
+ * static functions. VectorSpace is defined as a super type of ColorSpace to allow for pixel
+ * "colors" that represent rasterized data that does not directly represent a real color.
  *
  * Instances of a vector space of a given type do not necessarily represent the exact same space.
  * For example, a {@link com.lhkbob.imaje.color.space.GenericVectorSpace} provides a VectorSpace
