@@ -37,13 +37,31 @@ import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
+ * AbstractHueToRGBTransform
+ * =========================
  *
+ * A helper parent class for hue-based color transformations to an RGB space. This is accomplished
+ * by separating the logic of converting the hue space to an internal hue, chroma, and m space
+ * which this parent class then processes into RGB. The hue, chroma, and m coordinates are described
+ * (https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma)[here].
+ *
+ * @author Michael Ludwig
  */
 public abstract class AbstractHueToRGBTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI>, SO extends ColorSpace<RGB<SO>, SO>> implements ColorTransform<SI, I, SO, RGB<SO>> {
   private final SI inputSpace;
   private final SO outputSpace;
 
+  /**
+   * Create a transformation from the `inputSpace` to the `outputSpace`.
+   *
+   * @param inputSpace
+   *     The input hue space
+   * @param outputSpace
+   *     The output RGB space
+   */
   public AbstractHueToRGBTransform(SI inputSpace, SO outputSpace) {
     Arguments.notNull("inputSpace", inputSpace);
     Arguments.notNull("outputSpace", outputSpace);
@@ -74,12 +92,14 @@ public abstract class AbstractHueToRGBTransform<SI extends ColorSpace<I, SI>, I 
 
   @Override
   public boolean equals(Object o) {
-    if (o == this)
+    if (o == this) {
       return true;
-    if (!getClass().isInstance(o))
+    }
+    if (!getClass().isInstance(o)) {
       return false;
+    }
     AbstractHueToRGBTransform s = (AbstractHueToRGBTransform) o;
-    return s.inputSpace.equals(inputSpace) && s.outputSpace.equals(outputSpace);
+    return Objects.equals(s.inputSpace, inputSpace) && Objects.equals(s.outputSpace, outputSpace);
   }
 
   @Override
@@ -91,6 +111,16 @@ public abstract class AbstractHueToRGBTransform<SI extends ColorSpace<I, SI>, I 
     return result;
   }
 
+  /**
+   * Convert the `input` array of channel values, arranged as expected by the subclass, into the
+   * internal hue, chroma, and M representation used for the final RGB process. These values should
+   * be ordered hue, chroma, and M in the `hcm` array, which has length 3.
+   *
+   * @param input
+   *     The input channel values
+   * @param hcm
+   *     The hue, chroma, M output
+   */
   protected abstract void toHueChromaM(double[] input, double[] hcm);
 
   private void hueChromaMToRGB(double[] output) {

@@ -36,11 +36,22 @@ import com.lhkbob.imaje.color.HSV;
 import com.lhkbob.imaje.color.RGB;
 
 /**
+ * HSVToRGB
+ * ========
  *
+ * Color transformation from {@link HSV} to {@link RGB}.
+ *
+ * @author Michael Ludwig
  */
 public class HSVToRGB<S extends ColorSpace<RGB<S>, S>> extends AbstractHueToRGBTransform<HSVSpace<S>, HSV<S>, S> {
   private final RGBToHSV<S> inverse;
 
+  /**
+   * Create a new transformation that works with the given HSVSpace.
+   *
+   * @param inputSpace
+   *     The color space for this transformation
+   */
   public HSVToRGB(HSVSpace<S> inputSpace) {
     super(inputSpace, inputSpace.getRGBSpace());
     inverse = new RGBToHSV<>(this);

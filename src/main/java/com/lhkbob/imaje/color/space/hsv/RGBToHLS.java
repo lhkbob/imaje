@@ -36,11 +36,22 @@ import com.lhkbob.imaje.color.HLS;
 import com.lhkbob.imaje.color.RGB;
 
 /**
+ * RGBToHLS
+ * ========
  *
+ * Color transformation from {@link RGB} to {@link HLS}.
+ *
+ * @author Michael Ludwig
  */
 public class RGBToHLS<S extends ColorSpace<RGB<S>, S>> extends AbstractRGBToHueTransform<S, HLSSpace<S>, HLS<S>> {
   private final HLSToRGB<S> inverse;
 
+  /**
+   * Create a new transformation that works with the given HLSSpace.
+   *
+   * @param outputSpace
+   *     The color space for this transformation
+   */
   public RGBToHLS(HLSSpace<S> outputSpace) {
     super(outputSpace.getRGBSpace(), outputSpace);
     inverse = new HLSToRGB<>(this);

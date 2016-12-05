@@ -38,12 +38,28 @@ import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
+ * AbstractRGBToHueTransform
+ * =========================
  *
+ * A helper parent class for RGB to hue-based color transformations. This is accomplished
+ * by separating the logic of converting the hue space to an internal hue, chroma, and m space
+ * which this parent class then processes into RGB. The hue, chroma, and m coordinates are described
+ * (https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma)[here].
+ *
+ * @author Michael Ludwig
  */
 public abstract class AbstractRGBToHueTransform<SI extends ColorSpace<RGB<SI>, SI>, SO extends ColorSpace<O, SO>, O extends Color<O, SO>> implements ColorTransform<SI, RGB<SI>, SO, O> {
   private final SI inputSpace;
   private final SO outputSpace;
 
+  /**
+   * Create a transformation from the `inputSpace` to the `outputSpace`.
+   *
+   * @param inputSpace
+   *     The input RGB space
+   * @param outputSpace
+   *     The output hue space
+   */
   public AbstractRGBToHueTransform(SI inputSpace, SO outputSpace) {
     Arguments.notNull("inputSpace", inputSpace);
     Arguments.notNull("outputSpace", outputSpace);
@@ -92,5 +108,14 @@ public abstract class AbstractRGBToHueTransform<SI extends ColorSpace<RGB<SI>, S
     return true;
   }
 
+  /**
+   * Convert to the subclasses hue color space. This conversion is done in place, modifying `output`
+   * after using the values contained in `output` for its calculations. When called, `output`
+   * contains the hue and minimum and maximum values of the RGB color being transformed.
+   *
+   * @param output
+   *     The array containing hue, min, and max that must be modified to contain the
+   *     final hue color values
+   */
   protected abstract void fromHueMinMax(double[] output);
 }
