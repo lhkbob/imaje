@@ -93,6 +93,8 @@ public class SpectrumToXYZ<SI extends SpectrumSpace<SI>, SO extends XYZSpace<SO>
     // Zero out the output array so accumulation isn't incorrect from prior values
     Arrays.fill(output, 0.0);
 
+    // Note that this approximates the channel block as a flat function instead of linearly
+    // interpolating it to input[i + 1]
     for (int i = 0; i < xIntegral.length; i++) {
       output[0] = input[i] * xIntegral[i];
       output[1] = input[i] * yIntegral[i];
