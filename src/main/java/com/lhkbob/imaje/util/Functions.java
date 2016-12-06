@@ -31,6 +31,8 @@
  */
 package com.lhkbob.imaje.util;
 
+import java.util.function.DoubleUnaryOperator;
+
 /**
  *
  */
@@ -71,7 +73,6 @@ public final class Functions {
   }
 
   /**
-
    * @return The log base 2 of the number, after rounding up to the nearest power of two
    */
   public static long ceilLog2(long num) {
@@ -107,30 +108,33 @@ public final class Functions {
   }
 
   public static double clamp(double value, double min, double max) {
-    if (value > max)
+    if (value > max) {
       return max;
-    else if (value < min)
+    } else if (value < min) {
       return min;
-    else
+    } else {
       return value;
+    }
   }
 
   public static long clamp(long value, long min, long max) {
-    if (value > max)
+    if (value > max) {
       return max;
-    else if (value < min)
+    } else if (value < min) {
       return min;
-    else
+    } else {
       return value;
+    }
   }
 
   public static int clamp(int value, int min, int max) {
-    if (value > max)
+    if (value > max) {
       return max;
-    else if (value < min)
+    } else if (value < min) {
       return min;
-    else
+    } else {
       return value;
+    }
   }
 
   public static int maskInt(int bits) {
@@ -163,5 +167,44 @@ public final class Functions {
 
   public static int roundToInt(double value) {
     return Math.toIntExact(Math.round(value));
+  }
+
+  /**
+   * Numerically evaluate the integral of `f(x)` from `x = a` to `x = b` using composite Simpson's
+   * rule with `n` steps. See
+   * [here](https://en.wikipedia.org/wiki/Simpson's_rule#Composite_Simpson.27s_rule) for more info.
+   *
+   * @param f
+   *     The function to integrate
+   * @param a
+   *     The lower bound of the integral
+   * @param b
+   *     The upper bound of the integral
+   * @param n
+   *     The number of steps used in Simpson's rule, which must be even
+   * @return The approximate integral value
+   */
+  public static double integrate(DoubleUnaryOperator f, double a, double b, int n) {
+    if (n % 2 != 0) {
+      throw new IllegalArgumentException("N must be even");
+    }
+    double h = (a - b) / n;
+    int halfN = n / 2;
+
+    double sum = f.applyAsDouble(a); // f(x_0)
+    // 2 * sum(1, n/2-1, f(x_2j)
+    for (int j = 1; j <= halfN - 1; j++) {
+      double x2j = a + (2 * j) * h;
+      sum += 2 * f.applyAsDouble(x2j);
+    }
+    // 4 * sum(1, n/2, f(x_(2j-1))
+    for (int j = 1; j <= halfN; j++) {
+      double x2jm1 = b + (2 * j - 1) * h;
+      sum += 4 * f.applyAsDouble(x2jm1);
+    }
+    // f(x_n)
+    sum += f.applyAsDouble(b);
+    // final result
+    return h * sum / 3.0;
   }
 }
