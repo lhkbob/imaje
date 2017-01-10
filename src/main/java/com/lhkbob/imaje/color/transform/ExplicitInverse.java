@@ -4,6 +4,8 @@ import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  * ExplicitInverse
  * ===============
@@ -66,5 +68,29 @@ public class ExplicitInverse<SI extends ColorSpace<I, SI>, I extends Color<I, SI
   @Override
   public boolean applyUnchecked(double[] input, double[] output) {
     return forward.applyUnchecked(input, output);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = ExplicitInverse.class.hashCode();
+    result = 31 * result + forward.hashCode();
+    result = 31 * result + inverse.forward.hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this)
+      return true;
+    if (!(o instanceof ExplicitInverse))
+      return false;
+
+    ExplicitInverse e = (ExplicitInverse) o;
+    return Objects.equals(e.forward, forward) && Objects.equals(e.inverse.forward, inverse.forward);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%s with inverse (%s)", forward, inverse.forward);
   }
 }
