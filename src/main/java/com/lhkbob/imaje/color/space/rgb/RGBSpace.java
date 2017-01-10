@@ -25,7 +25,7 @@ import com.lhkbob.imaje.util.Arguments;
  * @author Michael Ludwig
  */
 public abstract class RGBSpace<S extends RGBSpace<S>> implements ColorSpace<RGB<S>, S> {
-  private RGBToXYZ<S, CIE31> toXYZ; // final after initialize()
+  private RGBToXYZ<S, CIE31> toXYZ = null; // final after initialize()
 
   /**
    * Finish initialization of this space by computing its transformation from RGB to XYZ
@@ -43,9 +43,14 @@ public abstract class RGBSpace<S extends RGBSpace<S>> implements ColorSpace<RGB<
    * @param gammaCurve
    *     Gamma curve converting from non-linear to linear values, or null for no transformation
    */
+  @SuppressWarnings("unchecked")
   protected void initialize(
       XYZ<CIE31> whitepoint, Yxy<CIE31> redPrimary, Yxy<CIE31> greenPrimary, Yxy<CIE31> bluePrimary,
       @Arguments.Nullable Curve gammaCurve) {
+    if (toXYZ != null) {
+      throw new IllegalStateException("initialize() already called");
+    }
+
     toXYZ = RGBToXYZ
         .newRGBToXYZ((S) this, whitepoint, redPrimary, greenPrimary, bluePrimary, gammaCurve);
   }
