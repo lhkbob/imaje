@@ -39,6 +39,7 @@ import com.lhkbob.imaje.util.Functions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  *
@@ -81,8 +82,8 @@ public class CurveTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI>
     }
 
     CurveTransform<?, ?, ?, ?> c = (CurveTransform<?, ?, ?, ?>) o;
-    return c.inputSpace.equals(inputSpace) && c.outputSpace.equals(outputSpace) && c.curves
-        .equals(curves);
+    return Objects.equals(c.inputSpace, inputSpace) && Objects.equals(c.outputSpace, outputSpace)
+        && Objects.equals(c.curves, curves);
   }
 
   @Override

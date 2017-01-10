@@ -35,6 +35,8 @@ import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  *
  */
@@ -90,7 +92,7 @@ public class Identity<SA extends ColorSpace<A, SA>, A extends Color<A, SA>, SB e
       return false;
     }
     Identity i = (Identity) o;
-    return i.inSpace.equals(inSpace) && i.outSpace.equals(outSpace);
+    return Objects.equals(i.inSpace, inSpace) && Objects.equals(i.outSpace, outSpace);
   }
 
   @Override

@@ -37,6 +37,7 @@ import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.Functions;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  *
@@ -111,7 +112,7 @@ public class ScaleChannels<S extends ColorSpace<T, S>, T extends Color<T, S>> im
       return false;
     }
     ScaleChannels c = (ScaleChannels) o;
-    return c.space.equals(space) && Arrays.equals(c.domainMin, domainMin) && Arrays
+    return Objects.equals(c.space, space) && Arrays.equals(c.domainMin, domainMin) && Arrays
         .equals(c.domainMax, domainMax) && Arrays.equals(c.rangeMin, rangeMin) && Arrays
         .equals(c.rangeMax, rangeMax);
   }
