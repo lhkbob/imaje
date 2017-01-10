@@ -32,5 +32,6 @@ public class Ultraviolet extends SpectrumSpace<Ultraviolet> {
    */
   public Ultraviolet(int channelCount) {
     super(channelCount, 100.0, 400.0, false);
+    initializeDefault();
   }
 }

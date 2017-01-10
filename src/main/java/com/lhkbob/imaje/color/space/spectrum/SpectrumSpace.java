@@ -2,8 +2,24 @@ package com.lhkbob.imaje.color.space.spectrum;
 
 import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.Spectrum;
+import com.lhkbob.imaje.color.XYZ;
+import com.lhkbob.imaje.color.space.rgb.Linear;
+import com.lhkbob.imaje.color.space.rgb.RGBSpace;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Composition;
+import com.lhkbob.imaje.color.transform.ExplicitInverse;
+import com.lhkbob.imaje.color.transform.curves.Curve;
+import com.lhkbob.imaje.color.transform.curves.UniformlySampledCurve;
 import com.lhkbob.imaje.util.Arguments;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * SpectrumSpace
@@ -31,7 +47,8 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
   private final boolean logSampleWavelength;
 
   private final double step;
-  private final SpectrumToXYZ<S, CIE31> toXYZ;
+
+  private ExplicitInverse<S, Spectrum<S>, CIE31, XYZ<CIE31>> toXYZ;
 
   /**
    * Create a new SpectrumSpace with the given `channelCount`, `minWavelength`, and `maxWavelength`.
@@ -76,8 +93,105 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
     this.logSampleWavelength = logSampleWavelength;
 
     step = (maxWavelength - minWavelength) / channelCount;
+  }
 
-    toXYZ = new SpectrumToXYZ<>((S) this, CIE31.SPACE);
+  /**
+   * Complete initialization of this space by providing the intermediate linear RGB space and
+   * spectrum basis functions used to build a SmitsRGBToSpectrum color transform as the explicit
+   * inverse of the spectrum to XYZ transform.
+   *
+   * @param rgbSpace
+   *     The intermediate linear RGB color space the basis functions are related to
+   * @param whiteSpectrum
+   *     A spectral power distribution corresponding to white
+   * @param cyanSpectrum
+   *     A spectral power distribution corresponding to cyan
+   * @param magentaSpectrum
+   *     A spectral power distribution corresponding to magenta
+   * @param yellowSpectrum
+   *     A spectral power distribution corresponding to yellow
+   * @param redSpectrum
+   *     A spectral power distribution corresponding to red
+   * @param greenSpectrum
+   *     A spectral power distribution corresponding to green
+   * @param blueSpectrum
+   *     A spectral power distribution corresponding to blue
+   * @param <R>
+   *     The RGB space defining primaries
+   * @throws IllegalStateException
+   *     if called more than once
+   */
+  @SuppressWarnings("unchecked")
+  protected <R extends RGBSpace<R>> void initialize(
+      Linear<R> rgbSpace, Curve whiteSpectrum, Curve cyanSpectrum, Curve magentaSpectrum,
+      Curve yellowSpectrum, Curve redSpectrum, Curve greenSpectrum, Curve blueSpectrum) {
+    if (toXYZ != null) {
+      throw new IllegalStateException("initialize() can only be called once");
+    }
+
+    SpectrumToXYZ<S, CIE31> toXYZ = new SpectrumToXYZ<>((S) this, CIE31.SPACE);
+    SmitsRGBToSpectrum<R, S> rgbToSpectrum = new SmitsRGBToSpectrum<>(rgbSpace, (S) this,
+        whiteSpectrum, cyanSpectrum, magentaSpectrum, yellowSpectrum, redSpectrum, greenSpectrum,
+        blueSpectrum);
+    ColorTransform<CIE31, XYZ<CIE31>, S, Spectrum<S>> fromXYZ = new Composition<>(
+        rgbSpace.getXYZTransform().inverse(), rgbToSpectrum);
+
+    this.toXYZ = new ExplicitInverse<>(toXYZ, fromXYZ);
+  }
+
+  /**
+   * Complete initialization by reading the spectrum basis functions defined in
+   * `resources/com.lhkbob.color.space.spectrum`, which use the linearized sRGB as the intermediate
+   * RGB space.
+   *
+   * @throws IllegalStateException
+   *     if called more than once
+   */
+  protected void initializeDefault() {
+    try {
+      Curve white = readSpectrumBasis("smits_rgb2spec_white.txt");
+      Curve cyan = readSpectrumBasis("smits_rgb2spec_cyan.txt");
+      Curve magenta = readSpectrumBasis("smits_rgb2spec_magenta.txt");
+      Curve yellow = readSpectrumBasis("smits_rgb2spec_yellow.txt");
+      Curve red = readSpectrumBasis("smits_rgb2spec_red.txt");
+      Curve green = readSpectrumBasis("smits_rgb2spec_green.txt");
+      Curve blue = readSpectrumBasis("smits_rgb2spec_blue.txt");
+
+      initialize(Linear.SPACE_SRGB, white, cyan, magenta, yellow, red, green, blue);
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to load default rgb2spec files", e);
+    }
+  }
+
+  private Curve readSpectrumBasis(String name) throws IOException {
+    // Don't use getClass() since the default files are defined relative to SpectrumSpace
+    // and not some arbitrary subclass.
+    URL file = SpectrumSpace.class.getResource(name);
+    if (file == null) {
+      throw new FileNotFoundException(name + " not found");
+    }
+
+    try {
+      List<String> lines = Files.readAllLines(Paths.get(file.toURI()));
+
+      int sampleCount = lines.size();
+      if (lines.get(lines.size() - 1).isEmpty()) {
+        sampleCount--;
+      }
+      if (sampleCount < 2) {
+        throw new IOException("Expected at least two samples");
+      }
+
+      double[] spd = new double[sampleCount];
+      for (int i = 0; i < sampleCount; i++) {
+        spd[i] = Double.parseDouble(lines.get(i));
+      }
+
+      // The domain min and max are specified in the README for the curve text files
+      return new UniformlySampledCurve(360.0, 800.0, spd);
+    } catch (URISyntaxException | NumberFormatException e) {
+      throw new IOException(e);
+    }
   }
 
   /**
@@ -192,7 +306,7 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
   }
 
   @Override
-  public SpectrumToXYZ<S, CIE31> getXYZTransform() {
+  public ColorTransform<S, Spectrum<S>, CIE31, XYZ<CIE31>> getXYZTransform() {
     return toXYZ;
   }
 

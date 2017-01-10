@@ -32,5 +32,6 @@ public class Visible extends SpectrumSpace<Visible> {
    */
   public Visible(int channelCount) {
     super(channelCount, 360.0, 830.0, false);
+    initializeDefault();
   }
 }

@@ -32,5 +32,6 @@ public class Infrared extends SpectrumSpace<Infrared> {
    */
   public Infrared(int channelCount) {
     super(channelCount, 3000.0, 50000.0, true);
+    initializeDefault();
   }
 }
