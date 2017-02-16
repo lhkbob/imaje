@@ -7,6 +7,8 @@ import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  * YxySpace
  * ========
@@ -101,5 +103,26 @@ public class YxySpace<S extends ColorSpace<XYZ<S>, S>> implements ColorSpace<Yxy
     default:
       throw new IndexOutOfBoundsException("Bad channel: " + channel);
     }
+  }
+
+  @Override
+  public int hashCode() {
+    return YxySpace.class.hashCode() ^ xyzSpace.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    } else if (!(o instanceof YxySpace)) {
+      return false;
+    }
+
+    return Objects.equals(((YxySpace) o).xyzSpace, xyzSpace);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("Yxy (%s)", xyzSpace);
   }
 }
