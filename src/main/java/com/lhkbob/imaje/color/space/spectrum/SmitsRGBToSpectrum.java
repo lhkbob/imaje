@@ -1,9 +1,8 @@
 package com.lhkbob.imaje.color.space.spectrum;
 
+import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.Spectrum;
-import com.lhkbob.imaje.color.space.rgb.Linear;
-import com.lhkbob.imaje.color.space.rgb.RGBSpace;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
@@ -22,8 +21,8 @@ import java.util.Objects;
  *
  * @author Michael Ludwig
  */
-public class SmitsRGBToSpectrum<SI extends RGBSpace<SI>, SO extends SpectrumSpace<SO>> implements ColorTransform<Linear<SI>, RGB<Linear<SI>>, SO, Spectrum<SO>> {
-  private final Linear<SI> rgb;
+public class SmitsRGBToSpectrum<SI extends ColorSpace<RGB<SI>, SI>, SO extends SpectrumSpace<SO>> implements ColorTransform<SI, RGB<SI>, SO, Spectrum<SO>> {
+  private final SI rgb;
   private final SO spectrum;
 
   private final double[] whiteIntegral;
@@ -60,7 +59,7 @@ public class SmitsRGBToSpectrum<SI extends RGBSpace<SI>, SO extends SpectrumSpac
    *     A spectral power distribution corresponding to blue
    */
   public SmitsRGBToSpectrum(
-      Linear<SI> rgbSpace, SO spectrumSpace, Curve whiteSpectrum, Curve cyanSpectrum,
+      SI rgbSpace, SO spectrumSpace, Curve whiteSpectrum, Curve cyanSpectrum,
       Curve magentaSpectrum, Curve yellowSpectrum, Curve redSpectrum, Curve greenSpectrum,
       Curve blueSpectrum) {
     Arguments.notNull("rgbSpace", rgbSpace);
@@ -103,13 +102,13 @@ public class SmitsRGBToSpectrum<SI extends RGBSpace<SI>, SO extends SpectrumSpac
   }
 
   @Override
-  public ColorTransform<SO, Spectrum<SO>, Linear<SI>, RGB<Linear<SI>>> inverse() {
+  public ColorTransform<SO, Spectrum<SO>, SI, RGB<SI>> inverse() {
     // Do not support an inverse
     return null;
   }
 
   @Override
-  public Linear<SI> getInputSpace() {
+  public SI getInputSpace() {
     return rgb;
   }
 

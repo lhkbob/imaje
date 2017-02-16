@@ -1,20 +1,23 @@
 package com.lhkbob.imaje.color.space.spectrum;
 
 import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.Spectrum;
 import com.lhkbob.imaje.color.XYZ;
-import com.lhkbob.imaje.color.space.rgb.Linear;
-import com.lhkbob.imaje.color.space.rgb.RGBSpace;
+import com.lhkbob.imaje.color.Yxy;
+import com.lhkbob.imaje.color.space.rgb.CustomRGBSpace;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.transform.ColorTransform;
 import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.color.transform.ExplicitInverse;
+import com.lhkbob.imaje.color.transform.Illuminants;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.color.transform.curves.UniformlySampledCurve;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -96,9 +99,9 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
   }
 
   /**
-   * Complete initialization of this space by providing the intermediate linear RGB space and
-   * spectrum basis functions used to build a SmitsRGBToSpectrum color transform as the explicit
-   * inverse of the spectrum to XYZ transform.
+   * Complete initialization of this space by providing the intermediate RGB space and spectrum
+   * basis functions used to build a SmitsRGBToSpectrum color transform as the explicit inverse of
+   * the spectrum to XYZ transform.
    *
    * @param rgbSpace
    *     The intermediate linear RGB color space the basis functions are related to
@@ -122,8 +125,8 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
    *     if called more than once
    */
   @SuppressWarnings("unchecked")
-  protected <R extends RGBSpace<R>> void initialize(
-      Linear<R> rgbSpace, Curve whiteSpectrum, Curve cyanSpectrum, Curve magentaSpectrum,
+  protected <R extends ColorSpace<RGB<R>, R>> void initialize(
+      R rgbSpace, Curve whiteSpectrum, Curve cyanSpectrum, Curve magentaSpectrum,
       Curve yellowSpectrum, Curve redSpectrum, Curve greenSpectrum, Curve blueSpectrum) {
     if (toXYZ != null) {
       throw new IllegalStateException("initialize() can only be called once");
@@ -141,38 +144,69 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
 
   /**
    * Complete initialization by reading the spectrum basis functions defined in
-   * `resources/com.lhkbob.color.space.spectrum`, which use the linearized sRGB as the intermediate
-   * RGB space.
+   * `resources/com.lhkbob.color.space.spectrum`, which use a linear RGB space with the same
+   * primaries as sRGB and an equal energy whitepoint.
    *
    * @throws IllegalStateException
    *     if called more than once
    */
   protected void initializeDefault() {
     try {
-      Curve white = readSpectrumBasis("smits_rgb2spec_white.txt");
-      Curve cyan = readSpectrumBasis("smits_rgb2spec_cyan.txt");
-      Curve magenta = readSpectrumBasis("smits_rgb2spec_magenta.txt");
-      Curve yellow = readSpectrumBasis("smits_rgb2spec_yellow.txt");
-      Curve red = readSpectrumBasis("smits_rgb2spec_red.txt");
-      Curve green = readSpectrumBasis("smits_rgb2spec_green.txt");
-      Curve blue = readSpectrumBasis("smits_rgb2spec_blue.txt");
+      // Don't use getClass() since the default files are defined relative to SpectrumSpace
+      // and not some arbitrary subclass.
 
-      initialize(Linear.SPACE_SRGB, white, cyan, magenta, yellow, red, green, blue);
+      Curve white = readSmitsSpectrumBasis(SpectrumSpace.class, "smits_rgb2spec_cie31_white.txt");
+      Curve cyan = readSmitsSpectrumBasis(SpectrumSpace.class, "smits_rgb2spec_cie31_cyan.txt");
+      Curve magenta = readSmitsSpectrumBasis(SpectrumSpace.class, "smits_rgb2spec_cie31_magenta.txt");
+      Curve yellow = readSmitsSpectrumBasis(SpectrumSpace.class, "smits_rgb2spec_cie31_yellow.txt");
+      Curve red = readSmitsSpectrumBasis(SpectrumSpace.class, "smits_rgb2spec_cie31_red.txt");
+      Curve green = readSmitsSpectrumBasis(SpectrumSpace.class, "smits_rgb2spec_cie31_green.txt");
+      Curve blue = readSmitsSpectrumBasis(SpectrumSpace.class, "smits_rgb2spec_cie31_blue.txt");
+
+      CustomRGBSpace<CIE31> dfltRGB = new CustomRGBSpace<>(
+          Illuminants.newE(1.0).toXYZ(), Yxy.newCIE31(0.64, 0.33), Yxy.newCIE31(0.3, 0.6),
+          Yxy.newCIE31(0.15, 0.06), null);
+
+      initialize(dfltRGB, white, cyan, magenta, yellow, red, green, blue);
     } catch (IOException e) {
       throw new RuntimeException("Unable to load default rgb2spec files", e);
     }
   }
 
-  private Curve readSpectrumBasis(String name) throws IOException {
-    // Don't use getClass() since the default files are defined relative to SpectrumSpace
-    // and not some arbitrary subclass.
-    URL file = SpectrumSpace.class.getResource(name);
+  /**
+   * Convenience wrapper about {@link #readSmitsSpectrumBasis(URI)} that generates a URI
+   * from a call `owner`'s {@link Class#getResource(String)}.
+   *
+   * @param owner The class that the basis resource is relative to
+   * @param name The name of the resource
+   * @return A curve that samples the basis data from the resource
+   * @throws IOException if there is a parsing error, file I/O error, or the resource can't be found
+   */
+  public static Curve readSmitsSpectrumBasis(Class<?> owner, String name) throws IOException {
+    URL file = owner.getResource(name);
     if (file == null) {
-      throw new FileNotFoundException(name + " not found");
+      throw new FileNotFoundException(name + " resource not found for " + owner);
     }
 
     try {
-      List<String> lines = Files.readAllLines(Paths.get(file.toURI()));
+      return readSmitsSpectrumBasis(file.toURI());
+    } catch(URISyntaxException e) {
+      throw new IOException(e);
+    }
+  }
+
+  /**
+   * Read a text file at `uri` and return a {@link Curve} representation. The file is assumed
+   * to have a spectral power value per line. The values are uniformly sampled over the wavelength
+   * range of 360 to 800, in that order.
+   *
+   * @param uri The location of the spectrum basis file
+   * @return A curve that samples the basis data from the file
+   * @throws IOException if there is a parsing error or other file I/O error
+   */
+  public static Curve readSmitsSpectrumBasis(URI uri) throws IOException {
+    try {
+      List<String> lines = Files.readAllLines(Paths.get(uri));
 
       int sampleCount = lines.size();
       if (lines.get(lines.size() - 1).isEmpty()) {
@@ -189,7 +223,7 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
 
       // The domain min and max are specified in the README for the curve text files
       return new UniformlySampledCurve(360.0, 800.0, spd);
-    } catch (URISyntaxException | NumberFormatException e) {
+    } catch (NumberFormatException e) {
       throw new IOException(e);
     }
   }
