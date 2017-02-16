@@ -28,7 +28,7 @@ import com.lhkbob.imaje.color.transform.curves.UnitGammaFunction;
  *
  * @author Michael Ludwig
  */
-public abstract class AnnotationRGBSpace<S extends AnnotationRGBSpace<S>> extends RGBSpace<S> {
+public abstract class AnnotationRGBSpace<S extends AnnotationRGBSpace<S>> extends RGBSpace<S, CIE31> {
   public AnnotationRGBSpace() {
     // Lookup primaries
     Primaries p = getClass().getAnnotation(Primaries.class);

@@ -180,14 +180,39 @@ public class RGBToXYZ<I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<
     Arguments.notNull("rgbSpace", rgbSpace);
 
     FixedMatrix3x3_64F linearRGBToXYZ = calculateLinearRGBToXYZ(redPrimary.x(), redPrimary.y(),
-        greenPrimary.x(), greenPrimary.y(), bluePrimary.x(), bluePrimary.y(), whitepoint);
+        greenPrimary.x(), greenPrimary.y(), bluePrimary.x(), bluePrimary.y(), whitepoint.x(),
+        whitepoint.y(), whitepoint.z());
     return new RGBToXYZ<>(rgbSpace, whitepoint.getColorSpace(), linearRGBToXYZ, gammaCurve);
   }
 
-  private static FixedMatrix3x3_64F calculateLinearRGBToXYZ(
-      double xr, double yr, double xg, double yg, double xb, double yb, XYZ<?> whitepoint) {
-    Arguments.notNull("whitepoint", whitepoint);
-
+  /**
+   * Calculate the linear 3x3 matrix transformation from an RGB space to an XYZ space. This is
+   * untyped so it is assumed that chromaticities and whitepoint tristimulus are in compatible color
+   * spaces.
+   *
+   * @param xr
+   *     Red primary x chromaticity
+   * @param yr
+   *     Red primary y chromaticity
+   * @param xg
+   *     Green primary x chromaticity
+   * @param yg
+   *     Green primary y chromaticity
+   * @param xb
+   *     Blue primary x chromaticity
+   * @param yb
+   *     Blue primary y chromaticity
+   * @param whiteX
+   *     White point X tristimulus
+   * @param whiteY
+   *     White point Y tristimulus
+   * @param whiteZ
+   *     White point Z tristimulus
+   * @return Untyped linear transformation from RGB to XYZ
+   */
+  public static FixedMatrix3x3_64F calculateLinearRGBToXYZ(
+      double xr, double yr, double xg, double yg, double xb, double yb, double whiteX,
+      double whiteY, double whiteZ) {
     double zr = 1.0 - xr - yr;
     double zg = 1.0 - xg - yg;
     double zb = 1.0 - xb - yb;
@@ -198,7 +223,7 @@ public class RGBToXYZ<I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<
       throw new IllegalArgumentException("Cannot form conversion matrix with given primaries");
     }
 
-    FixedMatrix3_64F w = new FixedMatrix3_64F(whitepoint.x(), whitepoint.y(), whitepoint.z());
+    FixedMatrix3_64F w = new FixedMatrix3_64F(whiteX, whiteY, whiteZ);
     FixedMatrix3_64F s = new FixedMatrix3_64F();
     FixedOps3.mult(inv, w, s);
 

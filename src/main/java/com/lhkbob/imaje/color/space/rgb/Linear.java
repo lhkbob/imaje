@@ -32,7 +32,7 @@ import java.util.Objects;
  *
  * @author Michael Ludwig
  */
-public class Linear<S extends RGBSpace<S>> implements ColorSpace<RGB<Linear<S>>, Linear<S>> {
+public class Linear<S extends RGBSpace<S, CIE31>> implements ColorSpace<RGB<Linear<S>>, Linear<S>> {
   /**
    * Singleton for the linear Adobe color space.
    */
@@ -94,7 +94,7 @@ public class Linear<S extends RGBSpace<S>> implements ColorSpace<RGB<Linear<S>>,
     Arguments.notNull("rgbSpace", rgbSpace);
     this.rgbSpace = rgbSpace;
 
-    RGBToXYZ<S, CIE31> baseTransform = rgbSpace.getXYZTransform();
+    RGBToXYZ<S, CIE31> baseTransform = rgbSpace.getRGBToXYZTransform();
     // The gamma curve in baseTransform goes from non-linear to linear, but we want the curve
     // that goes from linear to non-linear for use with linearTransform.
     Curve invGamma;

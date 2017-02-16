@@ -5,8 +5,15 @@ import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.Yxy;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.space.xyz.XYZSpace;
+import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
+
+import org.ejml.data.FixedMatrix3x3_64F;
+
+import java.util.Objects;
 
 /**
  * RGBSpace
@@ -24,8 +31,9 @@ import com.lhkbob.imaje.util.Arguments;
  *
  * @author Michael Ludwig
  */
-public abstract class RGBSpace<S extends RGBSpace<S>> implements ColorSpace<RGB<S>, S> {
-  private RGBToXYZ<S, CIE31> toXYZ = null; // final after initialize()
+public abstract class RGBSpace<S extends RGBSpace<S, T>, T extends XYZSpace<T>> implements ColorSpace<RGB<S>, S> {
+  private RGBToXYZ<S, T> toXYZ = null; // final after initialize()
+  private ColorTransform<S, RGB<S>, CIE31, XYZ<CIE31>> toCIE31 = null;
 
   /**
    * Finish initialization of this space by computing its transformation from RGB to XYZ
@@ -45,7 +53,7 @@ public abstract class RGBSpace<S extends RGBSpace<S>> implements ColorSpace<RGB<
    */
   @SuppressWarnings("unchecked")
   protected void initialize(
-      XYZ<CIE31> whitepoint, Yxy<CIE31> redPrimary, Yxy<CIE31> greenPrimary, Yxy<CIE31> bluePrimary,
+      XYZ<T> whitepoint, Yxy<T> redPrimary, Yxy<T> greenPrimary, Yxy<T> bluePrimary,
       @Arguments.Nullable Curve gammaCurve) {
     if (toXYZ != null) {
       throw new IllegalStateException("initialize() already called");
@@ -53,6 +61,36 @@ public abstract class RGBSpace<S extends RGBSpace<S>> implements ColorSpace<RGB<
 
     toXYZ = RGBToXYZ
         .newRGBToXYZ((S) this, whitepoint, redPrimary, greenPrimary, bluePrimary, gammaCurve);
+    initializeCIE31FromXYZ();
+  }
+
+  @SuppressWarnings("unchecked")
+  protected void initialize(
+      T xyzSpace, double wx, double wy, double wz, double rx, double ry, double gx, double gy,
+      double bx, double by, @Arguments.Nullable Curve gammaCurve) {
+    if (toXYZ != null) {
+      throw new IllegalStateException("initialize() already called");
+    }
+
+    FixedMatrix3x3_64F transform = RGBToXYZ
+        .calculateLinearRGBToXYZ(rx, ry, gx, gy, bx, by, wx, wy, wz);
+    toXYZ = new RGBToXYZ<>((S) this, xyzSpace, transform, gammaCurve);
+    initializeCIE31FromXYZ();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initializeCIE31FromXYZ() {
+    if (Objects.equals(toXYZ.getOutputSpace(), CIE31.SPACE)) {
+      // toXYZ is the exact transform, so just cast it without introducing any identity step
+      toCIE31 = (ColorTransform) toXYZ;
+    } else {
+      // Compose toXYZ with a transform going from T to CIE31
+      toCIE31 = new Composition<>(toXYZ, toXYZ.getOutputSpace().getXYZTransform());
+    }
+  }
+
+  public RGBToXYZ<S, T> getRGBToXYZTransform() {
+    return toXYZ;
   }
 
   @Override
@@ -62,8 +100,8 @@ public abstract class RGBSpace<S extends RGBSpace<S>> implements ColorSpace<RGB<
   }
 
   @Override
-  public RGBToXYZ<S, CIE31> getXYZTransform() {
-    return toXYZ;
+  public ColorTransform<S, RGB<S>, CIE31, XYZ<CIE31>> getXYZTransform() {
+    return toCIE31;
   }
 
   @Override

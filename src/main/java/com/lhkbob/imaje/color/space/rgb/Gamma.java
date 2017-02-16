@@ -43,7 +43,7 @@ import java.lang.annotation.Target;
  * =====
  *
  * A type annotation that is processed by subclasses of {@link AnnotationRGBSpace} to define the
- * gamma curve for the RGB space. The curve is modeled by a {@link
+ * decoding gamma curve for the RGB space. The curve is modeled by a {@link
  * com.lhkbob.imaje.color.transform.curves.UnitGammaFunction}, which has seven parameters: `a`, `b`,
  * `c`, `d`, `e`, `f`, and `gamma`. This function is defined as:
  *

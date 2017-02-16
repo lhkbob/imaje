@@ -43,8 +43,8 @@ import java.lang.annotation.Target;
  *
  * A type annotation used in conjunction with {@link Primaries} and {@link Illuminant} to specify
  * the chromaticity coordinates of a color, where the luminance of the color is irrelevant. The
- * chromaticity specifies the `x` and `y` component values in the {@link com.lhkbob.imaje.color.Yxy}
- * color system.
+ * chromaticity specifies the `x` and `y` component values in the CIE '31 {@link
+ * com.lhkbob.imaje.color.Yxy} color space.
  *
  * @author Michael Ludwig
  */
