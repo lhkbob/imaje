@@ -42,4 +42,35 @@ public final class CIE31 extends XYZSpace<CIE31> {
   public Identity<CIE31, XYZ<CIE31>, CIE31, XYZ<CIE31>> getXYZTransform() {
     return identity;
   }
+
+  /**
+   * A new XYZ color value in the CIE31 color space with given tristimulus values. The components
+   * are assumed to be in the CIE31 color space.
+   *
+   * @param x
+   *     The x component
+   * @param y
+   *     The y component
+   * @param z
+   *     The z component
+   * @return A new XYZ color
+   */
+  public static XYZ<CIE31> newXYZ(double x, double y, double z) {
+    return new XYZ<>(SPACE, x, y, z);
+  }
+
+  @Override
+  public int hashCode() {
+    return CIE31.class.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o == this || o instanceof CIE31;
+  }
+
+  @Override
+  public String toString() {
+    return "CIE '31 XYZ";
+  }
 }

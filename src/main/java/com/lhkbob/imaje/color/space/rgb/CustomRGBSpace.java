@@ -7,6 +7,8 @@ import com.lhkbob.imaje.color.space.xyz.XYZSpace;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+
 /**
  * CustomRGBSpace
  * ==============
@@ -82,5 +84,26 @@ public class CustomRGBSpace<S extends XYZSpace<S>> extends RGBSpace<CustomRGBSpa
       S xyzSpace, double wx, double wy, double wz, double rx, double ry, double gx, double gy,
       double bx, double by, @Arguments.Nullable Curve decodingGamma) {
     initialize(xyzSpace, wx, wy, wz, rx, ry, gx, gy, bx, by, decodingGamma);
+  }
+
+  @Override
+  public int hashCode() {
+    return CustomRGBSpace.class.hashCode() ^ getXYZTransform().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    } else if (!(o instanceof CustomRGBSpace)) {
+      return false;
+    }
+
+    return Objects.equals(((CustomRGBSpace) o).getXYZTransform(), getXYZTransform());
+  }
+
+  @Override
+  public String toString() {
+    return "Custom RGB";
   }
 }

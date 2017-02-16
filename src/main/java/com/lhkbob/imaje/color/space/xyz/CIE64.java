@@ -81,4 +81,35 @@ public class CIE64 extends XYZSpace<CIE64> {
   public ColorTransform<CIE64, XYZ<CIE64>, CIE31, XYZ<CIE31>> getXYZTransform() {
     return toXYZ31;
   }
+
+  /**
+   * A new XYZ color value in the CIE64 color space with given tristimulus values. The components
+   * are assumed to be in the CIE64 color space.
+   *
+   * @param x
+   *     The x component
+   * @param y
+   *     The y component
+   * @param z
+   *     The z component
+   * @return A new XYZ color
+   */
+  public static XYZ<CIE64> newXYZ(double x, double y, double z) {
+    return new XYZ<>(SPACE, x, y, z);
+  }
+
+  @Override
+  public int hashCode() {
+    return CIE64.class.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o == this || o instanceof CIE64;
+  }
+
+  @Override
+  public String toString() {
+    return "CIE '64 XYZ";
+  }
 }
