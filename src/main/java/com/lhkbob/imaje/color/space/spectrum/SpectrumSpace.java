@@ -51,7 +51,7 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
 
   private final double step;
 
-  private ExplicitInverse<S, Spectrum<S>, CIE31, XYZ<CIE31>> toXYZ;
+  private ExplicitInverse<Spectrum<S>, S, XYZ<CIE31>, CIE31> toXYZ;
 
   /**
    * Create a new SpectrumSpace with the given `channelCount`, `minWavelength`, and `maxWavelength`.

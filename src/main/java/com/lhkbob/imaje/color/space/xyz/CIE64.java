@@ -46,7 +46,7 @@ public class CIE64 extends XYZSpace<CIE64> {
     }
   }
 
-  private final ExplicitInverse<CIE64, XYZ<CIE64>, CIE31, XYZ<CIE31>> toXYZ31;
+  private final ExplicitInverse<XYZ<CIE64>, CIE64, XYZ<CIE31>, CIE31> toXYZ31;
 
   private CIE64() throws IOException {
     initializeFromCSV("ciexyz64_1.csv");

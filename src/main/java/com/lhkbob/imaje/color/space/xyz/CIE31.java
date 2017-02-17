@@ -31,7 +31,7 @@ public final class CIE31 extends XYZSpace<CIE31> {
     }
   }
 
-  private final Identity<CIE31, XYZ<CIE31>, CIE31, XYZ<CIE31>> identity;
+  private final Identity<XYZ<CIE31>, CIE31, XYZ<CIE31>, CIE31> identity;
 
   private CIE31() throws IOException {
     identity = new Identity<>(this, this);
@@ -39,7 +39,7 @@ public final class CIE31 extends XYZSpace<CIE31> {
   }
 
   @Override
-  public Identity<CIE31, XYZ<CIE31>, CIE31, XYZ<CIE31>> getXYZTransform() {
+  public Identity<XYZ<CIE31>, CIE31, XYZ<CIE31>, CIE31> getXYZTransform() {
     return identity;
   }
 
