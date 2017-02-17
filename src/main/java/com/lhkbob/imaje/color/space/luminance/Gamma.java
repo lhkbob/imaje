@@ -4,7 +4,7 @@ import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.Luminance;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.Illuminants;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.color.transform.curves.UnitGammaFunction;
@@ -35,8 +35,8 @@ public class Gamma implements ColorSpace<Luminance<Gamma>, Gamma> {
       new UnitGammaFunction(2.4, 1.0 / 1.055, 0.055 / 1.055, 0.0, 1.0 / 12.92, 0.0, 0.04045));
 
   private final Linear baseSpace;
-  private final ColorTransform<Gamma, Luminance<Gamma>, Linear, Luminance<Linear>> gammaDecoder;
-  private final ColorTransform<Gamma, Luminance<Gamma>, CIE31, XYZ<CIE31>> toXYZ;
+  private final Transform<Luminance<Gamma>, Gamma, Luminance<Linear>, Linear> gammaDecoder;
+  private final Transform<Luminance<Gamma>, Gamma, XYZ<CIE31>, CIE31> toXYZ;
 
   /**
    * Create a new Gamma luminance color space that is defined relative to the given whitepoint,
@@ -67,7 +67,7 @@ public class Gamma implements ColorSpace<Luminance<Gamma>, Gamma> {
   /**
    * @return The gamma decoding transformation from non-linear to linear space.
    */
-  public ColorTransform<Gamma, Luminance<Gamma>, Linear, Luminance<Linear>> getGammaDecoder() {
+  public Transform<Luminance<Gamma>, Gamma, Luminance<Linear>, Linear> getGammaDecoder() {
     return gammaDecoder;
   }
 
@@ -77,7 +77,7 @@ public class Gamma implements ColorSpace<Luminance<Gamma>, Gamma> {
   }
 
   @Override
-  public ColorTransform<Gamma, Luminance<Gamma>, CIE31, XYZ<CIE31>> getXYZTransform() {
+  public Transform<Luminance<Gamma>, Gamma, XYZ<CIE31>, CIE31> getXYZTransform() {
     return toXYZ;
   }
 

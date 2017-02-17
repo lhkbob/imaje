@@ -34,7 +34,7 @@ package com.lhkbob.imaje.color.space.hsv;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.RGB;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
@@ -50,7 +50,7 @@ import java.util.Objects;
  *
  * @author Michael Ludwig
  */
-public abstract class AbstractHueToRGBTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI>, SO extends ColorSpace<RGB<SO>, SO>> implements ColorTransform<SI, I, SO, RGB<SO>> {
+public abstract class AbstractHueToRGBTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI>, SO extends ColorSpace<RGB<SO>, SO>> implements Transform<I, SI, RGB<SO>, SO> {
   private final SI inputSpace;
   private final SO outputSpace;
 

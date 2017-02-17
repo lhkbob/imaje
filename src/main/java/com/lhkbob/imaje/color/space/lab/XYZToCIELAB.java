@@ -34,7 +34,7 @@ package com.lhkbob.imaje.color.space.lab;
 import com.lhkbob.imaje.color.Lab;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
@@ -48,7 +48,7 @@ import java.util.Objects;
  *
  * @author Michael Ludwig
  */
-public class XYZToCIELAB implements ColorTransform<CIE31, XYZ<CIE31>, CIE, Lab<CIE>> {
+public class XYZToCIELAB implements Transform<XYZ<CIE31>, CIE31, Lab<CIE>, CIE> {
   private final XYZ<CIE31> referenceWhitepoint; // cached from labSpace
   private final CIE labSpace;
   private final CIELABToXYZ inverse;

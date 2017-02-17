@@ -6,7 +6,7 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.Yxy;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
 import com.lhkbob.imaje.color.space.xyz.XYZSpace;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
@@ -33,7 +33,7 @@ import java.util.Objects;
  */
 public abstract class RGBSpace<S extends RGBSpace<S, T>, T extends XYZSpace<T>> implements ColorSpace<RGB<S>, S> {
   private RGBToXYZ<S, T> toXYZ = null; // final after initialize()
-  private ColorTransform<S, RGB<S>, CIE31, XYZ<CIE31>> toCIE31 = null;
+  private Transform<RGB<S>, S, XYZ<CIE31>, CIE31> toCIE31 = null;
 
   /**
    * Finish initialization of this space by computing its transformation from RGB to XYZ
@@ -82,7 +82,7 @@ public abstract class RGBSpace<S extends RGBSpace<S, T>, T extends XYZSpace<T>> 
   private void initializeCIE31FromXYZ() {
     if (Objects.equals(toXYZ.getOutputSpace(), CIE31.SPACE)) {
       // toXYZ is the exact transform, so just cast it without introducing any identity step
-      toCIE31 = (ColorTransform) toXYZ;
+      toCIE31 = (Transform) toXYZ;
     } else {
       // Compose toXYZ with a transform going from T to CIE31
       toCIE31 = new Composition<>(toXYZ, toXYZ.getOutputSpace().getXYZTransform());
@@ -100,7 +100,7 @@ public abstract class RGBSpace<S extends RGBSpace<S, T>, T extends XYZSpace<T>> 
   }
 
   @Override
-  public ColorTransform<S, RGB<S>, CIE31, XYZ<CIE31>> getXYZTransform() {
+  public Transform<RGB<S>, S, XYZ<CIE31>, CIE31> getXYZTransform() {
     return toCIE31;
   }
 

@@ -3,7 +3,7 @@ package com.lhkbob.imaje.color.space.spectrum;
 import com.lhkbob.imaje.color.Spectrum;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.XYZSpace;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.Functions;
 
@@ -21,7 +21,7 @@ import java.util.Objects;
  *
  * @author Michael Ludwig
  */
-public class SpectrumToXYZ<SI extends SpectrumSpace<SI>, SO extends XYZSpace<SO>> implements ColorTransform<SI, Spectrum<SI>, SO, XYZ<SO>> {
+public class SpectrumToXYZ<SI extends SpectrumSpace<SI>, SO extends XYZSpace<SO>> implements Transform<Spectrum<SI>, SI, XYZ<SO>, SO> {
   private final SI spectrum;
   private final SO xyz;
 
@@ -71,7 +71,7 @@ public class SpectrumToXYZ<SI extends SpectrumSpace<SI>, SO extends XYZSpace<SO>
   }
 
   @Override
-  public ColorTransform<SO, XYZ<SO>, SI, Spectrum<SI>> inverse() {
+  public Transform<XYZ<SO>, SO, Spectrum<SI>, SI> inverse() {
     return null;
   }
 

@@ -3,7 +3,7 @@ package com.lhkbob.imaje.color.space.xyz;
 import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.Yxy;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.util.Arguments;
 
@@ -33,7 +33,7 @@ public class YxySpace<S extends ColorSpace<XYZ<S>, S>> implements ColorSpace<Yxy
   private final S xyzSpace;
 
   private final YxyToXYZ<S> toXYZ;
-  private final ColorTransform<YxySpace<S>, Yxy<S>, CIE31, XYZ<CIE31>> toXYZ31;
+  private final Transform<Yxy<S>, YxySpace<S>, XYZ<CIE31>, CIE31> toXYZ31;
 
   /**
    * Create a new YxySpace defined against the given XYZ color space.
@@ -51,7 +51,7 @@ public class YxySpace<S extends ColorSpace<XYZ<S>, S>> implements ColorSpace<Yxy
 
     if (space == CIE31.SPACE) {
       // toXYZ31 is the same as toXYZ, generics just aren't good at sorting that out
-      toXYZ31 = (ColorTransform) toXYZ;
+      toXYZ31 = (Transform) toXYZ;
     } else {
       // Compose toXYZ with the non-CIE31 XYZ space's transform to CIE31
       toXYZ31 = new Composition<>(toXYZ, space.getXYZTransform());
@@ -82,7 +82,7 @@ public class YxySpace<S extends ColorSpace<XYZ<S>, S>> implements ColorSpace<Yxy
   }
 
   @Override
-  public ColorTransform<YxySpace<S>, Yxy<S>, CIE31, XYZ<CIE31>> getXYZTransform() {
+  public Transform<Yxy<S>, YxySpace<S>, XYZ<CIE31>, CIE31> getXYZTransform() {
     return toXYZ31;
   }
 

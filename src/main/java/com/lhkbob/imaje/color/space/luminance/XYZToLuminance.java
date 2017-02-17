@@ -34,7 +34,7 @@ package com.lhkbob.imaje.color.space.luminance;
 import com.lhkbob.imaje.color.Luminance;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
@@ -47,7 +47,7 @@ import java.util.Objects;
  *
  * @author Michael Ludwig
  */
-public class XYZToLuminance implements ColorTransform<CIE31, XYZ<CIE31>, Linear, Luminance<Linear>> {
+public class XYZToLuminance implements Transform<XYZ<CIE31>, CIE31, Luminance<Linear>, Linear> {
   private final Linear lumSpace;
   private final XYZ<CIE31> whitepoint; // cached from lumSpace
   private final LuminanceToXYZ inverse;

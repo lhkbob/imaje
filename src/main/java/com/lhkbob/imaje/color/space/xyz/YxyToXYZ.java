@@ -34,7 +34,7 @@ package com.lhkbob.imaje.color.space.xyz;
 import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.Yxy;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
@@ -47,7 +47,7 @@ import java.util.Objects;
  *
  * @author Michael Ludwig
  */
-public class YxyToXYZ<S extends ColorSpace<XYZ<S>, S>> implements ColorTransform<YxySpace<S>, Yxy<S>, S, XYZ<S>> {
+public class YxyToXYZ<S extends ColorSpace<XYZ<S>, S>> implements Transform<Yxy<S>, YxySpace<S>, XYZ<S>, S> {
   private final YxySpace<S> inputSpace;
   private final XYZToYxy<S> inverse;
 

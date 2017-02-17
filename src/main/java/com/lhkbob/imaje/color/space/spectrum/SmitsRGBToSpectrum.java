@@ -3,7 +3,7 @@ package com.lhkbob.imaje.color.space.spectrum;
 import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.Spectrum;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.Functions;
@@ -21,7 +21,7 @@ import java.util.Objects;
  *
  * @author Michael Ludwig
  */
-public class SmitsRGBToSpectrum<SI extends ColorSpace<RGB<SI>, SI>, SO extends SpectrumSpace<SO>> implements ColorTransform<SI, RGB<SI>, SO, Spectrum<SO>> {
+public class SmitsRGBToSpectrum<SI extends ColorSpace<RGB<SI>, SI>, SO extends SpectrumSpace<SO>> implements Transform<RGB<SI>, SI, Spectrum<SO>, SO> {
   private final SI rgb;
   private final SO spectrum;
 
@@ -102,7 +102,7 @@ public class SmitsRGBToSpectrum<SI extends ColorSpace<RGB<SI>, SI>, SO extends S
   }
 
   @Override
-  public ColorTransform<SO, Spectrum<SO>, SI, RGB<SI>> inverse() {
+  public Transform<Spectrum<SO>, SO, RGB<SI>, SI> inverse() {
     // Do not support an inverse
     return null;
   }

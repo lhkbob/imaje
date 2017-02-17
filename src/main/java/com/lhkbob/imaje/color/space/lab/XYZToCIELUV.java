@@ -34,7 +34,7 @@ package com.lhkbob.imaje.color.space.lab;
 import com.lhkbob.imaje.color.CIELUV;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
@@ -47,7 +47,7 @@ import java.util.Objects;
  *
  * @author Michael Ludwig
  */
-public class XYZToCIELUV implements ColorTransform<CIE31, XYZ<CIE31>, CIELUVSpace, CIELUV> {
+public class XYZToCIELUV implements Transform<XYZ<CIE31>, CIE31, CIELUV, CIELUVSpace> {
   private final XYZ<CIE31> referenceWhitepoint; // cached from luvSpace
   private final double uWhite, vWhite;
   private final CIELUVToXYZ inverse;

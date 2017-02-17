@@ -4,7 +4,7 @@ import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.CurveTransform;
 import com.lhkbob.imaje.color.transform.MatrixTransform;
 import com.lhkbob.imaje.color.transform.curves.Curve;
@@ -79,8 +79,8 @@ public class Linear<S extends RGBSpace<S, CIE31>> implements ColorSpace<RGB<Line
   public static final Linear<WideGamut> SPACE_WIDE_GAMUT = new Linear<>(WideGamut.SPACE);
 
   private final S rgbSpace;
-  private final ColorTransform<Linear<S>, RGB<Linear<S>>, S, RGB<S>> linearTransform;
-  private final ColorTransform<Linear<S>, RGB<Linear<S>>, CIE31, XYZ<CIE31>> xyzTransform;
+  private final Transform<RGB<Linear<S>>, Linear<S>, RGB<S>, S> linearTransform;
+  private final Transform<RGB<Linear<S>>, Linear<S>, XYZ<CIE31>, CIE31> xyzTransform;
 
   /**
    * Create a Linear color space wrapping the given `rgbSpace`.
@@ -118,14 +118,14 @@ public class Linear<S extends RGBSpace<S, CIE31>> implements ColorSpace<RGB<Line
    * @return The color transformation from this linear space back to its wrapped, non-linear RGB
    * space
    */
-  public ColorTransform<Linear<S>, RGB<Linear<S>>, S, RGB<S>> getGammaEncoder() {
+  public Transform<RGB<Linear<S>>, Linear<S>, RGB<S>, S> getGammaEncoder() {
     return linearTransform;
   }
 
   /**
    * @return The color transform from the non-linear RGB space to the linearized coordinate system
    */
-  public ColorTransform<S, RGB<S>, Linear<S>, RGB<Linear<S>>> getGammaDecoder() {
+  public Transform<RGB<S>, S, RGB<Linear<S>>, Linear<S>> getGammaDecoder() {
     return linearTransform.inverse();
   }
 
@@ -135,7 +135,7 @@ public class Linear<S extends RGBSpace<S, CIE31>> implements ColorSpace<RGB<Line
   }
 
   @Override
-  public ColorTransform<Linear<S>, RGB<Linear<S>>, CIE31, XYZ<CIE31>> getXYZTransform() {
+  public Transform<RGB<Linear<S>>, Linear<S>, XYZ<CIE31>, CIE31> getXYZTransform() {
     return xyzTransform;
   }
 

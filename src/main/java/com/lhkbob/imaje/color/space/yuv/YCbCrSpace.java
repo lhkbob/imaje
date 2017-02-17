@@ -8,7 +8,7 @@ import com.lhkbob.imaje.color.space.rgb.HDTV;
 import com.lhkbob.imaje.color.space.rgb.SMPTEC;
 import com.lhkbob.imaje.color.space.rgb.UHDTV;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.util.Arguments;
 
@@ -48,7 +48,7 @@ public class YCbCrSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<Y
   private final S rgbSpace;
 
   private final DifferenceChromaToRGB<YCbCrSpace<S>, YCbCr<S>, S> toRGB;
-  private final ColorTransform<YCbCrSpace<S>, YCbCr<S>, CIE31, XYZ<CIE31>> toXYZ;
+  private final Transform<YCbCr<S>, YCbCrSpace<S>, XYZ<CIE31>, CIE31> toXYZ;
 
   /**
    * Create a new YCbCrSpace that is defined in terms of the given `rgbSpace` and weights for
@@ -91,7 +91,7 @@ public class YCbCrSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<Y
   }
 
   @Override
-  public ColorTransform<YCbCrSpace<S>, YCbCr<S>, CIE31, XYZ<CIE31>> getXYZTransform() {
+  public Transform<YCbCr<S>, YCbCrSpace<S>, XYZ<CIE31>, CIE31> getXYZTransform() {
     return toXYZ;
   }
 

@@ -6,7 +6,7 @@ import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.rgb.SRGB;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.util.Arguments;
 
@@ -39,7 +39,7 @@ public class HLSSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<HLS
 
   private final S rgbSpace;
   private final HLSToRGB<S> toRGB;
-  private final ColorTransform<HLSSpace<S>, HLS<S>, CIE31, XYZ<CIE31>> toXYZ;
+  private final Transform<HLS<S>, HLSSpace<S>, XYZ<CIE31>, CIE31> toXYZ;
 
   /**
    * Create a new HLSSpace that is defined in terms of the given `rgbSpace`.
@@ -67,7 +67,7 @@ public class HLSSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<HLS
   /**
    * @return The transformation between the HLS color space and thr RGB space.
    */
-  public ColorTransform<HLSSpace<S>, HLS<S>, S, RGB<S>> getRGBTransform() {
+  public Transform<HLS<S>, HLSSpace<S>, RGB<S>, S> getRGBTransform() {
     return toRGB;
   }
 
@@ -77,7 +77,7 @@ public class HLSSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<HLS
   }
 
   @Override
-  public ColorTransform<HLSSpace<S>, HLS<S>, CIE31, XYZ<CIE31>> getXYZTransform() {
+  public Transform<HLS<S>, HLSSpace<S>, XYZ<CIE31>, CIE31> getXYZTransform() {
     return toXYZ;
   }
 

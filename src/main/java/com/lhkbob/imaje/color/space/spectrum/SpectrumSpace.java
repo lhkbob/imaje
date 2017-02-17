@@ -7,7 +7,7 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.Yxy;
 import com.lhkbob.imaje.color.space.rgb.CustomRGBSpace;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.color.transform.ExplicitInverse;
 import com.lhkbob.imaje.color.transform.Illuminants;
@@ -136,7 +136,7 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
     SmitsRGBToSpectrum<R, S> rgbToSpectrum = new SmitsRGBToSpectrum<>(rgbSpace, (S) this,
         whiteSpectrum, cyanSpectrum, magentaSpectrum, yellowSpectrum, redSpectrum, greenSpectrum,
         blueSpectrum);
-    ColorTransform<CIE31, XYZ<CIE31>, S, Spectrum<S>> fromXYZ = new Composition<>(
+    Transform<XYZ<CIE31>, CIE31, Spectrum<S>, S> fromXYZ = new Composition<>(
         rgbSpace.getXYZTransform().inverse(), rgbToSpectrum);
 
     this.toXYZ = new ExplicitInverse<>(toXYZ, fromXYZ);
@@ -340,7 +340,7 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
   }
 
   @Override
-  public ColorTransform<S, Spectrum<S>, CIE31, XYZ<CIE31>> getXYZTransform() {
+  public Transform<Spectrum<S>, S, XYZ<CIE31>, CIE31> getXYZTransform() {
     return toXYZ;
   }
 

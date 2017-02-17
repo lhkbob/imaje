@@ -36,7 +36,7 @@ import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.Yxy;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.Functions;
@@ -56,7 +56,7 @@ import java.util.Objects;
  *
  * @author Michael Ludwig
  */
-public class RGBToXYZ<I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<O>, O>> implements ColorTransform<I, RGB<I>, O, XYZ<O>> {
+public class RGBToXYZ<I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<O>, O>> implements Transform<RGB<I>, I, XYZ<O>, O> {
   private final I inputSpace;
   private final O outputSpace;
 
