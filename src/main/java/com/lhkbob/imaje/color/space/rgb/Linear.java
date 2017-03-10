@@ -4,9 +4,9 @@ import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.CurveTransform;
 import com.lhkbob.imaje.color.transform.MatrixTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
 
@@ -14,6 +14,7 @@ import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Linear
@@ -98,12 +99,14 @@ public class Linear<S extends RGBSpace<S, CIE31>> implements ColorSpace<RGB<Line
     // The gamma curve in baseTransform goes from non-linear to linear, but we want the curve
     // that goes from linear to non-linear for use with linearTransform.
     Curve invGamma;
-    if (baseTransform.getDecodingGammaFunction() == null)
+    if (baseTransform.getDecodingGammaFunction() == null) {
       invGamma = null;
-    else {
-      invGamma = baseTransform.getDecodingGammaFunction().inverted();
-      if (invGamma == null)
+    } else {
+      Optional<Curve> encoder = baseTransform.getDecodingGammaFunction().inverted();
+      if (!encoder.isPresent()) {
         throw new IllegalStateException("Gamma curve is not invertable");
+      }
+      invGamma = encoder.get();
     }
 
     DenseMatrix64F rgbToXYZ = new DenseMatrix64F(3, 3);
