@@ -7,7 +7,7 @@ import com.lhkbob.imaje.color.RGB;
  * ======
  *
  * An RGB color space representing the [NTSC's SMPTE C
- * standard](https://en.wikipedia.org/wiki/NTSC#SMPTE_C ). Because this space represents a standard
+ * standard](https://en.wikipedia.org/wiki/NTSC#SMPTE_C). Because this space represents a standard
  * with no additional parameters, it has no public constructor and is exposed as a singleton: {@link
  * #SPACE}.
  *

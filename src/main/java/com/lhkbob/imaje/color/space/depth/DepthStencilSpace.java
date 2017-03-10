@@ -17,6 +17,11 @@ import java.util.Objects;
  * @author Michael Ludwig
  */
 public class DepthStencilSpace<S extends VectorSpace<Depth<S>, S>> implements VectorSpace<DepthStencil<S>, DepthStencilSpace<S>> {
+  /**
+   * Pre-defined DepthStencilSpace associated with the Scene Depth vector space.
+   */
+  public static final DepthStencilSpace<Scene> SPACE_SCENE = new DepthStencilSpace<>(Scene.SPACE);
+
   private final S depthSpace;
 
   /**

@@ -4,12 +4,12 @@ import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.Luminance;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.Transform;
-import com.lhkbob.imaje.color.transform.Illuminants;
-import com.lhkbob.imaje.color.transform.curves.Curve;
-import com.lhkbob.imaje.color.transform.curves.UnitGammaFunction;
 import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.color.transform.CurveTransform;
+import com.lhkbob.imaje.color.transform.Illuminants;
+import com.lhkbob.imaje.color.transform.Transform;
+import com.lhkbob.imaje.color.transform.curves.Curve;
+import com.lhkbob.imaje.color.transform.curves.UnitGammaFunction;
 
 import java.util.Collections;
 import java.util.Objects;
