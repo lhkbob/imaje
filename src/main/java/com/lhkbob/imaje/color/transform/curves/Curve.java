@@ -31,15 +31,73 @@
  */
 package com.lhkbob.imaje.color.transform.curves;
 
+import java.util.Optional;
+import java.util.function.DoubleUnaryOperator;
+
 /**
+ * Curve
+ * =====
  *
+ * Curve is an interface for a potentially-domain restricted one-dimensional function that provides
+ * an inverse, if the function is invertible. Curve extends {@link DoubleUnaryOperator} so that it
+ * can be easily used as a functional interface. It provides two methods for invoking the function:
+ * {@link #evaluate(double)} and {@link #applyAsDouble(double)}. The former is domain aware and
+ * returns `NaN` if the input is outside of the domain range. The latter is not domain aware in that
+ * it returns `0.0` for all values outside of the domain range.
+ *
+ * Curve instances must be immutable, thread-safe, and provide reasonable implementations for
+ * `hashCode()`, `equals()`, and `toString()`.
+ *
+ * @author Michael Ludwig
  */
-public interface Curve {
+public interface Curve extends DoubleUnaryOperator {
+  /**
+   * Evaluate the function described this instance for the given argument, `x`. If `x` is outside of
+   * the domain range specified by {@link #getDomainMin()} and {@link #getDomainMax()} then {@link
+   * Double#NaN} must be returned.
+   *
+   * @param x
+   *     The input argument
+   * @return The value of the function at `x`, or `NaN` if `x` was outside the domain.
+   */
   double evaluate(double x);
 
+  /**
+   * @return The upper bound of the domain, inclusive, or {@link Double#POSITIVE_INFINITY} if
+   * unbounded from above
+   */
   double getDomainMax();
 
+  /**
+   * @return The lower bound of the domain, inclusive, or {@link Double#NEGATIVE_INFINITY} if
+   * unbounded from below
+   */
   double getDomainMin();
 
-  Curve inverted();
+  /**
+   * Get the inverse of this Curve as another Curve. If the function is invertible an appropriate
+   * Curve should be calculated and returned. Often, analytic inverses can be calculated very
+   * quickly for some types of curves. If the function is not invertible, or if it cannot be easily
+   * calculated (such as with a sampled or data-driven curve), then an empty optional is returned.
+   *
+   * @return An Optional containing the inverse, or no result if the inverse could not be calculated
+   */
+  Optional<Curve> inverted();
+
+  /**
+   * Evaluates the function, via {@link #evaluate(double)} if `x` is within the domain range,
+   * otherwise `0.0` is returned.
+   *
+   * @param x
+   *     The input argument
+   * @return The value of the function, or `0` if `x` was outside the domain.
+   */
+  @Override
+  default double applyAsDouble(double x) {
+    if (x < getDomainMin() || x > getDomainMax()) {
+      return 0.0;
+    } else {
+      return evaluate(x);
+    }
+  }
 }

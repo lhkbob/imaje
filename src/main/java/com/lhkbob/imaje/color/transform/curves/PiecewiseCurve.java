@@ -36,14 +36,34 @@ import com.lhkbob.imaje.util.Arguments;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
+ * PiecewiseCurve
+ * ==============
  *
+ * A curve that is defined as a piecewise combination of functions defined on connected domain
+ * ranges. This is represented as a list of curves that define the function for each section of the
+ * net domain. The net domain is defined as the lower bound of the first curve's domain and the
+ * upper bound of the last curve's domain. The upper bound of a curve segment's domain must equal
+ * the lower bound of the subsequent curve's domain, ensuring that the piecewise function is defined
+ * over the entire domain.
+ *
+ * @author Michael Ludwig
  */
 public class PiecewiseCurve implements Curve {
   private final double[] segmentBreakpoints;
   private final List<Curve> segments;
 
+  /**
+   * Create a PiecewiseCurve based on the list of `segments`.
+   *
+   * @param segments
+   *     The function definitions for each piece of the curve
+   * @throws IllegalArgumentException
+   *     if `segments` is empty or if the pieces' domains are not contiguous
+   */
   public PiecewiseCurve(List<Curve> segments) {
     Arguments.notEmpty("segments", segments);
 
@@ -71,7 +91,7 @@ public class PiecewiseCurve implements Curve {
       return false;
     }
     PiecewiseCurve c = (PiecewiseCurve) o;
-    return c.segments.equals(segments);
+    return Objects.equals(c.segments, segments);
   }
 
   @Override
@@ -122,19 +142,18 @@ public class PiecewiseCurve implements Curve {
   }
 
   @Override
-  public Curve inverted() {
+  public Optional<Curve> inverted() {
     // the constructor verified that the domain is a continuous interval, but the function
     // segments themselves could have discontinuous values (if so then it can't be inverted)
-    List<Curve> inverseSegments = new ArrayList<>();
+    List<Curve> inverseSegments = new ArrayList<>(segments.size());
 
-    Curve invSeg = segments.get(0).inverted();
-    if (invSeg == null) {
-      // segment can't be inverted so entire inverse is undefined
-      return null;
+    Optional<Curve> invSeg = segments.get(0).inverted();
+    if (invSeg.isPresent()) {
+      inverseSegments.add(invSeg.get());
     } else {
-      inverseSegments.add(invSeg);
-    }
-    int monotonicity = 0;
+      // segment can't be inverted so entire inverse is undefined
+      return Optional.empty();
+    } int monotonicity = 0;
 
     for (int i = 1; i < segments.size(); i++) {
       Curve left = segments.get(i - 1);
@@ -146,50 +165,50 @@ public class PiecewiseCurve implements Curve {
       double ry = right.evaluate(right.getDomainMin());
       if (Math.abs(ly - ry) > EPS) {
         // discontinuous
-        return null;
+        return Optional.empty();
       }
 
       // The left curve has already been inverted and added to inverseSegments, so try and invert
       // the right curve and make sure it doesn't overlap with the previous inverted segments
       invSeg = right.inverted();
-      if (invSeg == null) {
-        return null;
+      if (!invSeg.isPresent()) {
+        return Optional.empty();
       }
 
       if (monotonicity == 0) {
         // haven't determined how to order the inverted segments
-        if (Math.abs(inverseSegments.get(0).getDomainMax() - invSeg.getDomainMin()) < EPS) {
+        if (Math.abs(inverseSegments.get(0).getDomainMax() - invSeg.get().getDomainMin()) < EPS) {
           // positively ordered, so new inverse segment goes to the right
           monotonicity = 1;
-          inverseSegments.add(invSeg);
-        } else if (Math.abs(inverseSegments.get(0).getDomainMin() - invSeg.getDomainMin()) < EPS) {
+          inverseSegments.add(invSeg.get());
+        } else if (Math.abs(inverseSegments.get(0).getDomainMin() - invSeg.get().getDomainMin())
+            < EPS) {
           // negatively ordered, so new inverse segment goes to the left
           monotonicity = -1;
-          inverseSegments.add(0, invSeg);
+          inverseSegments.add(0, invSeg.get());
         } else {
           // Somehow doesn't line up like expected so can't invert
-          return null;
+          return Optional.empty();
         }
       } else if (monotonicity > 0) {
         // expect the last segment's max to equal this new segment's min
-        if (Math.abs(
-            inverseSegments.get(inverseSegments.size() - 1).getDomainMax() - invSeg.getDomainMin())
-            < EPS) {
-          inverseSegments.add(invSeg);
+        if (Math.abs(inverseSegments.get(inverseSegments.size() - 1).getDomainMax() - invSeg.get()
+            .getDomainMin()) < EPS) {
+          inverseSegments.add(invSeg.get());
         } else {
-          return null;
+          return Optional.empty();
         }
       } else {
         // expect the first segment's min to equal this new segment's max
-        if (Math.abs(inverseSegments.get(0).getDomainMin() - invSeg.getDomainMax()) < EPS) {
-          inverseSegments.add(0, invSeg);
+        if (Math.abs(inverseSegments.get(0).getDomainMin() - invSeg.get().getDomainMax()) < EPS) {
+          inverseSegments.add(0, invSeg.get());
         } else {
-          return null;
+          return Optional.empty();
         }
       }
     }
 
-    return new PiecewiseCurve(inverseSegments);
+    return Optional.of(new PiecewiseCurve(inverseSegments));
   }
 
   @Override

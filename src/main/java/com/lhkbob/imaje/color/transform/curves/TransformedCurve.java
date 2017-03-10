@@ -33,7 +33,10 @@ package com.lhkbob.imaje.color.transform.curves;
 
 import com.lhkbob.imaje.util.Arguments;
 
-/**
+import java.util.Objects;
+import java.util.Optional;
+
+/*
  * xScalar = a
  * xOffset = x_o
  * yScalar = b
@@ -54,6 +57,21 @@ import com.lhkbob.imaje.util.Arguments;
  * f^-1((y - y_o) / b) - x_o = a * x
  * f^-1((y - y_o) / b) / a - x_o / a = x(y)
  */
+
+/**
+ * TransformedCurve
+ * ================
+ *
+ * A curve that represents a linear transformation of another curve, `f`:
+ *
+ * ```
+ * g(x) = a * f(b * x + c) + d
+ * ```
+ *
+ * The domain of this function is the transformed domain of the function `f`.
+ *
+ * @author Michael Ludwig
+ */
 public final class TransformedCurve implements Curve {
   private final Curve f;
   private final double xOffset;
@@ -61,6 +79,20 @@ public final class TransformedCurve implements Curve {
   private final double yOffset;
   private final double yScalar;
 
+  /**
+   * Create a new TransformedCurve based on the defined constants and function to wrap.
+   *
+   * @param f
+   *     The function that is transformed
+   * @param xScalar
+   *     The scalar applied to `x` before evaluating `f`, e.g. `b` in the main example
+   * @param xOffset
+   *     The offset added to `x` before evaluating `f`, e.g. `c` in the main example
+   * @param yScalar
+   *     The scalar applied to the result of `f`, e.g. `a` in the main example
+   * @param yOffset
+   *     The constant added to the result of `f`, e.g. `d` in the main example
+   */
   public TransformedCurve(Curve f, double xScalar, double xOffset, double yScalar, double yOffset) {
     Arguments.notNull("f", f);
 
@@ -81,7 +113,7 @@ public final class TransformedCurve implements Curve {
     }
 
     TransformedCurve c = (TransformedCurve) o;
-    return c.f.equals(f) && Double.compare(c.xScalar, xScalar) == 0
+    return Objects.equals(c.f, f) && Double.compare(c.xScalar, xScalar) == 0
         && Double.compare(c.xOffset, xOffset) == 0 && Double.compare(c.yScalar, yScalar) == 0
         && Double.compare(c.yOffset, yOffset) == 0;
   }
@@ -116,14 +148,20 @@ public final class TransformedCurve implements Curve {
   }
 
   @Override
-  public Curve inverted() {
+  public Optional<Curve> inverted() {
     // Make sure we're not dividing by values that trivialize this function
     if (Math.abs(yScalar) < EPS || Math.abs(xScalar) < EPS) {
-      return null;
+      return Optional.empty();
     }
 
-    return new TransformedCurve(
-        f.inverted(), 1.0 / yScalar, -yOffset / yScalar, 1.0 / xScalar, -xOffset / xScalar);
+    Optional<Curve> invF = f.inverted();
+    if (!invF.isPresent()) {
+      return Optional.empty();
+    }
+
+    return Optional
+        .of(new TransformedCurve(invF.get(), 1.0 / yScalar, -yOffset / yScalar, 1.0 / xScalar,
+            -xOffset / xScalar));
   }
 
   @Override

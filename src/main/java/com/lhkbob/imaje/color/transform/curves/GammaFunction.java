@@ -31,8 +31,22 @@
  */
 package com.lhkbob.imaje.color.transform.curves;
 
+
+import java.util.Optional;
+
 /**
+ * GammaFunction
+ * =============
  *
+ * A curve that defines a polynomial function based on several constants, of the form:
+ *
+ * ```
+ * f(x) = (a * x + b) ^ gamma + c
+ * ```
+ *
+ * The curve has no domain restrictions.
+ *
+ * @author Michael Ludwig
  */
 public final class GammaFunction implements Curve {
   private final double gamma;
@@ -40,6 +54,18 @@ public final class GammaFunction implements Curve {
   private final double xScalar;
   private final double yOffset;
 
+  /**
+   * Create a new GammaFunction with the given constants.
+   *
+   * @param gamma
+   *     The exponent constant
+   * @param xScalar
+   *     The scale factor to `x` in the base, e.g. `a` in the main example
+   * @param xOffset
+   *     The offset to `x` in the base, e.g. `b` in the main example
+   * @param yOffset
+   *     The constant added to the polynomial, e.g. `c` in the main example
+   */
   public GammaFunction(
       double gamma, double xScalar, double xOffset, double yOffset) {
     this.gamma = gamma;
@@ -87,10 +113,10 @@ public final class GammaFunction implements Curve {
   }
 
   @Override
-  public Curve inverted() {
+  public Optional<Curve> inverted() {
     // Make sure we're not dividing by values that trivialize this function
     if (Math.abs(gamma) < EPS || Math.abs(xScalar) < EPS) {
-      return null;
+      return Optional.empty();
     }
 
     double invG = 1.0 / gamma;
@@ -98,7 +124,7 @@ public final class GammaFunction implements Curve {
     double invPowerXOffset = -invPowerXScalar * yOffset;
     double invPowerYOffset = -xOffset / xScalar;
 
-    return new GammaFunction(invG, invPowerXScalar, invPowerXOffset, invPowerYOffset);
+    return Optional.of(new GammaFunction(invG, invPowerXScalar, invPowerXOffset, invPowerYOffset));
   }
 
   @Override

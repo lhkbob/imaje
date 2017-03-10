@@ -31,13 +31,35 @@
  */
 package com.lhkbob.imaje.color.transform.curves;
 
+
+import java.util.Optional;
+
 /**
+ * LinearFunction
+ * ==============
  *
+ * A curve that defines a linear function based on several constants, of the form:
+ *
+ * ```
+ * f(x) = a * x + b
+ * ```
+ *
+ * The curve has no domain restrictions.
+ *
+ * @author Michael Ludwig
  */
 public final class LinearFunction implements Curve {
   private final double offset;
   private final double slope;
 
+  /**
+   * Create a new LinearFunction with the given constant parameters.
+   *
+   * @param slope
+   *     The slope of the function, e.g. `a` in the main example
+   * @param offset
+   *     The constant added to the function, e.g. `b` in the main example
+   */
   public LinearFunction(double slope, double offset) {
     this.slope = slope;
     this.offset = offset;
@@ -73,20 +95,20 @@ public final class LinearFunction implements Curve {
   @Override
   public int hashCode() {
     int result = 17;
-    result += 31 * result + Double.hashCode(slope);
-    result += 31 * result + Double.hashCode(offset);
+    result = 31 * result + Double.hashCode(slope);
+    result = 31 * result + Double.hashCode(offset);
     return result;
   }
 
   @Override
-  public Curve inverted() {
+  public Optional<Curve> inverted() {
     if (Math.abs(slope) < EPS) {
-      return null;
+      return Optional.empty();
     }
 
     double invSlope = 1.0 / slope;
     double invOffset = -offset / slope;
-    return new LinearFunction(invSlope, invOffset);
+    return Optional.of(new LinearFunction(invSlope, invOffset));
   }
 
   @Override

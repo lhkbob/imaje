@@ -33,13 +33,31 @@ package com.lhkbob.imaje.color.transform.curves;
 
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Objects;
+import java.util.Optional;
+
 /**
+ * ComposedCurve
+ * =============
  *
+ * A curve that represents the functional composition of two curves, `g` and `f`: for a given
+ * input `x` it returns `g(f(x))`.
+ *
+ * @author Michael Ludwig
  */
 public class ComposedCurve implements Curve {
   private final Curve f;
   private final Curve g;
 
+  /**
+   * Create a new ComposedCurve based on the two functions, where `g` is the outer function invoked
+   * with the result of `f`'s evaluation on an input `x`, e.g. this function represents `g(f(x))`.
+   *
+   * @param g
+   *     The outer function of the composition
+   * @param f
+   *     The inner function of the composition
+   */
   public ComposedCurve(Curve g, Curve f) {
     Arguments.notNull("g", g);
     Arguments.notNull("f", f);
@@ -58,7 +76,7 @@ public class ComposedCurve implements Curve {
       return false;
     }
     ComposedCurve c = (ComposedCurve) o;
-    return c.f.equals(f) && c.g.equals(g);
+    return Objects.equals(c.f, f) && Objects.equals(c.g, g);
   }
 
   @Override
@@ -87,14 +105,16 @@ public class ComposedCurve implements Curve {
   }
 
   @Override
-  public Curve inverted() {
+  public Optional<Curve> inverted() {
     // The inverse (if it exists) is equal to f^-1(g^-1)
-    Curve invF = f.inverted();
-    Curve invG = g.inverted();
-    if (invF == null || invG == null) {
-      return null;
+    Optional<Curve> invF = f.inverted();
+    Optional<Curve> invG = g.inverted();
+
+    if (invF.isPresent() && invG.isPresent()) {
+      return Optional.of(new ComposedCurve(invF.get(), invG.get()));
+    } else {
+      return Optional.empty();
     }
-    return new ComposedCurve(invF, invG);
   }
 
   @Override

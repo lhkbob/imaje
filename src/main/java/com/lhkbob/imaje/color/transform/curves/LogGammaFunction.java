@@ -31,8 +31,22 @@
  */
 package com.lhkbob.imaje.color.transform.curves;
 
+
+import java.util.Optional;
+
 /**
+ * LogGammaFunction
+ * =================
  *
+ * A curve that defines a function based on several constants, of the form:
+ *
+ * ```
+ * f(x) = a * log10(b * x^gamma + c) + d
+ * ```
+ *
+ * The curve has no domain restrictions.
+ *
+ * @author Michael Ludwig
  */
 public class LogGammaFunction implements Curve {
   private final double gamma;
@@ -41,6 +55,20 @@ public class LogGammaFunction implements Curve {
   private final double yOffset;
   private final double yScalar;
 
+  /**
+   * Create a new LogGammaFunction with the given constants.
+   *
+   * @param gamma
+   *     The exponent applied to `x`
+   * @param xScalar
+   *     The scale factor applied to `x^gamma`, e.g. `b` in the main example
+   * @param xOffset
+   *     The offset added within the logarithm, e.g. `c` in the main example
+   * @param yScalar
+   *     The scale factor applied to the result of the logarithm, e.g. `a` in the main example
+   * @param yOffset
+   *     The constant added to the function, e.g. `d` in the main example
+   */
   public LogGammaFunction(
       double gamma, double xScalar, double xOffset, double yScalar, double yOffset) {
     this.gamma = gamma;
@@ -91,26 +119,28 @@ public class LogGammaFunction implements Curve {
   }
 
   @Override
-  public Curve inverted() {
+  public Optional<Curve> inverted() {
     // Make sure we're not dividing by values that trivialize this function
     if (Math.abs(gamma) < EPS || Math.abs(xScalar) < EPS || Math.abs(yScalar) < EPS) {
-      return null;
+      return Optional.empty();
     }
 
     if (Double.compare(gamma, 1.0) == 0) {
       // Can be represented as just an exponential curve object
-      return new ExponentialFunction(
-          10.0, 1.0 / yScalar, -yOffset / yScalar, 1.0 / xScalar, -xOffset / xScalar);
+      return Optional
+          .of(new ExponentialFunction(10.0, 1.0 / yScalar, -yOffset / yScalar, 1.0 / xScalar,
+              -xOffset / xScalar));
     } else if (Double.compare(xOffset, 0.0) == 0) {
       // Can also be an exponential curve
-      return new ExponentialFunction(10.0, 1.0 / (yScalar * gamma), -yOffset / (yScalar * gamma),
-          1.0 / Math.pow(xScalar, 1.0 / gamma), 0.0);
+      return Optional
+          .of(new ExponentialFunction(10.0, 1.0 / (yScalar * gamma), -yOffset / (yScalar * gamma),
+              1.0 / Math.pow(xScalar, 1.0 / gamma), 0.0));
     } else {
       // Must compose an exponential curve with a gamma curve
       Curve exp = new ExponentialFunction(
           10.0, 1.0 / yScalar, -yOffset / yScalar, 1.0 / xScalar, -xOffset / xScalar);
       Curve gam = new GammaFunction(1.0 / gamma, 1.0, 0.0, 0.0);
-      return new ComposedCurve(gam, exp);
+      return Optional.of(new ComposedCurve(gam, exp));
     }
   }
 

@@ -31,8 +31,21 @@
  */
 package com.lhkbob.imaje.color.transform.curves;
 
+import java.util.Optional;
+
 /**
+ * ExponentialFunction
+ * ===================
  *
+ * A curve that defines an exponential function based on several constants, of the form:
+ *
+ * ```
+ * f(x) = a * b^(c * x + d) + e
+ * ```
+ *
+ * The curve has no domain restrictions.
+ *
+ * @author Michael Ludwig
  */
 public final class ExponentialFunction implements Curve {
   private final double base;
@@ -41,6 +54,20 @@ public final class ExponentialFunction implements Curve {
   private final double yOffset;
   private final double yScalar;
 
+  /**
+   * Create a new ExponentialFunction defined by the given constants.
+   *
+   * @param base
+   *     The base of the exponent, e.g. `b` from the main example
+   * @param xScalar
+   *     The scale factor applied to `x` in the exponent, e.g. `c` from the main example
+   * @param xOffset
+   *     The offset added to `x` in the exponent, e.g. `d` in the main example
+   * @param yScalar
+   *     The scale factor applied to the power term, e.g. `a` in the main example
+   * @param yOffset
+   *     The offset added to the power term, e.g. `e` in the main example
+   */
   public ExponentialFunction(
       double base, double xScalar, double xOffset, double yScalar, double yOffset) {
     this.base = base;
@@ -92,17 +119,17 @@ public final class ExponentialFunction implements Curve {
   }
 
   @Override
-  public Curve inverted() {
+  public Optional<Curve> inverted() {
     // Make sure we're not dividing by values that trivialize this function
     if (Math.abs(yScalar) < EPS || Math.abs(xScalar) < EPS || base <= 0.0) {
-      return null;
+      return Optional.empty();
     }
     double invXScalar = 1.0 / yScalar;
     double invXOffset = -yOffset / yScalar;
     double invYScalar = 1.0 / (xScalar * Math.log10(base));
     double invYOffset = -xOffset / xScalar;
 
-    return new LogGammaFunction(1.0, invXScalar, invXOffset, invYScalar, invYOffset);
+    return Optional.of(new LogGammaFunction(1.0, invXScalar, invXOffset, invYScalar, invYOffset));
   }
 
   @Override

@@ -31,6 +31,8 @@
  */
 package com.lhkbob.imaje.color.transform.curves;
 
+import java.util.Optional;
+
 /**
  * if no linear threshold (e.g. threshold == 0):
  * y = (a * x + b)^g + c
@@ -43,6 +45,22 @@ package com.lhkbob.imaje.color.transform.curves;
  * (y - f) / e = x
  *
  * and the new threshold between the two is y(d)
+ *
+ * UnitGammaFunction
+ * =================
+ *
+ * This curve is an optimized piecewise curve combining a linear function when `x` is near zero
+ * and becomes a gamma curve beyond that. The domain is restricted to `[0, 1]` and is assumed
+ * that the range of the function is within this unit range as well. This specialization is
+ * defined because it models the majority of non-linear transformations applied in the many RGB
+ * color space definitions. The exact form of this function is:
+ *
+ * ```
+ * f(x) = x > d ? (a * x + b)^gamma + c
+ * : e * x + f
+ * ```
+ *
+ * @author Michael Ludwig
  */
 public class UnitGammaFunction implements Curve {
   private final double gamma;
@@ -53,6 +71,24 @@ public class UnitGammaFunction implements Curve {
   private final double powerXScalar;
   private final double powerYOffset;
 
+  /**
+   * Create a new UnitGammaFunction with the given constant parameters.
+   *
+   * @param gamma
+   *     The exponent of the polynomial term
+   * @param powerXScalar
+   *     The scale factor applied to `x` in polynomial, e.g. `a` in the main example
+   * @param powerXOffset
+   *     The offset added to `x` in polynomial, e.g. `b` in the main example
+   * @param powerYOffset
+   *     The constant added to the polynomial, e.g. `c` in the main example
+   * @param linearXScalar
+   *     The slope of the linear piece, e.g. `e` in the main example
+   * @param linearYOffset
+   *     The constant added to the linear piece, e.g. `f` in the main example
+   * @param linearThreshold
+   *     The threshold for determining linear or gamma function, e.g. `d` in the main example
+   */
   public UnitGammaFunction(
       double gamma, double powerXScalar, double powerXOffset, double powerYOffset,
       double linearXScalar, double linearYOffset, double linearThreshold) {
@@ -63,24 +99,6 @@ public class UnitGammaFunction implements Curve {
     this.linearXScalar = linearXScalar;
     this.linearYOffset = linearYOffset;
     this.linearThreshold = linearThreshold;
-  }
-
-  // FIXME fix naming of these to not rely on underscores for clarity
-  public static UnitGammaFunction newCIE122_1996Curve(double gamma, double a, double b) {
-    return new UnitGammaFunction(gamma, a, b, 0.0, 0.0, 0.0, -b / a);
-  }
-
-  public static UnitGammaFunction newIEC61966_2_1Curve(
-      double gamma, double a, double b, double c, double d) {
-    return new UnitGammaFunction(gamma, a, b, 0.0, c, 0.0, d);
-  }
-
-  public static UnitGammaFunction newIEC61966_3Curve(double gamma, double a, double b, double c) {
-    return new UnitGammaFunction(gamma, a, b, c, 0.0, c, -b / a);
-  }
-
-  public static UnitGammaFunction newSimpleCurve(double gamma) {
-    return new UnitGammaFunction(gamma, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
   }
 
   @Override
@@ -137,10 +155,10 @@ public class UnitGammaFunction implements Curve {
   }
 
   @Override
-  public Curve inverted() {
+  public Optional<Curve> inverted() {
     // Make sure we're not dividing by values that trivialize this function
     if (Math.abs(gamma) < EPS || Math.abs(powerXScalar) < EPS) {
-      return null;
+      return Optional.empty();
     }
 
     double invG = 1.0 / gamma;
@@ -150,25 +168,27 @@ public class UnitGammaFunction implements Curve {
 
     if (Double.compare(linearThreshold, 0.0) == 0) {
       // No linear threshold to worry about
-      return new UnitGammaFunction(
-          invG, invPowerXScalar, invPowerXOffset, invPowerYOffset, 0.0, 0.0, 0.0);
+      return Optional
+          .of(new UnitGammaFunction(invG, invPowerXScalar, invPowerXOffset, invPowerYOffset, 0.0,
+              0.0, 0.0));
     } else {
       // Things are invertible if the linear portion has a positive slop and connects to the
       // gamma curve. If it doesn't connect, it's not continuous. If it's negative sloped, it could
       // technically still be invertible but it would require swapping the inequality direction.
       if (Math.abs(power(linearThreshold) - linear(linearThreshold)) >= CONNECTIVITY_EPS) {
         // Not continuous
-        return null;
+        return Optional.empty();
       }
       if (linearXScalar <= 0.0) {
         // Not a positive slope
-        return null;
+        return Optional.empty();
       }
 
       // Same inverse of the gamma curve as above, plus an inverted linear term
       // - the new threshold is the y coordinate of this function's linear threshold
-      return new UnitGammaFunction(invG, invPowerXScalar, invPowerXOffset, invPowerYOffset,
-          1.0 / linearXScalar, -linearYOffset / linearXScalar, linear(linearThreshold));
+      return Optional
+          .of(new UnitGammaFunction(invG, invPowerXScalar, invPowerXOffset, invPowerYOffset,
+              1.0 / linearXScalar, -linearYOffset / linearXScalar, linear(linearThreshold)));
     }
   }
 

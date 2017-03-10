@@ -34,14 +34,43 @@ package com.lhkbob.imaje.color.transform.curves;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
+ * SampledCurve
+ * ============
  *
+ * A data-driven function defined by irregular samples of some "real" function that this will
+ * approximate. Each sample specifies the `x` value and the output `y` value of this unknown
+ * function. The samples are stored compactly in parallel arrays.
+ *
+ * If the input arguments of the function are actually uniformly sampled within a domain range, i.e.
+ * the difference between adjacent elements is a constant, then {@link UniformlySampledCurve} is a
+ * more efficient option to represent the curve.
+ *
+ * @author Michael Ludwig
  */
 public class SampledCurve implements Curve {
   private final double[] xs;
   private final double[] ys;
 
+  /**
+   * Create a new SampledCurve that is defined by the samples stored in the paired
+   * `xs` and `ys` arrays. The two arrays must have the same length, and must have at least two
+   * values within them. For a given index `i`, `this.evaluate(xs[i]) == ys[i]` and intermediate
+   * domain values will be linearly interpolated between adjacent y values.
+   *
+   * The `xs` array must be sorted in ascending order. The arrays are cloned so the created
+   * curve cannot be modified after its instantiated.
+   *
+   * @param xs
+   *     The input values for each sample point of the true function
+   * @param ys
+   *     The output values for each sample point of the true function
+   * @throws IllegalArgumentException
+   *     if `xs.length != ys.length`, if they don't have at least two elements in them, or if `xs`
+   *     is not sorted
+   */
   public SampledCurve(double[] xs, double[] ys) {
     this(xs, ys, false);
   }
@@ -70,7 +99,7 @@ public class SampledCurve implements Curve {
     }
   }
 
-  public static int calculateStrictMonotonicity(double[] ys) {
+  static int calculateStrictMonotonicity(double[] ys) {
     if (ys.length < 2) {
       return 0;
     }
@@ -140,15 +169,15 @@ public class SampledCurve implements Curve {
   }
 
   @Override
-  public Curve inverted() {
+  public Optional<Curve> inverted() {
     // Check if the y values are monotonically increasing or decreasing
     int monotonicity = calculateStrictMonotonicity(ys);
     if (monotonicity == 0) {
       // not invertible
-      return null;
+      return Optional.empty();
     } else if (monotonicity > 0) {
       // Positively monotonic, so we can simply swap xs and ys variables to invert
-      return new SampledCurve(ys, xs, true);
+      return Optional.of(new SampledCurve(ys, xs, true));
     } else {
       // Negatively monotonic, so swap xs/ys and then reverse the xs/ys arrays to meet
       // requirement that the new xs array is positively ordered
@@ -159,7 +188,7 @@ public class SampledCurve implements Curve {
         reversedYs[ys.length - i - 1] = ys[i];
       }
 
-      return new SampledCurve(reversedYs, reversedXs, true);
+      return Optional.of(new SampledCurve(reversedYs, reversedXs, true));
     }
   }
 

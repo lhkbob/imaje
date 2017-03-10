@@ -31,14 +31,37 @@
  */
 package com.lhkbob.imaje.color.transform.curves;
 
+import java.util.Objects;
+import java.util.Optional;
+
 /**
+ * DomainWindow
+ * ============
  *
+ * A curve implementation that restricts another function to a specific domain range, but otherwise
+ * does not modify the behavior of the function.
+ *
+ * @author Michael Ludwig
  */
 public final class DomainWindow implements Curve {
   private final double domainMax;
   private final double domainMin;
   private final Curve f;
 
+  /**
+   * Create a new DomainWindow that wraps the curve `f` and restricts the domain to
+   * be within `domainMin` and `domainMax`, which must be inside `f`'s own declared domain.
+   *
+   * @param f
+   *     The curve function to wrap
+   * @param domainMin
+   *     The new domain lower boundary
+   * @param domainMax
+   *     The new domain upper boundary
+   * @throws IllegalArgumentException
+   *     if `domainMin` is less than `f`'s domain minimum or if `domainMax` is less than `f`'s
+   *     domain maximum
+   */
   public DomainWindow(Curve f, double domainMin, double domainMax) {
     if (domainMin < f.getDomainMin() || domainMax > f.getDomainMax()) {
       throw new IllegalArgumentException("Domain window does not restrict curve's domain");
@@ -59,7 +82,7 @@ public final class DomainWindow implements Curve {
     }
     DomainWindow c = (DomainWindow) o;
     return Double.compare(c.domainMax, domainMax) == 0
-        && Double.compare(c.domainMin, domainMin) == 0 && c.f.equals(f);
+        && Double.compare(c.domainMin, domainMin) == 0 && Objects.equals(c.f, f);
   }
 
   @Override
@@ -90,17 +113,18 @@ public final class DomainWindow implements Curve {
   }
 
   @Override
-  public Curve inverted() {
-    Curve invF = f.inverted();
-    if (invF == null) {
-      return null;
+  public Optional<Curve> inverted() {
+    Optional<Curve> invF = f.inverted();
+    if (!invF.isPresent()) {
+      return Optional.empty();
     }
-    // If invF is not null, then the inverse's domain will be the evaluation of this window's domain
+
+    // If invF is present, then the inverse's domain will be the evaluation of this window's domain
     double invDomainMin = f.evaluate(domainMin);
     double invDomainMax = f.evaluate(domainMax);
 
-    return new DomainWindow(invF, Math.min(invDomainMin, invDomainMax),
-        Math.max(invDomainMin, invDomainMax));
+    return Optional.of(new DomainWindow(invF.get(), Math.min(invDomainMin, invDomainMax),
+        Math.max(invDomainMin, invDomainMax)));
   }
 
   @Override
