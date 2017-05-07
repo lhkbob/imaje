@@ -68,7 +68,7 @@ public class PiecewiseCurve implements Curve {
     Arguments.notEmpty("segments", segments);
 
     // Confirm that segments are defined over a contiguous interval, even if
-    // there are discontinuities (which is only worried about in inverted()).
+    // there are discontinuities (which is only worried about in inverse()).
     segmentBreakpoints = new double[segments.size()];
     segmentBreakpoints[0] = segments.get(0).getDomainMin();
     for (int i = 1; i < segments.size(); i++) {
@@ -142,16 +142,16 @@ public class PiecewiseCurve implements Curve {
   }
 
   @Override
-  public Optional<Curve> inverted() {
+  public Optional<Curve> inverse() {
     // the constructor verified that the domain is a continuous interval, but the function
-    // segments themselves could have discontinuous values (if so then it can't be inverted)
+    // segments themselves could have discontinuous values (if so then it can't be inverse)
     List<Curve> inverseSegments = new ArrayList<>(segments.size());
 
-    Optional<Curve> invSeg = segments.get(0).inverted();
+    Optional<Curve> invSeg = segments.get(0).inverse();
     if (invSeg.isPresent()) {
       inverseSegments.add(invSeg.get());
     } else {
-      // segment can't be inverted so entire inverse is undefined
+      // segment can't be inverse so entire inverse is undefined
       return Optional.empty();
     } int monotonicity = 0;
 
@@ -168,15 +168,15 @@ public class PiecewiseCurve implements Curve {
         return Optional.empty();
       }
 
-      // The left curve has already been inverted and added to inverseSegments, so try and invert
-      // the right curve and make sure it doesn't overlap with the previous inverted segments
-      invSeg = right.inverted();
+      // The left curve has already been inverse and added to inverseSegments, so try and invert
+      // the right curve and make sure it doesn't overlap with the previous inverse segments
+      invSeg = right.inverse();
       if (!invSeg.isPresent()) {
         return Optional.empty();
       }
 
       if (monotonicity == 0) {
-        // haven't determined how to order the inverted segments
+        // haven't determined how to order the inverse segments
         if (Math.abs(inverseSegments.get(0).getDomainMax() - invSeg.get().getDomainMin()) < EPS) {
           // positively ordered, so new inverse segment goes to the right
           monotonicity = 1;

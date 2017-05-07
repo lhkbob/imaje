@@ -169,7 +169,7 @@ public class SampledCurve implements Curve {
   }
 
   @Override
-  public Optional<Curve> inverted() {
+  public Optional<Curve> inverse() {
     // Check if the y values are monotonically increasing or decreasing
     int monotonicity = calculateStrictMonotonicity(ys);
     if (monotonicity == 0) {

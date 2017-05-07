@@ -113,8 +113,8 @@ public final class DomainWindow implements Curve {
   }
 
   @Override
-  public Optional<Curve> inverted() {
-    Optional<Curve> invF = f.inverted();
+  public Optional<Curve> inverse() {
+    Optional<Curve> invF = f.inverse();
     if (!invF.isPresent()) {
       return Optional.empty();
     }

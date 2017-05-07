@@ -124,7 +124,7 @@ public class UniformlySampledCurve implements Curve {
   }
 
   @Override
-  public Optional<Curve> inverted() {
+  public Optional<Curve> inverse() {
     int monotonicity = SampledCurve.calculateStrictMonotonicity(values);
     if (monotonicity == 0) {
       // not invertible

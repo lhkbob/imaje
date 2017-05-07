@@ -119,7 +119,7 @@ public class LogGammaFunction implements Curve {
   }
 
   @Override
-  public Optional<Curve> inverted() {
+  public Optional<Curve> inverse() {
     // Make sure we're not dividing by values that trivialize this function
     if (Math.abs(gamma) < EPS || Math.abs(xScalar) < EPS || Math.abs(yScalar) < EPS) {
       return Optional.empty();

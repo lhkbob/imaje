@@ -119,7 +119,7 @@ public final class ExponentialFunction implements Curve {
   }
 
   @Override
-  public Optional<Curve> inverted() {
+  public Optional<Curve> inverse() {
     // Make sure we're not dividing by values that trivialize this function
     if (Math.abs(yScalar) < EPS || Math.abs(xScalar) < EPS || base <= 0.0) {
       return Optional.empty();

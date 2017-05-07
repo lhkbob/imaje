@@ -105,10 +105,10 @@ public class ComposedCurve implements Curve {
   }
 
   @Override
-  public Optional<Curve> inverted() {
+  public Optional<Curve> inverse() {
     // The inverse (if it exists) is equal to f^-1(g^-1)
-    Optional<Curve> invF = f.inverted();
-    Optional<Curve> invG = g.inverted();
+    Optional<Curve> invF = f.inverse();
+    Optional<Curve> invG = g.inverse();
 
     if (invF.isPresent() && invG.isPresent()) {
       return Optional.of(new ComposedCurve(invF.get(), invG.get()));

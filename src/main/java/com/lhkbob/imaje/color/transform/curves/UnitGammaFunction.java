@@ -155,7 +155,7 @@ public class UnitGammaFunction implements Curve {
   }
 
   @Override
-  public Optional<Curve> inverted() {
+  public Optional<Curve> inverse() {
     // Make sure we're not dividing by values that trivialize this function
     if (Math.abs(gamma) < EPS || Math.abs(powerXScalar) < EPS) {
       return Optional.empty();
@@ -184,7 +184,7 @@ public class UnitGammaFunction implements Curve {
         return Optional.empty();
       }
 
-      // Same inverse of the gamma curve as above, plus an inverted linear term
+      // Same inverse of the gamma curve as above, plus an inverse linear term
       // - the new threshold is the y coordinate of this function's linear threshold
       return Optional
           .of(new UnitGammaFunction(invG, invPowerXScalar, invPowerXOffset, invPowerYOffset,

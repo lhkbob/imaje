@@ -82,7 +82,7 @@ public interface Curve extends DoubleUnaryOperator {
    *
    * @return An Optional containing the inverse, or no result if the inverse could not be calculated
    */
-  Optional<Curve> inverted();
+  Optional<Curve> inverse();
 
   /**
    * Evaluates the function, via {@link #evaluate(double)} if `x` is within the domain range,

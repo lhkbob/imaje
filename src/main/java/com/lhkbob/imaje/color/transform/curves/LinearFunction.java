@@ -101,7 +101,7 @@ public final class LinearFunction implements Curve {
   }
 
   @Override
-  public Optional<Curve> inverted() {
+  public Optional<Curve> inverse() {
     if (Math.abs(slope) < EPS) {
       return Optional.empty();
     }
