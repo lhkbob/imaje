@@ -31,16 +31,31 @@
  */
 package com.lhkbob.imaje.color.transform;
 
-import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.Vector;
+import com.lhkbob.imaje.color.VectorSpace;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
+ * LookupTable
+ * ===========
  *
+ * LookupTable provides an explicit transformation between two multidimensional spaces. The each
+ * input dimension can have its own sampling resolution, termed grid size. Elements within the table
+ * are arranged in "row-major" order, where all values for the first sample of the first dimension
+ * come before values for later samples of the first dimension. Within that first sample's row,
+ * values are grouped by the first sample of the second dimension, etc. The final value for a given
+ * input coordinate is a packed vector of primitives, with dimensionality matching the output space.
+ *
+ * Multidimensional linear interpolation is used to sample the table and estimate a smoothed output
+ * value. If the table is two dimensional, this is equivalent to bilinear filtering. The layout and
+ * estimation algorithm are compatible with the lookup table used in ICC color profiles.
+ *
+ * @author Michael Ludwig
  */
-public class LookupTable<SA extends ColorSpace<A, SA>, A extends Color<A, SA>, SB extends ColorSpace<B, SB>, B extends Color<B, SB>> implements ColorTransform<SA, A, SB, B> {
+public class LookupTable<A extends Vector<A, SA>, SA extends VectorSpace<A, SA>, B extends Vector<B, SB>, SB extends VectorSpace<B, SB>> implements Transform<A, SA, B, SB> {
   private final int[] gridOffsets; // indexed by input channel
   private final int[] gridSizes;
   private final int[] hyperCubeOffsets; // indexed by hypercube index
@@ -48,10 +63,45 @@ public class LookupTable<SA extends ColorSpace<A, SA>, A extends Color<A, SA>, S
   private final SB outSpace;
   private final double[] values;
 
+  /**
+   * Create a lookup table used to transform between the two spaces. `gridSize` is the resolution of
+   * each input channel in the table. `values` is a multi-valued hypercube with dimensions equal to
+   * the channel count of `inSpace`. The layout of the `values` table is explained above.
+   *
+   * This is the same as the other constructor, where the `gridSizes` array is filled with the
+   * constant `gridSize`.
+   *
+   * @param inSpace
+   *     The input space
+   * @param outSpace
+   *     The output space
+   * @param gridSize
+   *     The resolution of each input dimension in the table
+   * @param values
+   *     The hypercube of values from input to output space
+   * @throws IllegalArgumentException
+   *     if `values` does not have the correct length given input, output space, and grid size
+   */
   public LookupTable(SA inSpace, SB outSpace, int gridSize, double[] values) {
     this(inSpace, outSpace, createSimpleSizes(inSpace.getChannelCount(), gridSize), values);
   }
 
+  /**
+   * Create a lookup table used to transform between the two spaces. `gridSizes` specifies the
+   * sampling resolution of each input dimension. Thus, its length must equal the channel count of
+   * the input space. The layout and size of the `values` table is explained above.
+   *
+   * @param inSpace
+   *     The input space
+   * @param outSpace
+   *     The output space
+   * @param gridSizes
+   *     The array of resolutions for each dimension of the input space
+   * @param values
+   *     The hypercube of values from input to output space
+   * @throws IllegalArgumentException
+   *     if `values` does not have the correct length given input, output space, and grid sizes
+   */
   public LookupTable(SA inSpace, SB outSpace, int[] gridSizes, double[] values) {
     Arguments.notNull("gridSizes", gridSizes);
     Arguments.notNull("values", values);
@@ -102,10 +152,8 @@ public class LookupTable<SA extends ColorSpace<A, SA>, A extends Color<A, SA>, S
   }
 
   @Override
-  public LookupTable<SB, B, SA, A> inverse() {
-    // FIXME implement this somehow, brute force reconstruction of another table? creation of
-    // an explicit inverse (e.g. also provided in ICC profile)
-    throw new UnsupportedOperationException("Inverse is unavailable for look up tables");
+  public Optional<LookupTable<B, SB, A, SA>> inverse() {
+    return Optional.empty();
   }
 
   @Override
@@ -120,8 +168,8 @@ public class LookupTable<SA extends ColorSpace<A, SA>, A extends Color<A, SA>, S
 
   @Override
   public String toString() {
-    return String.format("CLUT (in: %d, out: %d,  grid: %s,)", inSpace.getChannelCount(), outSpace.getChannelCount(),
-        Arrays.toString(gridSizes));
+    return String.format("CLUT (in: %d, out: %d,  grid: %s,)", inSpace.getChannelCount(),
+        outSpace.getChannelCount(), Arrays.toString(gridSizes));
   }
 
   @Override

@@ -31,36 +31,121 @@
  */
 package com.lhkbob.imaje.color.transform;
 
-import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.Vector;
+import com.lhkbob.imaje.color.VectorSpace;
 import com.lhkbob.imaje.util.Arguments;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
+ * MatrixTransform
+ * ===============
+ *
+ * MatrixTransform is a general purpose transformation between vector spaces that is represented
+ * as either:
+ *
+ * # `o = Mx`
+ * # `o = Mx + c`
+ *
+ * where `o` is the output vector, `x` is the input vector, and `M` is a matrix and `c` is
+ * an optional vector added to the result of the matrix multiplication.
+ *
+ * @author Michael Ludwig
  */
-public class MatrixTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI>, SO extends ColorSpace<O, SO>, O extends Color<O, SO>> implements ColorTransform<SI, I, SO, O> {
+public class MatrixTransform<I extends Vector<I, SI>, SI extends VectorSpace<I, SI>, O extends Vector<O, SO>, SO extends VectorSpace<O, SO>> implements Transform<I, SI, O, SO> {
   private final SI inputSpace;
   private final SO outputSpace;
 
   private final boolean isAffine;
   private final DenseMatrix64F matrix;
 
-  private final MatrixTransform<SO, O, SI, I> inverse;
+  private final MatrixTransform<O, SO, I, SI> inverse;
 
-  public MatrixTransform(SI inputSpace, SO outputSpace, int numRows, int numCols, double[] matrix) {
-    this(inputSpace, outputSpace, makeMatrix(numRows, numCols, matrix, null), false, true);
+  /**
+   * Create a new MatrixTransform between the two spaces. The `matrix` is represented in row-major
+   * order in the array, with a number of rows equal to the output space's channel count and a
+   * number of columns equal to the input space's channel count. This matrix is a linear operation
+   * between the input and output color spaces.
+   *
+   * The values within `matrix` are copied so future changes to that array will not affect the
+   * transform's state.
+   *
+   * @param inputSpace
+   *     The input vector space
+   * @param outputSpace
+   *     The output vector space
+   * @param matrix
+   *     The array containing a row-major matrix transform between input and output space
+   * @throws IllegalArgumentException
+   *     if the `matrix` array has incorrect length
+   */
+  public MatrixTransform(SI inputSpace, SO outputSpace, double[] matrix) {
+    this(inputSpace, outputSpace,
+        makeMatrix(outputSpace.getChannelCount(), inputSpace.getChannelCount(), matrix, null),
+        false, true);
   }
 
+  /**
+   * Create a new MatrixTransform between the two spaces. The `matrix` is represented in row-major
+   * order in the array, with a number of rows equal to the output space's channel count and a
+   * number of columns equal to the input space's channel count. This matrix is a linear operation
+   * between the input and output color spaces.
+   *
+   * If `translation` is not null, it represents an additional affine operation applied after the
+   * linear matrix operation. It must have a length equal to the output space's channel count. If
+   * `translation` is null, then no offset is applied to the result of the matrix multiplication.
+   *
+   * The values within `matrix` and `translation` are copied so future changes to these arrays will
+   * not affect the transform's state.
+   *
+   * @param inputSpace
+   *     The input vector space
+   * @param outputSpace
+   *     The output vector space
+   * @param matrix
+   *     The array containing a row-major matrix transform between input and output space
+   * @param translation
+   *     An optional vector to add to post-matrix multiplication
+   * @throws IllegalArgumentException
+   *     if the `matrix` or `translation` arrays have incorrect lengths
+   */
   public MatrixTransform(
-      SI inputSpace, SO outputSpace, int numRows, int numCols, double[] matrix,
-      @Arguments.Nullable double[] translation) {
-    this(inputSpace, outputSpace, makeMatrix(numRows, numCols, matrix, translation), true, true);
+      SI inputSpace, SO outputSpace, double[] matrix, @Arguments.Nullable double[] translation) {
+    this(inputSpace, outputSpace,
+        makeMatrix(outputSpace.getChannelCount(), inputSpace.getChannelCount(), matrix,
+            translation), true, true);
   }
 
+  /**
+   * Create a new MatrixTransform between the two spaces. The `matrix` is copied so that future
+   * modifications to the provided instance will not impact the state of the transform. The required
+   * dimensionality of the matrix is dependent on the channel counts of the two spaces and whether
+   * or not the transform acts as an affine transform instead of a linear transform.
+   *
+   * If `isAffine` is false, then `matrix` is a linear transform that has the number of rows equal
+   * to the channel count of `outputSpace`, and a number of columns equal to the channel count of
+   * `inputSpace`.
+   *
+   * If `isAffine` is true, then `matrix` represents an affine transform. To achieve this it has an
+   * additional row and column compared to the `isAffine = false` condition, and all input vectors
+   * are considered to have an additional component equal to 1 (and the value of the corresponding
+   * output vector's extra component is ignored).
+   *
+   * @param inputSpace
+   *     The input vector space
+   * @param outputSpace
+   *     The output vector space
+   * @param matrix
+   *     The matrix transformation between the two spaces
+   * @param isAffine
+   *     True if the matrix has dimensions corresponding to an affine transform
+   * @throws IllegalArgumentException
+   *     if the dimensions of `matrix` are incorrect
+   */
   public MatrixTransform(SI inputSpace, SO outputSpace, DenseMatrix64F matrix, boolean isAffine) {
     this(inputSpace, outputSpace, matrix, isAffine, false);
   }
@@ -81,7 +166,7 @@ public class MatrixTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI
     inverse = new MatrixTransform<>(this);
   }
 
-  private MatrixTransform(MatrixTransform<SO, O, SI, I> inverse) {
+  private MatrixTransform(MatrixTransform<O, SO, I, SI> inverse) {
     matrix = new DenseMatrix64F(inverse.matrix.numCols, inverse.matrix.numRows);
 
     if (matrix.numRows != matrix.numCols || !CommonOps.invert(inverse.matrix, matrix)) {
@@ -119,8 +204,8 @@ public class MatrixTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI
   }
 
   @Override
-  public MatrixTransform<SO, O, SI, I> inverse() {
-    return inverse;
+  public Optional<MatrixTransform<O, SO, I, SI>> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override
@@ -151,8 +236,8 @@ public class MatrixTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI
     }
     CommonOps.mult(matrix, in, out);
 
-    // output will be length output matrix, or 1 less (and we ignore the additional homogenous
-    // coord)
+    // output will be length output matrix, or 1 less (and we ignore the additional homogeneous
+    // coordinate)
     System.arraycopy(out.data, 0, output, 0, output.length);
     return true;
   }

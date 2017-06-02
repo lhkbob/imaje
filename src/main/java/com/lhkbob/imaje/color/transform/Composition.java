@@ -1,19 +1,39 @@
 package com.lhkbob.imaje.color.transform;
 
-import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.Vector;
+import com.lhkbob.imaje.color.VectorSpace;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Optional;
+
 /**
+ * Composition
+ * ===========
  *
+ * A Transform implementation that embodies the mathematical composition of two other functions.
+ *
+ * @author Michael Ludwig
  */
-public class Composition<SA extends ColorSpace<A, SA>, A extends Color<A, SA>, SB extends ColorSpace<B, SB>, B extends Color<B, SB>, SC extends ColorSpace<C, SC>, C extends Color<C, SC>> implements ColorTransform<SA, A, SC, C> {
-  private final ColorTransform<SA, A, SB, B> f;
-  private final ColorTransform<SB, B, SC, C> g;
+public class Composition<A extends Vector<A, SA>, SA extends VectorSpace<A, SA>, B extends Vector<B, SB>, SB extends VectorSpace<B, SB>, C extends Vector<C, SC>, SC extends VectorSpace<C, SC>> implements Transform<A, SA, C, SC> {
+  private final Transform<A, SA, B, SB> f;
+  private final Transform<B, SB, C, SC> g;
 
-  private final Composition<SC, C, SB, B, SA, A> inverse;
+  private final Composition<C, SC, B, SB, A, SA> inverse;
 
-  public Composition(ColorTransform<SA, A, SB, B> f, ColorTransform<SB, B, SC, C> g) {
+  /**
+   * Create a new composition that represents the net transform of `g(f(x))`. The output channel
+   * count of `f` and the input channel count of `g` must be equal.
+   *
+   * @param f
+   *     The first function in the composition
+   * @param g
+   *     The second function in the composition
+   * @throws NullPointerException
+   *     if `f` or `g` are null
+   * @throws IllegalArgumentException
+   *     if the output channels of `f` don't equal the input channels of `g`
+   */
+  public Composition(Transform<A, SA, B, SB> f, Transform<B, SB, C, SC> g) {
     Arguments.notNull("f", f);
     Arguments.notNull("g", g);
 
@@ -24,18 +44,25 @@ public class Composition<SA extends ColorSpace<A, SA>, A extends Color<A, SA>, S
     this.f = f;
     this.g = g;
 
-    inverse = new Composition<>(this);
+    Optional<? extends Transform<B, SB, A, SA>> fInv = f.inverse();
+    Optional<? extends Transform<C, SC, B, SB>> gInv = g.inverse();
+
+    if (fInv.isPresent() && gInv.isPresent()) {
+      inverse = new Composition<>(gInv.get(), fInv.get(), this);
+    } else {
+      inverse = null;
+    }
   }
 
-  private Composition(Composition<SC, C, SB, B, SA, A> inverse) {
-    f = inverse.g.inverse();
-    g = inverse.f.inverse();
+  private Composition(Transform<A, SA, B, SB> f, Transform<B, SB, C, SC> g, Composition<C, SC, B, SB, A, SA> inverse) {
+    this.f = f;
+    this.g = g;
     this.inverse = inverse;
   }
 
   @Override
-  public Composition<SC, C, SB, B, SA, A> inverse() {
-    return inverse;
+  public Optional<Composition<C, SC, B, SB, A, SA>> inverse() {
+    return Optional.ofNullable(inverse);
   }
 
   @Override

@@ -31,36 +31,65 @@
  */
 package com.lhkbob.imaje.color.transform;
 
-import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.Vector;
+import com.lhkbob.imaje.color.VectorSpace;
 import com.lhkbob.imaje.util.Arguments;
 
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
+ * Identity
+ * ========
  *
+ * The Identity transform returns the input channel values without modification, although it does
+ * allow changing the vector space for the output space. If this is done, this transformation acts
+ * much like a type-casting operation.
+ *
+ * The identity transform has several modes of operation depending on the dimensionality of the
+ * input and output spaces. If both spaces have the same dimensionality, then the input values are
+ * passed through unmodified. If the input space is 1D, but the output space has more, then the
+ * input value is used for every output channel value. If the output space is 1D, but the input
+ * space has a higher dimensionality, then the output value is set to the average of the input
+ * channels.
+ *
+ * @author Michael Ludwig
  */
-public class Identity<SA extends ColorSpace<A, SA>, A extends Color<A, SA>, SB extends ColorSpace<B, SB>, B extends Color<B, SB>> implements ColorTransform<SA, A, SB, B> {
+public class Identity<A extends Vector<A, SA>, SA extends VectorSpace<A, SA>, B extends Vector<B, SB>, SB extends VectorSpace<B, SB>> implements Transform<A, SA, B, SB> {
   private final SA inSpace;
   private final SB outSpace;
-  private final Identity<SB, B, SA, A> inverse;
+  private final Identity<B, SB, A, SA> inverse;
 
+  /**
+   * Create a new Identity transform that goes between the given input and output vector spaces.
+   * If both spaces have dimensionality above one, then they must have the same dimensionality.
+   * If either space has a dimensionality of one, then the identity transformation behaves in
+   * a modified form, as described above.
+   *
+   * @param inSpace The input space
+   * @param outSpace The output space
+   */
   public Identity(SA inSpace, SB outSpace) {
-    Arguments.equals("channel count", inSpace.getChannelCount(), outSpace.getChannelCount());
+    if (inSpace.getChannelCount() != 1 && outSpace.getChannelCount() != 1) {
+      Arguments.equals("channel count", inSpace.getChannelCount(), outSpace.getChannelCount());
+    }
+    // else if either space only has a single channel that will be duplicated or averaged
+
     this.inSpace = inSpace;
     this.outSpace = outSpace;
     inverse = new Identity<>(this);
   }
 
-  private Identity(Identity<SB, B, SA, A> inverse) {
+  private Identity(Identity<B, SB, A, SA> inverse) {
     inSpace = inverse.getOutputSpace();
     outSpace = inverse.getInputSpace();
     this.inverse = inverse;
   }
 
   @Override
-  public Identity<SB, B, SA, A> inverse() {
-    return inverse;
+  public Optional<Identity<B, SB, A, SA>> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override
@@ -78,8 +107,20 @@ public class Identity<SA extends ColorSpace<A, SA>, A extends Color<A, SA>, SB e
     Arguments.equals("input.length", inSpace.getChannelCount(), input.length);
     Arguments.equals("output.length", outSpace.getChannelCount(), output.length);
 
-    // Copy input to output
-    System.arraycopy(input, 0, output, 0, input.length);
+    if (input.length == output.length) {
+      // Copy input to output
+      System.arraycopy(input, 0, output, 0, input.length);
+    } else if (input.length == 1) {
+      // Set every channel in output equal to input[0]
+      Arrays.fill(output, input[0]);
+    } else {
+      // Set single output channel to average of input
+      double v = 0;
+      for (int i = 0; i < input.length; i++) {
+        v += input[i];
+      }
+      output[0] = v / input.length;
+    }
     return true;
   }
 

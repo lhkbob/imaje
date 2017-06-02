@@ -31,8 +31,8 @@
  */
 package com.lhkbob.imaje.color.transform;
 
-import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.Vector;
+import com.lhkbob.imaje.color.VectorSpace;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.util.Functions;
@@ -40,36 +40,82 @@ import com.lhkbob.imaje.util.Functions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
+ * CurveTransform
+ * ==============
  *
+ * CurveTransform is a Transform implementation that creates a multidimensional function by using
+ * a Curve for each dimension. Each dimension or channel can have its own separate Curve function,
+ * or curves can be reused to transform each channel the same way.
+ *
+ * @author Michael Ludwig
  */
-public class CurveTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI>, SO extends ColorSpace<O, SO>, O extends Color<O, SO>> implements ColorTransform<SI, I, SO, O> {
+public class CurveTransform<I extends Vector<I, SI>, SI extends VectorSpace<I, SI>, O extends Vector<O, SO>, SO extends VectorSpace<O, SO>> implements Transform<I, SI, O, SO> {
   private final SI inputSpace;
   private final SO outputSpace;
 
   private final List<Curve> curves;
-  private final CurveTransform<SO, O, SI, I> inverse;
+  private final CurveTransform<O, SO, I, SI> inverse;
 
+  /**
+   * Create a new CurveTransform that goes between `inputSpace` and `outputSpace` by using a
+   * provided {@link Curve} for each channel, specified in `curves`. The channel count for the input
+   * and output spaces must be the same length as `curves`. Each Curve in `curves` is the
+   * transformation applies to that specific channel. If the curve for a given channel is `null`,
+   * then it is assumed the identity transform is used for that channel.
+   *
+   * The `curves` list is copied so the created instance is properly immutable.
+   *
+   * @param inputSpace
+   *     The input vector space of the transform
+   * @param outputSpace
+   *     The output vector space of the transform
+   * @param curves
+   *     The curve transformations for each channel
+   * @throws IllegalArgumentException
+   *     if the channel counts of the input and output spaces do not equal the length of the
+   *     `curves` list
+   */
   public CurveTransform(SI inputSpace, SO outputSpace, List<? extends Curve> curves) {
     Arguments.equals("inputSpace.getChannelCount()", curves.size(), inputSpace.getChannelCount());
     Arguments.equals("outputSpace.getChannelCount()", curves.size(), outputSpace.getChannelCount());
     this.inputSpace = inputSpace;
     this.outputSpace = outputSpace;
     this.curves = new ArrayList<>(curves);
-    inverse = new CurveTransform<>(this);
+
+    CurveTransform<O, SO, I, SI> inverse = null;
+    List<Curve> inverseCurves = new ArrayList<>(curves.size());
+    for (Curve c : curves) {
+      if (c == null) {
+        // Pass through on this channel
+        inverseCurves.add(null);
+      } else {
+        Optional<Curve> invC = c.inverse();
+        if (invC.isPresent()) {
+          inverseCurves.add(invC.get());
+        } else {
+          // Can't calculate an inverse for each channel
+          break;
+        }
+      }
+    }
+
+    if (inverseCurves.size() == curves.size()) {
+      // All channels were inverted properly
+      inverse = new CurveTransform<>(inverseCurves, this);
+    }
+
+    this.inverse = inverse;
   }
 
-  private CurveTransform(CurveTransform<SO, O, SI, I> inverse) {
+  private CurveTransform(List<Curve> curves, CurveTransform<O, SO, I, SI> inverse) {
     this.inverse = inverse;
     inputSpace = inverse.getOutputSpace();
     outputSpace = inverse.getInputSpace();
 
-    curves = new ArrayList<>(inverse.curves.size());
-    for (Curve c : inverse.curves) {
-      Curve invC = (c == null ? null : c.inverted());
-      curves.add(invC);
-    }
+    this.curves = curves;
   }
 
   @Override
@@ -96,8 +142,8 @@ public class CurveTransform<SI extends ColorSpace<I, SI>, I extends Color<I, SI>
   }
 
   @Override
-  public CurveTransform<SO, O, SI, I> inverse() {
-    return inverse;
+  public Optional<CurveTransform<O, SO, I, SI>> inverse() {
+    return Optional.ofNullable(inverse);
   }
 
   @Override

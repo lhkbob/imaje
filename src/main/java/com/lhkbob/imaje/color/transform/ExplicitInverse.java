@@ -1,10 +1,11 @@
 package com.lhkbob.imaje.color.transform;
 
-import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.color.ColorSpace;
+import com.lhkbob.imaje.color.Vector;
+import com.lhkbob.imaje.color.VectorSpace;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * ExplicitInverse
@@ -20,9 +21,9 @@ import java.util.Objects;
  *
  * @author Michael Ludwig
  */
-public class ExplicitInverse<SI extends ColorSpace<I, SI>, I extends Color<I, SI>, SO extends ColorSpace<O, SO>, O extends Color<O, SO>> implements ColorTransform<SI, I, SO, O> {
-  private final ColorTransform<SI, I, SO, O> forward;
-  private final ExplicitInverse<SO, O, SI, I> inverse;
+public class ExplicitInverse<I extends Vector<I, SI>, SI extends VectorSpace<I, SI>, O extends Vector<O, SO>, SO extends VectorSpace<O, SO>> implements Transform<I, SI, O, SO> {
+  private final Transform<I, SI, O, SO> forward;
+  private final ExplicitInverse<O, SO, I, SI> inverse;
 
   /**
    * Create a new ExplicitInverse transform that wraps `forward` but reports `inverse` when
@@ -36,7 +37,7 @@ public class ExplicitInverse<SI extends ColorSpace<I, SI>, I extends Color<I, SI
    *     if `forward` or `inverse` are null
    */
   public ExplicitInverse(
-      ColorTransform<SI, I, SO, O> forward, ColorTransform<SO, O, SI, I> inverse) {
+      Transform<I, SI, O, SO> forward, Transform<O, SO, I, SI> inverse) {
     Arguments.notNull("forward", forward);
     Arguments.notNull("inverse", inverse);
 
@@ -45,14 +46,14 @@ public class ExplicitInverse<SI extends ColorSpace<I, SI>, I extends Color<I, SI
   }
 
   private ExplicitInverse(
-      ExplicitInverse<SO, O, SI, I> inverse, ColorTransform<SI, I, SO, O> forward) {
+      ExplicitInverse<O, SO, I, SI> inverse, Transform<I, SI, O, SO> forward) {
     this.forward = forward;
     this.inverse = inverse;
   }
 
   @Override
-  public ExplicitInverse<SO, O, SI, I> inverse() {
-    return inverse;
+  public Optional<ExplicitInverse<O, SO, I, SI>> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override
