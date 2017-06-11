@@ -56,8 +56,13 @@ public class CIE implements ColorSpace<Lab<CIE>, CIE> {
   }
 
   @Override
-  public CIELABToXYZ getXYZTransform() {
+  public CIELABToXYZ getTransformToXYZ() {
     return toXYZ;
+  }
+
+  @Override
+  public XYZToCIELAB getTransformFromXYZ() {
+    return toXYZ.inverse().orElseThrow(UnsupportedOperationException::new);
   }
 
   @Override

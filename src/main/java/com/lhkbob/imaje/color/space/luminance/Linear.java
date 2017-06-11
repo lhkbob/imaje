@@ -56,8 +56,13 @@ public class Linear implements ColorSpace<Luminance<Linear>, Linear> {
   }
 
   @Override
-  public LuminanceToXYZ getXYZTransform() {
+  public LuminanceToXYZ getTransformToXYZ() {
     return toXYZ;
+  }
+
+  @Override
+  public XYZToLuminance getTransformFromXYZ() {
+    return toXYZ.inverse().orElseThrow(UnsupportedOperationException::new);
   }
 
   @Override

@@ -39,7 +39,7 @@ public final class CIE31 extends XYZSpace<CIE31> {
   }
 
   @Override
-  public Identity<XYZ<CIE31>, CIE31, XYZ<CIE31>, CIE31> getXYZTransform() {
+  public Identity<XYZ<CIE31>, CIE31, XYZ<CIE31>, CIE31> getTransformToXYZ() {
     return identity;
   }
 

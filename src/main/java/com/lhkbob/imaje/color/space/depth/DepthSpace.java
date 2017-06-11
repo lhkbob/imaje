@@ -28,12 +28,26 @@ public abstract class DepthSpace<S extends DepthSpace<S>> implements VectorSpace
   /**
    * @return The transformation from this depth space to the original Scene space.
    */
-  public abstract Transform<Depth<S>, S, Depth<Scene>, Scene> getSceneTransform();
+  public abstract Transform<Depth<S>, S, Depth<Scene>, Scene> getTransformToScene();
 
   /**
    * @return A visualization transformation to turn the depth image into a colored image.
    */
-  public abstract Transform<Depth<S>, S, RGB<SRGB>, SRGB> getRGBTransform();
+  public abstract Transform<Depth<S>, S, RGB<SRGB>, SRGB> getTransformToRGB();
+
+  /**
+   * @return The transformation from the original Scene space to this depth space
+   */
+  public Transform<Depth<Scene>, Scene, Depth<S>, S> getTransformFromScene() {
+    return getTransformToScene().inverse().orElseThrow(UnsupportedOperationException::new);
+  }
+
+  /**
+   * @return The transformation from a colored image to this depth space
+   */
+  public Transform<RGB<SRGB>, SRGB, Depth<S>, S> getTransformFromRGB() {
+    return getTransformToRGB().inverse().orElseThrow(UnsupportedOperationException::new);
+  }
 
   @Override
   public int getChannelCount() {

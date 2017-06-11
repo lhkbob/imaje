@@ -71,12 +71,17 @@ public class ZBuffer extends DepthSpace<ZBuffer> {
   }
 
   @Override
-  public InversePerspectiveTransform getSceneTransform() {
+  public InversePerspectiveTransform getTransformToScene() {
     return toScene;
   }
 
   @Override
-  public Transform<Depth<ZBuffer>, ZBuffer, RGB<SRGB>, SRGB> getRGBTransform() {
+  public PerspectiveTransform getTransformFromScene() {
+    return toScene.inverse().orElseThrow(UnsupportedOperationException::new);
+  }
+
+  @Override
+  public Transform<Depth<ZBuffer>, ZBuffer, RGB<SRGB>, SRGB> getTransformToRGB() {
     return toRGB;
   }
 

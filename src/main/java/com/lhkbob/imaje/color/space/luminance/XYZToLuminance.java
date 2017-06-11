@@ -38,6 +38,7 @@ import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * XYZToLuminance
@@ -88,8 +89,8 @@ public class XYZToLuminance implements Transform<XYZ<CIE31>, CIE31, Luminance<Li
   }
 
   @Override
-  public LuminanceToXYZ inverse() {
-    return inverse();
+  public Optional<LuminanceToXYZ> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override

@@ -35,6 +35,8 @@ import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.HLS;
 import com.lhkbob.imaje.color.RGB;
 
+import java.util.Optional;
+
 /**
  * RGBToHLS
  * ========
@@ -63,8 +65,8 @@ public class RGBToHLS<S extends ColorSpace<RGB<S>, S>> extends AbstractRGBToHueT
   }
 
   @Override
-  public HLSToRGB<S> inverse() {
-    return inverse;
+  public Optional<HLSToRGB<S>> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override

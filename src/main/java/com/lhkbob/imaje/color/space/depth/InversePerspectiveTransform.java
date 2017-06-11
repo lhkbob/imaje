@@ -5,6 +5,7 @@ import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * InversePerspectiveTransform
@@ -36,8 +37,8 @@ public class InversePerspectiveTransform implements Transform<Depth<ZBuffer>, ZB
   }
 
   @Override
-  public PerspectiveTransform inverse() {
-    return inverse;
+  public Optional<PerspectiveTransform> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override

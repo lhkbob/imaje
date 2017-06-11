@@ -85,12 +85,30 @@ public abstract class RGBSpace<S extends RGBSpace<S, T>, T extends XYZSpace<T>> 
       toCIE31 = (Transform) toXYZ;
     } else {
       // Compose toXYZ with a transform going from T to CIE31
-      toCIE31 = new Composition<>(toXYZ, toXYZ.getOutputSpace().getXYZTransform());
+      toCIE31 = new Composition<>(toXYZ, toXYZ.getOutputSpace().getTransformToXYZ());
     }
   }
 
-  public RGBToXYZ<S, T> getRGBToXYZTransform() {
+  /**
+   * Get the color transformation between a `RGB` in S and the XYZ space, `T`, that this space is defined
+   * against. If `T` is equal to {@link CIE31#SPACE} then the returned transform is equal to {@link
+   * #getTransformToXYZ()} ()}.
+   *
+   * @return The transform between a RGB representation and the `T` color space
+   */
+  public RGBToXYZ<S, T> getDirectTransformToXYZ() {
     return toXYZ;
+  }
+
+  /**
+   * Get the color transformation between a `XYZ` in `T`, that this RGB space is defined against, to
+   * this  RGB space, `S`. If `T` is equal to {@link CIE31#SPACE} then the returned transform is
+   * equal to {@link #getTransformFromXYZ()} ()}.
+   *
+   * @return The transform between a RGB representation and the `T` color space
+   */
+  public XYZToRGB<T, S> getDirectTransformFromXYZ() {
+    return toXYZ.inverse().orElseThrow(UnsupportedOperationException::new);
   }
 
   @Override
@@ -100,7 +118,7 @@ public abstract class RGBSpace<S extends RGBSpace<S, T>, T extends XYZSpace<T>> 
   }
 
   @Override
-  public Transform<RGB<S>, S, XYZ<CIE31>, CIE31> getXYZTransform() {
+  public Transform<RGB<S>, S, XYZ<CIE31>, CIE31> getTransformToXYZ() {
     return toCIE31;
   }
 

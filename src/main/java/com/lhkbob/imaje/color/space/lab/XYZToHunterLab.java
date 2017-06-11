@@ -38,6 +38,7 @@ import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * XYZToHunterLab
@@ -95,8 +96,8 @@ public class XYZToHunterLab implements Transform<XYZ<CIE31>, CIE31, Lab<Hunter>,
   }
 
   @Override
-  public HunterLabToXYZ inverse() {
-    return inverse;
+  public Optional<HunterLabToXYZ> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override

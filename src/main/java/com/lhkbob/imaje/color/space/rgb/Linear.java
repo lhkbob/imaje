@@ -95,14 +95,14 @@ public class Linear<S extends RGBSpace<S, CIE31>> implements ColorSpace<RGB<Line
     Arguments.notNull("rgbSpace", rgbSpace);
     this.rgbSpace = rgbSpace;
 
-    RGBToXYZ<S, CIE31> baseTransform = rgbSpace.getRGBToXYZTransform();
+    RGBToXYZ<S, CIE31> baseTransform = rgbSpace.getDirectTransformToXYZ();
     // The gamma curve in baseTransform goes from non-linear to linear, but we want the curve
     // that goes from linear to non-linear for use with linearTransform.
     Curve invGamma;
     if (baseTransform.getDecodingGammaFunction() == null) {
       invGamma = null;
     } else {
-      Optional<Curve> encoder = baseTransform.getDecodingGammaFunction().inverted();
+      Optional<Curve> encoder = baseTransform.getDecodingGammaFunction().inverse();
       if (!encoder.isPresent()) {
         throw new IllegalStateException("Gamma curve is not invertable");
       }
@@ -129,7 +129,7 @@ public class Linear<S extends RGBSpace<S, CIE31>> implements ColorSpace<RGB<Line
    * @return The color transform from the non-linear RGB space to the linearized coordinate system
    */
   public Transform<RGB<S>, S, RGB<Linear<S>>, Linear<S>> getGammaDecoder() {
-    return linearTransform.inverse();
+    return linearTransform.inverse().orElseThrow(UnsupportedOperationException::new);
   }
 
   @Override
@@ -138,7 +138,7 @@ public class Linear<S extends RGBSpace<S, CIE31>> implements ColorSpace<RGB<Line
   }
 
   @Override
-  public Transform<RGB<Linear<S>>, Linear<S>, XYZ<CIE31>, CIE31> getXYZTransform() {
+  public Transform<RGB<Linear<S>>, Linear<S>, XYZ<CIE31>, CIE31> getTransformToXYZ() {
     return xyzTransform;
   }
 

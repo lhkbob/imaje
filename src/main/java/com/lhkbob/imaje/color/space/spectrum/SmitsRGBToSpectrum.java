@@ -10,6 +10,7 @@ import com.lhkbob.imaje.util.Functions;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * SmitsRGBToSpectrum
@@ -102,9 +103,9 @@ public class SmitsRGBToSpectrum<SI extends ColorSpace<RGB<SI>, SI>, SO extends S
   }
 
   @Override
-  public Transform<Spectrum<SO>, SO, RGB<SI>, SI> inverse() {
+  public Optional<? extends Transform<Spectrum<SO>, SO, RGB<SI>, SI>> inverse() {
     // Do not support an inverse
-    return null;
+    return Optional.empty();
   }
 
   @Override

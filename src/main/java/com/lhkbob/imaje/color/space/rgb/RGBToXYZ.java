@@ -46,6 +46,7 @@ import org.ejml.data.FixedMatrix3_64F;
 import org.ejml.data.FixedMatrix3x3_64F;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * RGBToXYZ
@@ -100,9 +101,9 @@ public class RGBToXYZ<I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<
         // There is no gamma to invert
         inverse = new XYZToRGB<>(this, xyzToRGB, null);
       } else {
-        Curve encodingGamma = decodingGammaCurve.inverted();
-        if (encodingGamma != null) {
-          inverse = new XYZToRGB<>(this, xyzToRGB, encodingGamma);
+        Optional<Curve> encodingGamma = decodingGammaCurve.inverse();
+        if (encodingGamma.isPresent()) {
+          inverse = new XYZToRGB<>(this, xyzToRGB, encodingGamma.get());
         } else {
           inverse = null;
         }
@@ -272,8 +273,8 @@ public class RGBToXYZ<I extends ColorSpace<RGB<I>, I>, O extends ColorSpace<XYZ<
   }
 
   @Override
-  public XYZToRGB<O, I> inverse() {
-    return inverse;
+  public Optional<XYZToRGB<O, I>> inverse() {
+    return Optional.ofNullable(inverse);
   }
 
   @Override

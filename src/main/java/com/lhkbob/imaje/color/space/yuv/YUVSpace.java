@@ -51,7 +51,7 @@ public class YUVSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<YUV
 
   private final S rgbSpace;
 
-  private final DifferenceChromaToRGB<YUVSpace<S>, YUV<S>, S> toRGB;
+  private final DifferenceChromaToRGB<YUV<S>, YUVSpace<S>, S> toRGB;
   private final Transform<YUV<S>, YUVSpace<S>, XYZ<CIE31>, CIE31> toXYZ;
 
   /**
@@ -72,7 +72,7 @@ public class YUVSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<YUV
 
     this.rgbSpace = rgbSpace;
     toRGB = new DifferenceChromaToRGB<>(this, rgbSpace, kb, kr, 0.436, 0.615);
-    toXYZ = new Composition<>(toRGB, rgbSpace.getXYZTransform());
+    toXYZ = new Composition<>(toRGB, rgbSpace.getTransformToXYZ());
   }
 
   /**
@@ -85,8 +85,12 @@ public class YUVSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<YUV
   /**
    * @return A transformation from YUV to RGB.
    */
-  public DifferenceChromaToRGB<YUVSpace<S>, YUV<S>, S> getRGBTransform() {
+  public DifferenceChromaToRGB<YUV<S>, YUVSpace<S>, S> getTransformToRGB() {
     return toRGB;
+  }
+
+  public RGBToDifferenceChroma<S, YUV<S>, YUVSpace<S>> getTransformFromRGB() {
+    return toRGB.inverse().orElseThrow(UnsupportedOperationException::new);
   }
 
   @Override
@@ -95,7 +99,7 @@ public class YUVSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<YUV
   }
 
   @Override
-  public Transform<YUV<S>, YUVSpace<S>, XYZ<CIE31>, CIE31> getXYZTransform() {
+  public Transform<YUV<S>, YUVSpace<S>, XYZ<CIE31>, CIE31> getTransformToXYZ() {
     return toXYZ;
   }
 

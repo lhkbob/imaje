@@ -54,19 +54,30 @@ public class YxySpace<S extends ColorSpace<XYZ<S>, S>> implements ColorSpace<Yxy
       toXYZ31 = (Transform) toXYZ;
     } else {
       // Compose toXYZ with the non-CIE31 XYZ space's transform to CIE31
-      toXYZ31 = new Composition<>(toXYZ, space.getXYZTransform());
+      toXYZ31 = new Composition<>(toXYZ, space.getTransformToXYZ());
     }
   }
 
   /**
    * Get the color transformation between a `Yxy` and the XYZ space, `S`, that this space is defined
    * against. If `S` is equal to {@link CIE31#SPACE} then the returned transform is equal to {@link
-   * #getXYZTransform()}.
+   * #getTransformToXYZ()}.
    *
    * @return The transform between a Yxy representation and the `S` color space
    */
-  public YxyToXYZ<S> getDirectXYZTransform() {
+  public YxyToXYZ<S> getDirectTransformToXYZ() {
     return toXYZ;
+  }
+
+  /**
+   * Get the color transformation between a `XYZ` in `S`, that this Yxy space is defined against, to
+   * this  Yxy space. If `S` is equal to {@link CIE31#SPACE} then the returned transform is
+   * equal to {@link #getTransformFromXYZ()} ()}.
+   *
+   * @return The transform between a RGB representation and the `T` color space
+   */
+  public XYZToYxy<S> getDirectTransformFromXYZ() {
+    return toXYZ.inverse().orElseThrow(UnsupportedOperationException::new);
   }
 
   /**
@@ -82,7 +93,7 @@ public class YxySpace<S extends ColorSpace<XYZ<S>, S>> implements ColorSpace<Yxy
   }
 
   @Override
-  public Transform<Yxy<S>, YxySpace<S>, XYZ<CIE31>, CIE31> getXYZTransform() {
+  public Transform<Yxy<S>, YxySpace<S>, XYZ<CIE31>, CIE31> getTransformToXYZ() {
     return toXYZ31;
   }
 

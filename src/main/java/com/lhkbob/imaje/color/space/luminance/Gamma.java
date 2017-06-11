@@ -77,7 +77,7 @@ public class Gamma implements ColorSpace<Luminance<Gamma>, Gamma> {
   }
 
   @Override
-  public Transform<Luminance<Gamma>, Gamma, XYZ<CIE31>, CIE31> getXYZTransform() {
+  public Transform<Luminance<Gamma>, Gamma, XYZ<CIE31>, CIE31> getTransformToXYZ() {
     return toXYZ;
   }
 

@@ -56,8 +56,13 @@ public class Hunter implements ColorSpace<Lab<Hunter>, Hunter> {
   }
 
   @Override
-  public HunterLabToXYZ getXYZTransform() {
+  public HunterLabToXYZ getTransformToXYZ() {
     return toXYZ;
+  }
+
+  @Override
+  public XYZToHunterLab getTransformFromXYZ() {
+    return toXYZ.inverse().orElseThrow(UnsupportedOperationException::new);
   }
 
   @Override

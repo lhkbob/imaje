@@ -7,10 +7,10 @@ import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.Yxy;
 import com.lhkbob.imaje.color.space.rgb.CustomRGBSpace;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.color.transform.ExplicitInverse;
 import com.lhkbob.imaje.color.transform.Illuminants;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 import com.lhkbob.imaje.color.transform.curves.UniformlySampledCurve;
 import com.lhkbob.imaje.util.Arguments;
@@ -136,8 +136,9 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
     SmitsRGBToSpectrum<R, S> rgbToSpectrum = new SmitsRGBToSpectrum<>(rgbSpace, (S) this,
         whiteSpectrum, cyanSpectrum, magentaSpectrum, yellowSpectrum, redSpectrum, greenSpectrum,
         blueSpectrum);
+
     Transform<XYZ<CIE31>, CIE31, Spectrum<S>, S> fromXYZ = new Composition<>(
-        rgbSpace.getXYZTransform().inverse(), rgbToSpectrum);
+        rgbSpace.getTransformFromXYZ(), rgbToSpectrum);
 
     this.toXYZ = new ExplicitInverse<>(toXYZ, fromXYZ);
   }
@@ -175,7 +176,7 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
 
   /**
    * Convenience wrapper about {@link #readSmitsSpectrumBasis(URI)} that generates a URI
-   * from a call `owner`'s {@link Class#getResource(String)}.
+   * from a call to `owner`'s {@link Class#getResource(String)}.
    *
    * @param owner The class that the basis resource is relative to
    * @param name The name of the resource
@@ -340,7 +341,7 @@ public abstract class SpectrumSpace<S extends SpectrumSpace<S>> implements Color
   }
 
   @Override
-  public Transform<Spectrum<S>, S, XYZ<CIE31>, CIE31> getXYZTransform() {
+  public Transform<Spectrum<S>, S, XYZ<CIE31>, CIE31> getTransformToXYZ() {
     return toXYZ;
   }
 

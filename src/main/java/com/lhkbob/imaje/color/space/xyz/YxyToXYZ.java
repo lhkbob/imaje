@@ -38,6 +38,7 @@ import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * YxyToXYZ
@@ -86,8 +87,8 @@ public class YxyToXYZ<S extends ColorSpace<XYZ<S>, S>> implements Transform<Yxy<
   }
 
   @Override
-  public XYZToYxy<S> inverse() {
-    return inverse;
+  public Optional<XYZToYxy<S>> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override

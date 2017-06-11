@@ -46,7 +46,7 @@ public abstract class Color<C extends Color<C, S>, S extends ColorSpace<C, S>> e
    */
   @SuppressWarnings("unchecked")
   public XYZ<CIE31> toXYZ() {
-    return getColorSpace().getXYZTransform().apply((C) this);
+    return getColorSpace().getTransformToXYZ().apply((C) this);
   }
 
   /**
@@ -57,6 +57,18 @@ public abstract class Color<C extends Color<C, S>, S extends ColorSpace<C, S>> e
    */
   @SuppressWarnings("unchecked")
   public boolean toXYZ(XYZ<CIE31> result) {
-    return getColorSpace().getXYZTransform().apply((C) this, result);
+    return getColorSpace().getTransformToXYZ().apply((C) this, result);
+  }
+
+  /**
+   * Convert the given `xyz` color into the color space of this instance and store the calculated
+   * values into this instance.
+   *
+   * @param xyz The XYZ color to convert
+   * @return The gamut response from the XYZ transformation
+   */
+  @SuppressWarnings("unchecked")
+  public boolean fromXYZ(XYZ<CIE31> xyz) {
+    return getColorSpace().getTransformFromXYZ().apply(xyz, (C) this);
   }
 }

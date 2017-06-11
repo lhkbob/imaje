@@ -35,12 +35,12 @@ public final class Scene extends DepthSpace<Scene> {
   }
 
   @Override
-  public Transform<Depth<Scene>, Scene, Depth<Scene>, Scene> getSceneTransform() {
+  public Transform<Depth<Scene>, Scene, Depth<Scene>, Scene> getTransformToScene() {
     return identity;
   }
 
   @Override
-  public Transform<Depth<Scene>, Scene, RGB<SRGB>, SRGB> getRGBTransform() {
+  public Transform<Depth<Scene>, Scene, RGB<SRGB>, SRGB> getTransformToRGB() {
     return toRGB;
   }
 

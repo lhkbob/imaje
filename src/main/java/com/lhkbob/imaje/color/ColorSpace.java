@@ -1,7 +1,7 @@
 package com.lhkbob.imaje.color;
 
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 
 /**
  * ColorSpace
@@ -38,15 +38,28 @@ public interface ColorSpace<C extends Color<C, S>, S extends ColorSpace<C, S>> e
 
   /**
    * Get the transformation from this color space to the CIE 31 space. The transform operates on
-   * color instances of type C and produces XYZ values. The transform, if possible, also have a
-   * non-null inverse so that XYZ CIE 31 values can be converted into this space.
+   * color instances of type C and produces XYZ values. The transform must have an inverse,
+   * although it is allowed to be a pseudo-inverse that loses information or is clamped to
+   * a particular gamut.
    *
    * This transformation is the primary means by which the color space is defined relative to a
    * known standard.
    *
    * @return The color transform from this space to XYZ
    */
-  ColorTransform<S, C, CIE31, XYZ<CIE31>> getXYZTransform();
+  Transform<C, S, XYZ<CIE31>, CIE31> getTransformToXYZ();
+
+  /**
+   * Get the transformation from the CIE 31 space to this color space. This should return the
+   * inverse reported by {@link #getTransformToXYZ()} and is provided as a convenience that
+   * extracts the instance from the Optional returned formally by the Transform. Since the
+   * XYZ transformation for ColorSpaces are required to have inverses, this is a safe operation.
+   *
+   * @return The color transform from XYZ to this space
+   */
+  default Transform<XYZ<CIE31>, CIE31, C, S> getTransformFromXYZ() {
+    return getTransformToXYZ().inverse().orElseThrow(UnsupportedOperationException::new);
+  }
 
   /**
    * Get the human-readable name associated with the channel index, such as 'red', 'green', etc.

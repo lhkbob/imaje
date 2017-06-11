@@ -46,6 +46,7 @@ import org.ejml.data.FixedMatrix3_64F;
 import org.ejml.data.FixedMatrix3x3_64F;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * XYZToRGB
@@ -94,9 +95,9 @@ public class XYZToRGB<I extends ColorSpace<XYZ<I>, I>, O extends ColorSpace<RGB<
         // There is no gamma to invert so inverse is available
         inverse = new RGBToXYZ<>(this, rgbToXYZ, null);
       } else {
-        Curve decodingGamma = encodingGamma.inverted();
-        if (decodingGamma != null) {
-          inverse = new RGBToXYZ<>(this, rgbToXYZ, decodingGamma);
+        Optional<Curve> decodingGamma = encodingGamma.inverse();
+        if (decodingGamma.isPresent()) {
+          inverse = new RGBToXYZ<>(this, rgbToXYZ, decodingGamma.get());
         } else {
           inverse = null;
         }
@@ -163,12 +164,12 @@ public class XYZToRGB<I extends ColorSpace<XYZ<I>, I>, O extends ColorSpace<RGB<
       @Arguments.Nullable Curve gammaCurve) {
     RGBToXYZ<I, O> rgbToXYZ = RGBToXYZ
         .newRGBToXYZ(rgbSpace, whitepoint, redPrimary, greenPrimary, bluePrimary, gammaCurve);
-    XYZToRGB<O, I> xyzToRGB = rgbToXYZ.inverse();
-    if (xyzToRGB == null) {
+    Optional<XYZToRGB<O, I>> xyzToRGB = rgbToXYZ.inverse();
+    if (!xyzToRGB.isPresent()) {
       throw new IllegalArgumentException(
           "Primaries, whitepoint, and gamma curve do not create a valid XYZ to RGB conversion");
     }
-    return xyzToRGB;
+    return xyzToRGB.get();
   }
 
   @Override
@@ -265,8 +266,8 @@ public class XYZToRGB<I extends ColorSpace<XYZ<I>, I>, O extends ColorSpace<RGB<
   }
 
   @Override
-  public RGBToXYZ<O, I> inverse() {
-    return inverse;
+  public Optional<RGBToXYZ<O, I>> inverse() {
+    return Optional.ofNullable(inverse);
   }
 
   @Override

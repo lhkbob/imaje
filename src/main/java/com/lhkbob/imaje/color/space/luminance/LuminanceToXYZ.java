@@ -38,6 +38,7 @@ import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * LuminanceToXYZ
@@ -88,8 +89,8 @@ public class LuminanceToXYZ implements Transform<Luminance<Linear>, Linear, XYZ<
   }
 
   @Override
-  public XYZToLuminance inverse() {
-    return inverse;
+  public Optional<XYZToLuminance> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override

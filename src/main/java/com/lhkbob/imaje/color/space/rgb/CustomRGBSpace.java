@@ -88,7 +88,7 @@ public class CustomRGBSpace<S extends XYZSpace<S>> extends RGBSpace<CustomRGBSpa
 
   @Override
   public int hashCode() {
-    return CustomRGBSpace.class.hashCode() ^ getXYZTransform().hashCode();
+    return CustomRGBSpace.class.hashCode() ^ getTransformToXYZ().hashCode();
   }
 
   @Override
@@ -99,7 +99,7 @@ public class CustomRGBSpace<S extends XYZSpace<S>> extends RGBSpace<CustomRGBSpa
       return false;
     }
 
-    return Objects.equals(((CustomRGBSpace) o).getXYZTransform(), getXYZTransform());
+    return Objects.equals(((CustomRGBSpace) o).getTransformToXYZ(), getTransformToXYZ());
   }
 
   @Override

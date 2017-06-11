@@ -42,17 +42,18 @@ public class Normalized extends DepthSpace<Normalized> {
     this.far = far;
 
     toRGB = new Identity<>(this, SRGB.SPACE);
-    toScene = ScaleChannels
-        .normalize(Scene.SPACE, this, new double[] { near }, new double[] { far }).inverse();
+    toScene = new ScaleChannels<>(
+        this, Scene.SPACE, new double[] { 0.0 }, new double[] { 1.0 }, new double[] { near },
+        new double[] { far });
   }
 
   @Override
-  public Transform<Depth<Normalized>, Normalized, Depth<Scene>, Scene> getSceneTransform() {
+  public Transform<Depth<Normalized>, Normalized, Depth<Scene>, Scene> getTransformToScene() {
     return toScene;
   }
 
   @Override
-  public Transform<Depth<Normalized>, Normalized, RGB<SRGB>, SRGB> getRGBTransform() {
+  public Transform<Depth<Normalized>, Normalized, RGB<SRGB>, SRGB> getTransformToRGB() {
     return toRGB;
   }
 

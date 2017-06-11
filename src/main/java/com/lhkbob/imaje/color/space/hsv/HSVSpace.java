@@ -54,7 +54,7 @@ public class HSVSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<HSV
     this.rgbSpace = rgbSpace;
 
     toRGB = new HSVToRGB<>(this);
-    toXYZ = new Composition<>(toRGB, rgbSpace.getXYZTransform());
+    toXYZ = new Composition<>(toRGB, rgbSpace.getTransformToXYZ());
   }
 
   /**
@@ -65,10 +65,17 @@ public class HSVSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<HSV
   }
 
   /**
-   * @return The transformation between the HSV color space and thr RGB space.
+   * @return The transformation between the HSV color space and the RGB space.
    */
-  public Transform<HSV<S>, HSVSpace<S>, RGB<S>, S> getRGBTransform() {
+  public Transform<HSV<S>, HSVSpace<S>, RGB<S>, S> getTransformToRGB() {
     return toRGB;
+  }
+
+  /**
+   * @return The transformation between the HSV color space and the RGB space.
+   */
+  public RGBToHSV<S> getTransformFromRGB() {
+    return toRGB.inverse().orElseThrow(UnsupportedOperationException::new);
   }
 
   @Override
@@ -77,7 +84,7 @@ public class HSVSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<HSV
   }
 
   @Override
-  public Transform<HSV<S>, HSVSpace<S>, XYZ<CIE31>, CIE31> getXYZTransform() {
+  public Transform<HSV<S>, HSVSpace<S>, XYZ<CIE31>, CIE31> getTransformToXYZ() {
     return toXYZ;
   }
 

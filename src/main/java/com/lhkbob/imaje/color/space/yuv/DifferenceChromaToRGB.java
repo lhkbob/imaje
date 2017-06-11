@@ -40,6 +40,7 @@ import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * DifferenceChromaToRGB
@@ -50,7 +51,7 @@ import java.util.Objects;
  *
  * @author Michael Ludwig
  */
-public class DifferenceChromaToRGB<SI extends ColorSpace<I, SI>, I extends Color<I, SI>, SO extends ColorSpace<RGB<SO>, SO>> implements Transform<I, SI, RGB<SO>, SO> {
+public class DifferenceChromaToRGB<I extends Color<I, SI>, SI extends ColorSpace<I, SI>, SO extends ColorSpace<RGB<SO>, SO>> implements Transform<I, SI, RGB<SO>, SO> {
   private final SI yCbCrSpace;
   private final SO rgbSpace;
 
@@ -59,7 +60,7 @@ public class DifferenceChromaToRGB<SI extends ColorSpace<I, SI>, I extends Color
   private final double umax;
   private final double vmax;
 
-  private final RGBToDifferenceChroma<SO, SI, I> inverse;
+  private final RGBToDifferenceChroma<SO, I, SI> inverse;
 
   /**
    * Create a transformation from a difference chroma color space to RGB that is defined by
@@ -97,7 +98,7 @@ public class DifferenceChromaToRGB<SI extends ColorSpace<I, SI>, I extends Color
   }
 
   DifferenceChromaToRGB(
-      RGBToDifferenceChroma<SO, SI, I> inverse, double kb, double kr, double umax, double vmax) {
+      RGBToDifferenceChroma<SO, I, SI> inverse, double kb, double kr, double umax, double vmax) {
     yCbCrSpace = inverse.getOutputSpace();
     rgbSpace = inverse.getInputSpace();
 
@@ -108,15 +109,6 @@ public class DifferenceChromaToRGB<SI extends ColorSpace<I, SI>, I extends Color
 
     this.inverse = inverse;
   }
-
-  /*public static <S extends ColorSpace<RGB<S>, S>> DifferenceChromaToRGB<YCbCrSpace<S>, YCbCr<S>, S> newYCbCrToRGB(YCbCrSpace<S> yCbCrSpace, double kb, double kr) {
-    return new DifferenceChromaToRGB<>(yCbCrSpace, yCbCrSpace.getRGBSpace(), kb, kr, 0.5, 0.5);
-  }
-
-  public static <S extends ColorSpace<RGB<S>, S>> DifferenceChromaToRGB<YUVSpace<S>, YUV<S>, S> newYUVToRGB(
-      YUVSpace<S> yuvSpace, double kb, double kr) {
-    return new DifferenceChromaToRGB<>(yuvSpace, yuvSpace.getRGBSpace(), kb, kr, 0.436, 0.615);
-  }*/
 
   @Override
   public boolean equals(Object o) {
@@ -147,8 +139,8 @@ public class DifferenceChromaToRGB<SI extends ColorSpace<I, SI>, I extends Color
   }
 
   @Override
-  public RGBToDifferenceChroma<SO, SI, I> inverse() {
-    return inverse;
+  public Optional<RGBToDifferenceChroma<SO, I, SI>> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override

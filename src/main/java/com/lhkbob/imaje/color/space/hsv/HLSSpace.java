@@ -6,8 +6,8 @@ import com.lhkbob.imaje.color.RGB;
 import com.lhkbob.imaje.color.XYZ;
 import com.lhkbob.imaje.color.space.rgb.SRGB;
 import com.lhkbob.imaje.color.space.xyz.CIE31;
-import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.Composition;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
@@ -54,7 +54,7 @@ public class HLSSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<HLS
     this.rgbSpace = rgbSpace;
 
     toRGB = new HLSToRGB<>(this);
-    toXYZ = new Composition<>(toRGB, rgbSpace.getXYZTransform());
+    toXYZ = new Composition<>(toRGB, rgbSpace.getTransformToXYZ());
   }
 
   /**
@@ -65,10 +65,17 @@ public class HLSSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<HLS
   }
 
   /**
-   * @return The transformation between the HLS color space and thr RGB space.
+   * @return The transformation between the HLS color space and the RGB space.
    */
-  public Transform<HLS<S>, HLSSpace<S>, RGB<S>, S> getRGBTransform() {
+  public HLSToRGB<S> getTransformToRGB() {
     return toRGB;
+  }
+
+  /**
+   * @return The transformation between the HLS color space and the RGB space.
+   */
+  public RGBToHLS<S> getTransformFromRGB() {
+    return toRGB.inverse().orElseThrow(UnsupportedOperationException::new);
   }
 
   @Override
@@ -77,7 +84,7 @@ public class HLSSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<HLS
   }
 
   @Override
-  public Transform<HLS<S>, HLSSpace<S>, XYZ<CIE31>, CIE31> getXYZTransform() {
+  public Transform<HLS<S>, HLSSpace<S>, XYZ<CIE31>, CIE31> getTransformToXYZ() {
     return toXYZ;
   }
 

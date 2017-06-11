@@ -6,9 +6,9 @@ import com.lhkbob.imaje.color.space.spectrum.SmitsRGBToSpectrum;
 import com.lhkbob.imaje.color.space.spectrum.SpectrumSpace;
 import com.lhkbob.imaje.color.space.spectrum.SpectrumToXYZ;
 import com.lhkbob.imaje.color.space.spectrum.Visible;
-import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.Composition;
 import com.lhkbob.imaje.color.transform.ExplicitInverse;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.curves.Curve;
 
 import java.io.IOException;
@@ -67,18 +67,18 @@ public class CIE64 extends XYZSpace<CIE64> {
     SmitsRGBToSpectrum<CustomRGBSpace<CIE64>, Visible> rgb64ToSpec = new SmitsRGBToSpectrum<>(
         rgb64, Visible.SPACE_32, white, cyan, magenta, yellow, red, green, blue);
     Transform<XYZ<CIE64>, CIE64, XYZ<CIE31>, CIE31> to31 = new Composition<>(
-        rgb64.getRGBToXYZTransform().inverse(),
-        new Composition<>(rgb64ToSpec, Visible.SPACE_32.getXYZTransform()));
+        rgb64.getDirectTransformFromXYZ(),
+        new Composition<>(rgb64ToSpec, Visible.SPACE_32.getTransformToXYZ()));
 
     SpectrumToXYZ<Visible, CIE64> specToXYZ64 = new SpectrumToXYZ<>(Visible.SPACE_32, this);
     Transform<XYZ<CIE31>, CIE31, XYZ<CIE64>, CIE64> to64 = new Composition<>(
-        Visible.SPACE_32.getXYZTransform().inverse(), specToXYZ64);
+        Visible.SPACE_32.getTransformFromXYZ(), specToXYZ64);
 
     toXYZ31 = new ExplicitInverse<>(to31, to64);
   }
 
   @Override
-  public Transform<XYZ<CIE64>, CIE64, XYZ<CIE31>, CIE31> getXYZTransform() {
+  public Transform<XYZ<CIE64>, CIE64, XYZ<CIE31>, CIE31> getTransformToXYZ() {
     return toXYZ31;
   }
 

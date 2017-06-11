@@ -47,7 +47,7 @@ public class YCbCrSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<Y
 
   private final S rgbSpace;
 
-  private final DifferenceChromaToRGB<YCbCrSpace<S>, YCbCr<S>, S> toRGB;
+  private final DifferenceChromaToRGB<YCbCr<S>, YCbCrSpace<S>, S> toRGB;
   private final Transform<YCbCr<S>, YCbCrSpace<S>, XYZ<CIE31>, CIE31> toXYZ;
 
   /**
@@ -68,7 +68,7 @@ public class YCbCrSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<Y
 
     this.rgbSpace = rgbSpace;
     toRGB = new DifferenceChromaToRGB<>(this, rgbSpace, kb, kr, 0.5, 0.5);
-    toXYZ = new Composition<>(toRGB, rgbSpace.getXYZTransform());
+    toXYZ = new Composition<>(toRGB, rgbSpace.getTransformToXYZ());
   }
 
   /**
@@ -81,8 +81,15 @@ public class YCbCrSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<Y
   /**
    * @return A transformation from YCbCr to RGB.
    */
-  public DifferenceChromaToRGB<YCbCrSpace<S>, YCbCr<S>, S> getRGBTransform() {
+  public DifferenceChromaToRGB<YCbCr<S>, YCbCrSpace<S>, S> getTransformToRGB() {
     return toRGB;
+  }
+
+  /**
+   * @return The transformation from RGB to YCbCr.
+   */
+  public RGBToDifferenceChroma<S, YCbCr<S>, YCbCrSpace<S>> getTransformFromRGB() {
+    return toRGB.inverse().orElseThrow(UnsupportedOperationException::new);
   }
 
   @Override
@@ -91,7 +98,7 @@ public class YCbCrSpace<S extends ColorSpace<RGB<S>, S>> implements ColorSpace<Y
   }
 
   @Override
-  public Transform<YCbCr<S>, YCbCrSpace<S>, XYZ<CIE31>, CIE31> getXYZTransform() {
+  public Transform<YCbCr<S>, YCbCrSpace<S>, XYZ<CIE31>, CIE31> getTransformToXYZ() {
     return toXYZ;
   }
 

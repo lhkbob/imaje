@@ -9,6 +9,7 @@ import com.lhkbob.imaje.util.Functions;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * SpectrumToXYZ
@@ -71,8 +72,8 @@ public class SpectrumToXYZ<SI extends SpectrumSpace<SI>, SO extends XYZSpace<SO>
   }
 
   @Override
-  public Transform<XYZ<SO>, SO, Spectrum<SI>, SI> inverse() {
-    return null;
+  public Optional<? extends Transform<XYZ<SO>, SO, Spectrum<SI>, SI>> inverse() {
+    return Optional.empty();
   }
 
   @Override

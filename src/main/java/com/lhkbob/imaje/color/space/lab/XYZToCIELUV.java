@@ -38,6 +38,7 @@ import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * XYZToCIELUV
@@ -92,8 +93,8 @@ public class XYZToCIELUV implements Transform<XYZ<CIE31>, CIE31, CIELUV, CIELUVS
   }
 
   @Override
-  public CIELUVToXYZ inverse() {
-    return inverse;
+  public Optional<CIELUVToXYZ> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override

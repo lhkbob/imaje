@@ -38,6 +38,7 @@ import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * XYZToCIELAB
@@ -88,8 +89,8 @@ public class XYZToCIELAB implements Transform<XYZ<CIE31>, CIE31, Lab<CIE>, CIE> 
   }
 
   @Override
-  public CIELABToXYZ inverse() {
-    return inverse;
+  public Optional<CIELABToXYZ> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override

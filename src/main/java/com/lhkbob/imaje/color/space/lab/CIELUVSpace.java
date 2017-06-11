@@ -59,8 +59,13 @@ public class CIELUVSpace implements ColorSpace<CIELUV, CIELUVSpace> {
   }
 
   @Override
-  public CIELUVToXYZ getXYZTransform() {
+  public CIELUVToXYZ getTransformToXYZ() {
     return toXYZ;
+  }
+
+  @Override
+  public XYZToCIELUV getTransformFromXYZ() {
+    return toXYZ.inverse().orElseThrow(UnsupportedOperationException::new);
   }
 
   @Override

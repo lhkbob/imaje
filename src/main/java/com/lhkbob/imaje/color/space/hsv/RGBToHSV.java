@@ -35,6 +35,8 @@ import com.lhkbob.imaje.color.ColorSpace;
 import com.lhkbob.imaje.color.HSV;
 import com.lhkbob.imaje.color.RGB;
 
+import java.util.Optional;
+
 /**
  * RGBToHSV
  * ========
@@ -63,8 +65,8 @@ public class RGBToHSV<S extends ColorSpace<RGB<S>, S>> extends AbstractRGBToHueT
   }
 
   @Override
-  public HSVToRGB<S> inverse() {
-    return inverse;
+  public Optional<HSVToRGB<S>> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override

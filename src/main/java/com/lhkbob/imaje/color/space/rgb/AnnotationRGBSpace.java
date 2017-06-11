@@ -29,7 +29,10 @@ import com.lhkbob.imaje.color.transform.curves.UnitGammaFunction;
  * @author Michael Ludwig
  */
 public abstract class AnnotationRGBSpace<S extends AnnotationRGBSpace<S>> extends RGBSpace<S, CIE31> {
-  public AnnotationRGBSpace() {
+  /**
+   * Subclasses should only have a private constructor and expose a singleton.
+   */
+  protected AnnotationRGBSpace() {
     // Lookup primaries
     Primaries p = getClass().getAnnotation(Primaries.class);
     Yxy<CIE31> r, g, b;

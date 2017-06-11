@@ -5,6 +5,7 @@ import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * PerspectiveTransform
@@ -38,8 +39,8 @@ public class PerspectiveTransform implements Transform<Depth<Scene>, Scene, Dept
   }
 
   @Override
-  public InversePerspectiveTransform inverse() {
-    return inverse;
+  public Optional<InversePerspectiveTransform> inverse() {
+    return Optional.of(inverse);
   }
 
   @Override
