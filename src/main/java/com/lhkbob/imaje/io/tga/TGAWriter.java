@@ -35,7 +35,7 @@ import com.lhkbob.imaje.Image;
 import com.lhkbob.imaje.Raster;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.SRGB;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.Transforms;
 import com.lhkbob.imaje.data.Data;
 import com.lhkbob.imaje.io.IO;
@@ -69,7 +69,7 @@ public class TGAWriter implements ImageFileWriter {
 
   private <T extends Color> void writePixels(
       Raster<T> image, SeekableByteChannel out, ByteBuffer work) throws IOException {
-    ColorTransform<T, SRGB> toSRGB = Transforms.newTransform(image.getColorType(), SRGB.class);
+    Transform<T, SRGB> toSRGB = Transforms.newTransform(image.getColorType(), SRGB.class);
 
     // A top-down left-to-right pixel loop
     T color = Color.newInstance(image.getColorType());

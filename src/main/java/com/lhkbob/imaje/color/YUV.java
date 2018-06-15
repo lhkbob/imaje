@@ -31,65 +31,26 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
-import com.lhkbob.imaje.color.annot.OpponentAxis;
+import com.lhkbob.imaje.color.space.yuv.YUVSpace;
 
 /**
  *
  */
-@Channels({ "Y", "U", "V" })
-public abstract class YUV extends Color {
-  @OpponentAxis(aWeight = 0.0593, bWeight = 0.2627)
-  public static class REC2020 extends YUV {
-    public REC2020() {
-
-    }
-
-    public REC2020(double y, double u, double v) {
-      set(y, u, v);
-    }
-
-    @Override
-    public REC2020 clone() {
-      return (REC2020) super.clone();
-    }
+public class YUV<S extends ColorSpace<RGB<S>, S>> extends Color<YUV<S>, YUVSpace<S>> {
+  public YUV(YUVSpace<S> space) {
+    super(space, 3);
   }
 
-  @OpponentAxis(aWeight = 0.114, bWeight = 0.299)
-  public static class REC601 extends YUV {
-    public REC601() {
-
-    }
-
-    public REC601(double y, double u, double v) {
-      set(y, u, v);
-    }
-
-    @Override
-    public REC601 clone() {
-      return (REC601) super.clone();
-    }
-  }
-
-  @OpponentAxis(aWeight = 0.0722, bWeight = 0.2126)
-  public static class REC709 extends YUV {
-    public REC709() {
-
-    }
-
-    public REC709(double y, double u, double v) {
-      set(y, u, v);
-    }
-
-    @Override
-    public REC709 clone() {
-      return (REC709) super.clone();
-    }
+  public YUV(YUVSpace<S> space, double y, double u, double v) {
+    this(space);
+    setY(y);
+    setU(u);
+    setV(v);
   }
 
   @Override
-  public YUV clone() {
-    return (YUV) super.clone();
+  public YUV<S> clone() {
+    return (YUV<S>) super.clone();
   }
 
   public double getU() {

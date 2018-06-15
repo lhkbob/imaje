@@ -369,7 +369,7 @@ public final class Profile {
       }
 
       // 4. Calculate absolute colorimetric intent from media intent, which likely exists at this point
-      // from being explicitly given, having a default, or from being inverted.
+      // from being explicitly given, having a default, or from being inverse.
       if (transforms.containsKey(RenderingIntent.MEDIA_RELATIVE_COLORIMETRIC) && !transforms
           .containsKey(RenderingIntent.ICC_ABSOLUTE_COLORIMETRIC)) {
         // FIXME implement this

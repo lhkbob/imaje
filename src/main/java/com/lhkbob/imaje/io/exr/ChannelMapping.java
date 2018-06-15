@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -303,7 +304,7 @@ public class ChannelMapping {
   private static <T> void replaceRGBWithXYZ(Map<T, Class<? extends Color>> toModify) {
     List<T> keysToChange = new ArrayList<>();
     for (Map.Entry<T, Class<? extends Color>> e : toModify.entrySet()) {
-      if (RGB.Linear.class.equals(e.getValue())) {
+      if (Objects.equals(RGB.Linear.class, e.getValue())) {
         keysToChange.add(e.getKey());
       }
     }

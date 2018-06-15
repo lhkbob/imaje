@@ -37,7 +37,7 @@ import com.lhkbob.imaje.data.DataBuffer;
 import com.lhkbob.imaje.data.NumericData;
 import com.lhkbob.imaje.layout.DataLayout;
 import com.lhkbob.imaje.layout.DataLayoutBuilder;
-import com.lhkbob.imaje.layout.GeneralLayout;
+import com.lhkbob.imaje.layout.TileInterleaveLayout;
 import com.lhkbob.imaje.layout.PackedPixelArray;
 import com.lhkbob.imaje.layout.PixelArray;
 import com.lhkbob.imaje.layout.PixelFormat;
@@ -53,6 +53,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * FIXME does making this a monolithic builder make sense? should it just expose its sub components
+ * to allow modification there? i.e. im.format().addChannel(...)?
+ * maybe revisit when I have a better idea of how all the decisions for choosing the pixel array
+ * implementation will look like, and what the behavior of compatibleWith() is.
  */
 public abstract class ImageBuilder<T extends Color, I extends Image<T>, B extends ImageBuilder<T, I, B>> {
   public static class OfMipmap<T extends Color> extends ImageBuilder<T, Mipmap<T>, OfMipmap<T>> {
@@ -201,22 +205,22 @@ public abstract class ImageBuilder<T extends Color, I extends Image<T>, B extend
   }
 
   public B channelsByPixel() {
-    layoutBuilder.interleave(GeneralLayout.InterleavingUnit.PIXEL);
+    layoutBuilder.interleave(TileInterleaveLayout.InterleavingUnit.PIXEL);
     return builder();
   }
 
   public B channelsByScanline() {
-    layoutBuilder.interleave(GeneralLayout.InterleavingUnit.SCANLINE);
+    layoutBuilder.interleave(TileInterleaveLayout.InterleavingUnit.SCANLINE);
     return builder();
   }
 
   public B channelsByTile() {
-    layoutBuilder.interleave(GeneralLayout.InterleavingUnit.TILE);
+    layoutBuilder.interleave(TileInterleaveLayout.InterleavingUnit.TILE);
     return builder();
   }
 
   public B channelsByImage() {
-    layoutBuilder.interleave(GeneralLayout.InterleavingUnit.IMAGE);
+    layoutBuilder.interleave(TileInterleaveLayout.InterleavingUnit.IMAGE);
     return builder();
   }
 
@@ -264,19 +268,19 @@ public abstract class ImageBuilder<T extends Color, I extends Image<T>, B extend
   }
 
   public B newBuffer() {
-    return newData(Data.bufferDataFactory());
+    return newData(Data.nioDataFactory());
   }
 
   public B newBufferForMipmap(int mipmap) {
-    return newDataForMipmap(mipmap, Data.bufferDataFactory());
+    return newDataForMipmap(mipmap, Data.nioDataFactory());
   }
 
   public B newBufferForLayer(int layer) {
-    return newDataForLayer(layer, Data.bufferDataFactory());
+    return newDataForLayer(layer, Data.nioDataFactory());
   }
 
   public B newBufferFor(int layer, int mipmap) {
-    return newDataFor(layer, mipmap, Data.bufferDataFactory());
+    return newDataFor(layer, mipmap, Data.nioDataFactory());
   }
 
   public B existingData(byte[] data) {
@@ -475,7 +479,7 @@ public abstract class ImageBuilder<T extends Color, I extends Image<T>, B extend
   }
 
   public B defaultDataLayout() {
-    layoutBuilder.interleave(GeneralLayout.InterleavingUnit.PIXEL).leftToRight().bottomToTop().tileHeight(-1).tileWidth(-1).width(1).height(1);
+    layoutBuilder.interleave(TileInterleaveLayout.InterleavingUnit.PIXEL).leftToRight().bottomToTop().tileHeight(-1).tileWidth(-1).width(1).height(1);
     return builder();
   }
 
@@ -490,6 +494,7 @@ public abstract class ImageBuilder<T extends Color, I extends Image<T>, B extend
     return builder();
   }
 
+  // FIXME rename initialValue or something like that?
   public B filledWith(T color) {
     fillColor = color;
     return builder();
@@ -751,6 +756,9 @@ public abstract class ImageBuilder<T extends Color, I extends Image<T>, B extend
     return builder();
   }
 
+  // FIXME if the format already has an alpha channel (potentially in an unknown manner since
+  // the use of compatible(Image) could already provide the alpha channel) then this should do
+  // nothing because the image is already going to have an alpha.
   public B withAlpha() {
     formatBuilder.addChannel(PixelFormat.ALPHA_CHANNEL);
     return builder();
@@ -943,7 +951,7 @@ public abstract class ImageBuilder<T extends Color, I extends Image<T>, B extend
   private NumericData<?> buildDataSource(
       PixelFormat format, DataLayout layout, int layer, int mipmap) {
     long imageSize =
-        Images.getUncompressedImageSize(layout.getWidth(), layout.getHeight()) * layout.getChannelCount();
+        Images.getUncompressedImageSize(layout.getWidth(), layout.getHeight()) * layout.getBandCount();
 
     Object data = getDataProviderOrDefault(layer, mipmap);
     DataBufferBuilder dataBuilder = new DataBufferBuilder();

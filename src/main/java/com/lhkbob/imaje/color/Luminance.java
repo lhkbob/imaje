@@ -31,24 +31,22 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
-
 /**
  *
  */
-@Channels(value = "Luminance", shortNames = "Y")
-public class Luminance extends Color {
-  public Luminance() {
-    this(0.0);
+public class Luminance<S extends ColorSpace<Luminance<S>, S>> extends Color<Luminance<S>, S> {
+  public Luminance(S space) {
+    super(space, 1);
   }
 
-  public Luminance(double l) {
+  public Luminance(S space, double l) {
+    this(space);
     setLuminance(l);
   }
 
   @Override
-  public Luminance clone() {
-    return (Luminance) super.clone();
+  public Luminance<S> clone() {
+    return (Luminance<S>) super.clone();
   }
 
   public double getLuminance() {

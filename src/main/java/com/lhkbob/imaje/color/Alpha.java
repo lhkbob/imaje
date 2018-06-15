@@ -31,19 +31,26 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.color.space.GenericVectorSpace;
 
 /**
  *
  */
-@Channels(value = "Alpha", shortNames = "A")
-public class Alpha extends Color {
+public class Alpha extends Vector<Alpha, GenericVectorSpace<Alpha>> {
+  public static final GenericVectorSpace<Alpha> VECTOR_SPACE = new GenericVectorSpace<>(
+      1, Alpha::new);
+
   public Alpha() {
     this(1.0);
   }
 
   public Alpha(double a) {
+    this(VECTOR_SPACE);
     setAlpha(a);
+  }
+
+  private Alpha(GenericVectorSpace<Alpha> space) {
+    super(space, 1);
   }
 
   public double getAlpha() {

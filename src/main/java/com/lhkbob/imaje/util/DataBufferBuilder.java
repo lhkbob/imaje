@@ -63,6 +63,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
+import java.util.Objects;
 
 import static com.lhkbob.imaje.layout.PixelFormat.Type.UINT;
 
@@ -98,7 +99,7 @@ public class DataBufferBuilder implements Cloneable {
     if (bitSize == 8 && (type == UINT || type == PixelFormat.Type.USCALED)) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.UINT8)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.UINT8)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof ByteData) {
@@ -115,7 +116,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 16 && (type == UINT || type == PixelFormat.Type.USCALED)) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.UINT16)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.UINT16)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof ShortData) {
@@ -132,7 +133,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 32 && (type == UINT || type == PixelFormat.Type.USCALED)) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.UINT32)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.UINT32)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof IntData) {
@@ -149,7 +150,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 64 && (type == UINT || type == PixelFormat.Type.USCALED)) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.UINT64)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.UINT64)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof LongData) {
@@ -168,7 +169,7 @@ public class DataBufferBuilder implements Cloneable {
         return (ByteData.Numeric) existingData;
       } else if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.SINT8)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.SINT8)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof ByteData) {
@@ -187,7 +188,7 @@ public class DataBufferBuilder implements Cloneable {
         return (ShortData.Numeric) existingData;
       } else if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.SINT16)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.SINT16)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof ShortData) {
@@ -206,7 +207,7 @@ public class DataBufferBuilder implements Cloneable {
         return (IntData.Numeric) existingData;
       } else if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.SINT32)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.SINT32)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof IntData) {
@@ -225,7 +226,7 @@ public class DataBufferBuilder implements Cloneable {
         return (LongData.Numeric) existingData;
       } else if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.SINT64)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.SINT64)) {
           return (CustomBinaryData<?>) existingData;
         }
       }else if (existingData instanceof LongData) {
@@ -242,7 +243,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 8 && type == PixelFormat.Type.UNORM) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.UNORM8)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.UNORM8)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof ByteData) {
@@ -259,7 +260,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 16 && type == PixelFormat.Type.UNORM) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.UNORM8)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.UNORM8)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof ShortData) {
@@ -276,7 +277,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 32 && type == PixelFormat.Type.UNORM) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.UNORM8)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.UNORM8)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof IntData) {
@@ -293,7 +294,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 64 && type == PixelFormat.Type.UNORM) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.UNORM8)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.UNORM8)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof LongData) {
@@ -310,7 +311,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 8 && type == PixelFormat.Type.SNORM) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.SNORM8)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.SNORM8)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof ByteData) {
@@ -327,7 +328,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 16 && type == PixelFormat.Type.SNORM) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.SNORM16)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.SNORM16)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof ShortData) {
@@ -344,7 +345,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 32 && type == PixelFormat.Type.SNORM) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.SNORM32)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.SNORM32)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof IntData) {
@@ -361,7 +362,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 64 && type == PixelFormat.Type.SNORM) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.SNORM64)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.SNORM64)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof LongData) {
@@ -378,7 +379,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 16 && type == PixelFormat.Type.SFLOAT) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.SFLOAT16)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.SFLOAT16)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof ShortData) {
@@ -395,7 +396,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 32 && type == PixelFormat.Type.SFLOAT) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.SFLOAT32)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.SFLOAT32)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof FloatData) {
@@ -418,7 +419,7 @@ public class DataBufferBuilder implements Cloneable {
     } else if (bitSize == 64 && type == PixelFormat.Type.SFLOAT) {
       if (existingData instanceof CustomBinaryData) {
         CustomBinaryData<?> d = (CustomBinaryData<?>) existingData;
-        if (d.getBinaryRepresentation().equals(Data.SFLOAT64)) {
+        if (Objects.equals(d.getBinaryRepresentation(), Data.SFLOAT64)) {
           return (CustomBinaryData<?>) existingData;
         }
       } else if (existingData instanceof DoubleData) {

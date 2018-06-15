@@ -160,7 +160,7 @@ public abstract class AbstractChunkReader implements ChunkReader {
 
     // The data will be  copied into the image data array at the offset for the first channel of the
     // layout for the top left corner of the data window.
-    long offset = layout.getChannelIndex(chunkWindow.getMinX(), chunkWindow.getMinY(), 0) * header
+    long offset = layout.getBandOffset(chunkWindow.getMinX(), chunkWindow.getMinY(), 0) * header
         .getBytesPerPixel();
 
     int uncompressedSize = header.getBytesPerPixel() * chunkWindow.width() * chunkWindow.height();

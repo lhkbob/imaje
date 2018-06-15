@@ -35,6 +35,7 @@ import com.lhkbob.imaje.layout.PixelFormat;
 import com.lhkbob.imaje.layout.PixelFormat.Type;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -428,7 +429,7 @@ public enum GPUFormat {
   public static boolean isPixelFormat(GPUFormat format, PixelFormat pixelFormat) {
     if (format.isCompressed())
       return false;
-    return format.getPixelFormat().equals(pixelFormat);
+    return Objects.equals(format.getPixelFormat(), pixelFormat);
   }
 
   public static boolean isUnpackedLayout(GPUFormat format) {
@@ -530,9 +531,9 @@ public enum GPUFormat {
   }
 
   private static int getBitSize(Class<?> javaType) {
-    if (javaType.equals(byte.class)) {
+    if (Objects.equals(javaType, byte.class)) {
       return 8;
-    } else if (javaType.equals(short.class)) {
+    } else if (Objects.equals(javaType, short.class)) {
       return 16;
     } else if (javaType.equals(int.class) || javaType.equals(float.class)) {
       return 32;

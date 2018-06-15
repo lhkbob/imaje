@@ -31,29 +31,58 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.color.space.xyz.CIE31;
+import com.lhkbob.imaje.color.space.xyz.YxySpace;
 
 /**
  *
  */
 
-@Channels({ "Y", "x", "y" })
-public class Yxy extends Color {
-  public Yxy() {
-    this(0.33333, 0.33333);
+public class Yxy<S extends ColorSpace<XYZ<S>, S>> extends Color<Yxy<S>, YxySpace<S>> {
+  // FIXME defaults should be 0s to be consistent with other vector spaces, etc.
+  public Yxy(YxySpace<S> space) {
+    this(space, 0.33333, 0.33333);
   }
 
-  public Yxy(double x, double y) {
-    this(1.0, x, y);
+  public Yxy(YxySpace<S> space, double x, double y) {
+    this(space, 1.0, x, y);
   }
 
-  public Yxy(double luminance, double x, double y) {
-    set(luminance, x, y);
+  public Yxy(YxySpace<S> space, double luminance, double x, double y) {
+    super(space, 3);
+    setLuminance(luminance);
+    setX(x);
+    setY(y);
+  }
+
+  public static Yxy<CIE31> newCIE31() {
+    return new Yxy<>(YxySpace.SPACE_CIE31);
+  }
+
+  public static Yxy<CIE31> newCIE31(double x, double y) {
+    return new Yxy<>(YxySpace.SPACE_CIE31, x, y);
+  }
+
+  public static Yxy<CIE31> newCIE31(double luminance, double x, double y) {
+    return new Yxy<>(YxySpace.SPACE_CIE31, luminance, x, y);
+  }
+
+  public static <S extends ColorSpace<XYZ<S>, S>> Yxy<S> newYxy(S xyzSpace) {
+    return new Yxy<>(new YxySpace<>(xyzSpace));
+  }
+
+  public static <S extends ColorSpace<XYZ<S>, S>> Yxy<S> newYxy(S xyzSpace, double x, double y) {
+    return new Yxy<>(new YxySpace<>(xyzSpace), x, y);
+  }
+
+  public static <S extends ColorSpace<XYZ<S>, S>> Yxy<S> newYxy(
+      S xyzSpace, double luminance, double x, double y) {
+    return new Yxy<>(new YxySpace<>(xyzSpace), luminance, x, y);
   }
 
   @Override
-  public Yxy clone() {
-    return (Yxy) super.clone();
+  public Yxy<S> clone() {
+    return (Yxy<S>) super.clone();
   }
 
   public double getLuminance() {

@@ -31,41 +31,19 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
-
 /**
  *
  */
-@Channels({ "L", "a", "b" })
-public abstract class Lab extends Color {
-  public static class CIE extends Lab {
-    public CIE() {
-
-    }
-
-    public CIE(double l, double a, double b) {
-      set(l, a, b);
-    }
-
-    @Override
-    public CIE clone() {
-      return (CIE) super.clone();
-    }
+public class Lab<S extends ColorSpace<Lab<S>, S>> extends Color<Lab<S>, S> {
+  public Lab(S space) {
+    super(space, 3);
   }
 
-  public static class Hunter extends Lab {
-    public Hunter() {
-
-    }
-
-    public Hunter(double l, double a, double b) {
-      set(l, a, b);
-    }
-
-    @Override
-    public Hunter clone() {
-      return (Hunter) super.clone();
-    }
+  public Lab(S space, double l, double a, double b) {
+    this(space);
+    setL(l);
+    setA(a);
+    setB(b);
   }
 
   public double a() {
@@ -85,8 +63,8 @@ public abstract class Lab extends Color {
   }
 
   @Override
-  public Lab clone() {
-    return (Lab) super.clone();
+  public Lab<S> clone() {
+    return (Lab<S>) super.clone();
   }
 
   public double getA() {

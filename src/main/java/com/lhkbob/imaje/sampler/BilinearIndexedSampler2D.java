@@ -33,7 +33,7 @@ package com.lhkbob.imaje.sampler;
 
 import com.lhkbob.imaje.RasterArray;
 import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.op.ColorOps;
+import com.lhkbob.imaje.color.Vectors;
 import com.lhkbob.imaje.util.Arguments;
 
 /**
@@ -95,19 +95,19 @@ public class BilinearIndexedSampler2D<T extends Color> implements IndexedSampler
     // add them into result.
     double weight00 = (1.0 - alpha) * (1.0 - beta);
     double blendedAlpha = weight00 * sample(i0, j0, index);
-    ColorOps.mul(sample, weight00, result);
+    Vectors.scale(sample, weight00, result);
 
     double weight10 = alpha * (1.0 - beta);
     blendedAlpha += weight10 * sample(i1, j0, index);
-    ColorOps.addScaled(result, sample, weight10, result);
+    Vectors.addScaled(result, sample, weight10, result);
 
     double weight01 = (1.0 - alpha) * beta;
     blendedAlpha += weight01 * sample(i0, j1, index);
-    ColorOps.addScaled(result, sample, weight01, result);
+    Vectors.addScaled(result, sample, weight01, result);
 
     double weight11 = alpha * beta;
     blendedAlpha += weight11 * sample(i1, j1, index);
-    ColorOps.addScaled(result, sample, weight11, result);
+    Vectors.addScaled(result, sample, weight11, result);
 
     return blendedAlpha;
   }

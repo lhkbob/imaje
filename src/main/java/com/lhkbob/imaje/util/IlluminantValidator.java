@@ -44,7 +44,6 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 /**
- * FIXME move this to util package
  */
 @SupportedAnnotationTypes("com.lhkbob.imaje.color.annot.Illuminant")
 public class IlluminantValidator extends AbstractProcessor {

@@ -37,7 +37,7 @@ import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 
 /**
- *
+ * TODO add an SPI type deal to request file readers and writers
  */
 public interface ImageFileReader {
   Image<?> read(SeekableByteChannel in) throws IOException;

@@ -31,46 +31,22 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
-
 /**
  *
  */
-@Channels(value = "Depth", shortNames = "D")
-public abstract class Depth extends Color {
-  public static class Device extends Depth {
-    public Device() {
-
-    }
-
-    public Device(double d) {
-      setDepth(d);
-    }
-
-    @Override
-    public Device clone() {
-      return (Device) super.clone();
-    }
+public class Depth<S extends VectorSpace<Depth<S>, S>> extends Vector<Depth<S>, S> {
+  public Depth(S space) {
+    super(space, 1);
   }
 
-  public static class Linear extends Depth {
-    public Linear() {
-
-    }
-
-    public Linear(double d) {
-      setDepth(d);
-    }
-
-    @Override
-    public Linear clone() {
-      return (Linear) super.clone();
-    }
+  public Depth(S space, double z) {
+    this(space);
+    setDepth(z);
   }
 
   @Override
-  public Depth clone() {
-    return (Depth) super.clone();
+  public Depth<S> clone() {
+    return (Depth<S>) super.clone();
   }
 
   public double getDepth() {

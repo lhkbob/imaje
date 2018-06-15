@@ -31,65 +31,26 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
-import com.lhkbob.imaje.color.annot.OpponentAxis;
+import com.lhkbob.imaje.color.space.yuv.YCbCrSpace;
 
 /**
  *
  */
-@Channels({ "Y", "Cb", "Cr" })
-public abstract class YCbCr extends Color {
-  @OpponentAxis(aWeight = 0.0593, bWeight = 0.2627)
-  public static class REC2020 extends YCbCr {
-    public REC2020() {
-
-    }
-
-    public REC2020(double y, double cb, double cr) {
-      set(y, cb, cr);
-    }
-
-    @Override
-    public REC2020 clone() {
-      return (REC2020) super.clone();
-    }
+public class YCbCr<S extends ColorSpace<RGB<S>, S>> extends Color<YCbCr<S>, YCbCrSpace<S>> {
+  public YCbCr(YCbCrSpace<S> space) {
+    super(space, 3);
   }
 
-  @OpponentAxis(aWeight = 0.114, bWeight = 0.299)
-  public static class REC601 extends YCbCr {
-    public REC601() {
-
-    }
-
-    public REC601(double y, double cb, double cr) {
-      set(y, cb, cr);
-    }
-
-    @Override
-    public REC601 clone() {
-      return (REC601) super.clone();
-    }
-  }
-
-  @OpponentAxis(aWeight = 0.0722, bWeight = 0.2126)
-  public static class REC709 extends YCbCr {
-    public REC709() {
-
-    }
-
-    public REC709(double y, double cb, double cr) {
-      set(y, cb, cr);
-    }
-
-    @Override
-    public REC709 clone() {
-      return (REC709) super.clone();
-    }
+  public YCbCr(YCbCrSpace<S> space, double y, double cb, double cr) {
+    this(space);
+    setY(y);
+    setCb(cb);
+    setCr(cr);
   }
 
   @Override
-  public YCbCr clone() {
-    return (YCbCr) super.clone();
+  public YCbCr<S> clone() {
+    return (YCbCr<S>) super.clone();
   }
 
   public double cb() {

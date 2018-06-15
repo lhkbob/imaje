@@ -31,19 +31,25 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.color.space.GenericVectorSpace;
 
 /**
  *
  */
-@Channels({"X", "Y", "Z"})
-public class Normal extends Color {
+public class Normal extends Vector<Normal, GenericVectorSpace<Normal>> {
+  public static final GenericVectorSpace<Normal> VECTOR_SPACE = new GenericVectorSpace<>(3, Normal::new);
+
   public Normal() {
     this(0, 0, 0);
   }
 
   public Normal(double x, double y, double z) {
+    this(VECTOR_SPACE);
     set(x, y, z);
+  }
+
+  private Normal(GenericVectorSpace<Normal> space) {
+    super(space, 3);
   }
 
   @Override

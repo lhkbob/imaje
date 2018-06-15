@@ -40,6 +40,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -141,11 +142,11 @@ public class RadianceHeader {
   }
 
   public boolean isFormatRGB() {
-    return FORMAT_RGB_VALUE.equals(getFormat());
+    return Objects.equals(FORMAT_RGB_VALUE, getFormat());
   }
 
   public boolean isFormatXYZ() {
-    return FORMAT_XYZ_VALUE.equals(getFormat());
+    return Objects.equals(FORMAT_XYZ_VALUE, getFormat());
   }
 
   public void setFormat(String format) {
@@ -206,9 +207,9 @@ public class RadianceHeader {
     Matcher m = RESOLUTION_PATTERN.matcher(vars.get("RESOLUTION"));
     m.matches(); // This is known to be true since that's how processVariables() terminates
     h.height = Integer.parseInt(m.group(2));
-    h.topToBottom = "-".equals(m.group(1));
+    h.topToBottom = Objects.equals("-", m.group(1));
     h.width = Integer.parseInt(m.group(4));
-    h.leftToRight = "+".equals(m.group(3));
+    h.leftToRight = Objects.equals("+", m.group(3));
 
     return h;
   }

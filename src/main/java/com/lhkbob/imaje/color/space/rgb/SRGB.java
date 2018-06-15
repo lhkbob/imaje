@@ -1,6 +1,7 @@
 package com.lhkbob.imaje.color.space.rgb;
 
 import com.lhkbob.imaje.color.RGB;
+import com.lhkbob.imaje.color.space.WhitePoint;
 
 /**
  * SRGB
@@ -18,7 +19,7 @@ import com.lhkbob.imaje.color.RGB;
     / 12.92, f = 0.0)
 @Illuminant(type = Illuminant.Type.D65)
 @Primaries(red = @Chromaticity(x = 0.64, y = 0.33), green = @Chromaticity(x = 0.3, y = 0.6), blue = @Chromaticity(x = 0.15, y = 0.06))
-public final class SRGB extends AnnotationRGBSpace<SRGB> {
+public final class SRGB extends AnnotationRGBSpace<SRGB> implements WhitePoint<com.lhkbob.imaje.color.space.Illuminant.D50> {
   /**
    * The singleton instance for the sRGB color space
    */

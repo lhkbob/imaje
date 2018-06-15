@@ -31,24 +31,33 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.color.space.xyz.CIE31;
 
 /**
  *
  */
-@Channels({ "X", "Y", "Z" })
-public class XYZ extends Color {
-  public XYZ() {
-    this(0, 0, 0);
+public class XYZ<S extends ColorSpace<XYZ<S>, S>> extends Color<XYZ<S>, S> {
+  public XYZ(S space) {
+    super(space, 3);
   }
 
-  public XYZ(double x, double y, double z) {
-    set(x, y, z);
+  public XYZ(S space, double x, double y, double z) {
+    this(space);
+    setX(x);
+    setY(y);
+    setZ(z);
+  }
+
+  // FIXME maybe add some fromXYZ() methods that take a color space or result instance
+  // FIXME figure out what newColor() static methods to have throughout the color classes
+
+  public static XYZ<CIE31> newCIE31() {
+    return new XYZ<>(CIE31.SPACE);
   }
 
   @Override
-  public XYZ clone() {
-    return (XYZ) super.clone();
+  public XYZ<S> clone() {
+    return (XYZ<S>) super.clone();
   }
 
   public double getX() {

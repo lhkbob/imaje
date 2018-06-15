@@ -31,25 +31,27 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.color.space.hsv.HSVSpace;
 
 /**
  *
  */
-@Channels(value = { "Hue", "Saturation", "Value" }, shortNames = { "H", "S", "V" })
-public class HSV extends Color {
-
-  public HSV() {
-    this(0.0, 0.0, 0.0);
+public class HSV<S extends ColorSpace<RGB<S>, S>> extends Color<HSV<S>, HSVSpace<S>> {
+  public HSV(HSVSpace<S> space) {
+    super(space, 3);
   }
 
-  public HSV(double h, double s, double v) {
-    set(h, s, v);
+  public HSV(HSVSpace<S> space, double h, double s, double v) {
+    this(space);
+    setHue(h);
+    setSaturation(s);
+    setValue(v);
   }
 
   @Override
-  public HSV clone() {
-    return (HSV) super.clone();
+  @SuppressWarnings("unchecked")
+  public HSV<S> clone() {
+    return (HSV<S>) super.clone();
   }
 
   public double getHue() {

@@ -33,7 +33,7 @@ package com.lhkbob.imaje.io.exr;
 
 import com.lhkbob.imaje.io.InvalidImageException;
 import com.lhkbob.imaje.layout.DataLayout;
-import com.lhkbob.imaje.layout.GeneralLayout;
+import com.lhkbob.imaje.layout.TileInterleaveLayout;
 import com.lhkbob.imaje.layout.InvertedLayout;
 import com.lhkbob.imaje.util.Arguments;
 
@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  *
@@ -122,8 +123,8 @@ public class OpenEXRHeader {
         for (int lx = 0; lx < levelLayouts.length; lx++) {
           Box2Int chunk = tiles.getLevelDataWindow(dataWindow, lx, lx);
           levelLayouts[lx] = new InvertedLayout(
-              new GeneralLayout(chunk.width(), chunk.height(), tiles.getWidth(), tiles.getHeight(),
-                  channels.size(), GeneralLayout.InterleavingUnit.SCANLINE), false, true);
+              new TileInterleaveLayout(chunk.width(), chunk.height(), tiles.getWidth(), tiles.getHeight(),
+                  channels.size(), TileInterleaveLayout.InterleavingUnit.SCANLINE), false, true);
         }
       } else {
         int numX = tiles.getLevelCountX(dataWindow);
@@ -136,8 +137,8 @@ public class OpenEXRHeader {
           for (int lx = 0; lx < numX; lx++) {
             Box2Int chunk = tiles.getLevelDataWindow(dataWindow, lx, ly);
             levelLayouts[lx + ly * numX] = new InvertedLayout(
-                new GeneralLayout(chunk.width(), chunk.height(), tiles.getWidth(),
-                    tiles.getHeight(), channels.size(), GeneralLayout.InterleavingUnit.SCANLINE),
+                new TileInterleaveLayout(chunk.width(), chunk.height(), tiles.getWidth(),
+                    tiles.getHeight(), channels.size(), TileInterleaveLayout.InterleavingUnit.SCANLINE),
                 false, true);
           }
         }
@@ -159,8 +160,8 @@ public class OpenEXRHeader {
       }
 
       levelLayouts[0] = new InvertedLayout(
-          new GeneralLayout(dataWindow.width(), dataWindow.height(), tileWidth, tileHeight,
-              channels.size(), GeneralLayout.InterleavingUnit.SCANLINE), false, true);
+          new TileInterleaveLayout(dataWindow.width(), dataWindow.height(), tileWidth, tileHeight,
+              channels.size(), TileInterleaveLayout.InterleavingUnit.SCANLINE), false, true);
     }
   }
 
@@ -267,7 +268,7 @@ public class OpenEXRHeader {
   private static <T> T requiredAttr(
       String name, String type, Class<T> cls, Map<String, Attribute> attrs) throws
       InvalidImageException {
-    if (!attrs.containsKey(name) || !attrs.get(name).getType().equals(type)) {
+    if (!attrs.containsKey(name) || !Objects.equals(attrs.get(name).getType(), type)) {
       throw new InvalidImageException(
           "File missing required attribute (" + name + ") with type " + type);
     }
@@ -276,7 +277,7 @@ public class OpenEXRHeader {
 
   private static <T> T optionalAttr(
       String name, String type, Class<T> cls, Map<String, Attribute> attrs) {
-    if (!attrs.containsKey(name) || !attrs.get(name).getType().equals(type)) {
+    if (!attrs.containsKey(name) || !Objects.equals(attrs.get(name).getType(), type)) {
       return null;
     }
     return cls.cast(attrs.remove(name).getValue());

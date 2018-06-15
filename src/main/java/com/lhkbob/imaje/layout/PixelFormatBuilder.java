@@ -99,12 +99,13 @@ public class PixelFormatBuilder implements Cloneable {
    * Truncates or expands the type array, filling in new values with the previous last type or the
    * default type if the old type array was empty.
    */
-  private static PixelFormat.Type[] getResizedTypes(PixelFormat.Type[] originalTypes, int newLength) {
+  private static PixelFormat.Type[] getResizedTypes(
+      PixelFormat.Type[] originalTypes, int newLength) {
     int oldLength = originalTypes.length;
     PixelFormat.Type[] newTypes = Arrays.copyOf(originalTypes, newLength);
     PixelFormat.Type defaultType = oldLength > 0 ? originalTypes[oldLength - 1] : DEFAULT_TYPE;
 
-    for (int i = oldLength ; i < newLength; i++) {
+    for (int i = oldLength; i < newLength; i++) {
       newTypes[i] = defaultType;
     }
     return newTypes;
@@ -116,8 +117,9 @@ public class PixelFormatBuilder implements Cloneable {
 
   public PixelFormatBuilder compatibleWith(PixelFormat format) {
     reset();
-    for (int i = 0; i < format.getDataChannelCount(); i++) {
-      addChannel(format.getDataChannelColorIndex(i), format.getDataChannelBitSize(i), format.getDataChannelType(i));
+    for (int i = 0; i < format.getDataFieldCount(); i++) {
+      addChannel(
+          format.getDataFieldChannel(i), format.getDataFieldBitSize(i), format.getDataFieldType(i));
     }
     return this;
   }

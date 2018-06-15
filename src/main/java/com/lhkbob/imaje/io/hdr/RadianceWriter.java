@@ -35,7 +35,7 @@ import com.lhkbob.imaje.Image;
 import com.lhkbob.imaje.Raster;
 import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.color.RGB;
-import com.lhkbob.imaje.color.transform.ColorTransform;
+import com.lhkbob.imaje.color.transform.Transform;
 import com.lhkbob.imaje.color.transform.Transforms;
 import com.lhkbob.imaje.data.Bytes;
 import com.lhkbob.imaje.io.IO;
@@ -78,7 +78,7 @@ public class RadianceWriter implements ImageFileWriter {
     h.write(out, work);
 
     T color = Color.newInstance(image.getColorType());
-    ColorTransform<T, RGB.Linear> toLinear = Transforms.newTransform(image.getColorType(), RGB.Linear.class);
+    Transform<T, RGB.Linear> toLinear = Transforms.newTransform(image.getColorType(), RGB.Linear.class);
     // FIXME implement some RLE encoding for images of appropriate size
     for (int y = image.getHeight() - 1; y >= 0; y--) {
       for (int x = 0; x < image.getWidth(); x++) {

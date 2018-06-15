@@ -37,6 +37,34 @@ import com.lhkbob.imaje.color.space.xyz.CIE31;
 /**
  *
  */
+// FIXME what package does this belong to?
+  // FIXME could we also have tag interfaces, or parametric interfaces that describe the illuminant for a color space
+  // e.g. HDTV implements D65, or HDTV implenents WhitePoint<D65>
+  // FIXME could we also have a ChromaticAdapt color space that takes another color space
+  // and a new white point to adapt it to that
+  // FIXME maybe I should have tag interfaces that describe the photometric intent (e.g. scene/viewer relative)
+  // I need to review the HDR photography and color space books before I can really make these
+  // decisions, since it may be that the white point used for certain spaces like CIE XYZ are
+  // not part of the color space, since they are scene relative (e.g. the white point already
+  // manipulated the spectra)
+  //
+  // However, I could maybe make a ViewerRelative space that takes another color space and a white point?
+  // - only downside is that you can't inherit generic properties, so it's not actually just the
+  // 2 params. It's the color, the color space, and the white point it is adapted to
+  // (and if we're going to encode the white point for viewer relative, then do we also want to
+  // include what the other end point is? Usually viewer relative spaces have a single white point
+  // they are defined against, or they allow the white point to be specified (CIELAB). In either
+  // case these illuminants may not be a defined standard, so it gets trickier/less desirable to
+  // push them into the type system.
+
+  // Really all I'm hoping for here is a way to distinguish between XYZ normalized, XYZ absolute,
+  // and XYZ relative to the ICC PCS space (and do the same for CIELAB and CIELUV). I could define
+  // additional color spaces? XYZ normalized would be CIE31; XYZ absolute has a trivial transform
+  // and parameter for the white point's luminance. And PCS space would also be CIE31? And then
+  // normalized is something else (that has the extra data needed to form the chromatic adaptation
+  // transform from its white point to the PCS white point?)
+
+  // We do need a way to track illuminants and intents; perhaps this is just a function pushed into ColorSpace?
 public final class Illuminants {
   private Illuminants() {}
 

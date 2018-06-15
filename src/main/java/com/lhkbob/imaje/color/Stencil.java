@@ -31,19 +31,27 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.color.space.GenericVectorSpace;
 
 /**
  *
  */
-@Channels(value = "Stencil Mask", shortNames = "S")
-public class Stencil extends Color {
+public class Stencil extends Vector<Stencil, GenericVectorSpace<Stencil>> {
+  public static final GenericVectorSpace<Stencil> VECTOR_SPACE = new GenericVectorSpace<>(
+      1, Stencil::new);
+
+
   public Stencil() {
     this(0);
   }
 
   public Stencil(int stencilMask) {
+    this(VECTOR_SPACE);
     setStencil(stencilMask);
+  }
+
+  private Stencil(GenericVectorSpace<Stencil> space) {
+    super(space, 1);
   }
 
   @Override

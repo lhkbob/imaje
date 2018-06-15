@@ -55,6 +55,10 @@ import java.nio.channels.SeekableByteChannel;
 public class TGAReader implements ImageFileReader {
   private final Data.Factory dataFactory;
 
+  public TGAReader() {
+    this(null);
+  }
+
   public TGAReader(@Arguments.Nullable Data.Factory factory) {
     if (factory == null) {
       dataFactory = Data.getDefaultDataFactory();

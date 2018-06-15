@@ -29,39 +29,12 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.lhkbob.imaje.color.transform;
-
-import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.util.Arguments;
+package com.lhkbob.imaje.layout;
 
 /**
- *
+ * FIXME should this use a type safe ColorTransform, or the generic Transform?
+ * - Since PixelArray is type agnostic and just thinks in terms of logical color channels it
+ *   seems like Transform is probably the way to go.
  */
-public class InverseTransformFactory<I extends Color, O extends Color> implements TransformFactory<I, O> {
-  private final TransformFactory<O, I> inverted;
-
-  public InverseTransformFactory(TransformFactory<O, I> toInvert) {
-    Arguments.notNull("toInvert", toInvert);
-    inverted = toInvert;
-  }
-
-  @Override
-  public Class<I> getInputType() {
-    return inverted.getOutputType();
-  }
-
-  @Override
-  public Class<O> getOutputType() {
-    return inverted.getInputType();
-  }
-
-  @Override
-  public ColorTransform<O, I> newInverseTransform() {
-    return inverted.newTransform();
-  }
-
-  @Override
-  public ColorTransform<I, O> newTransform() {
-    return inverted.newInverseTransform();
-  }
+public class TransformedPixelArray {
 }

@@ -57,6 +57,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -184,7 +185,7 @@ public class OpenEXRReader implements ImageFileReader {
     for (Image<?> img : allChunks) {
       if (colorType == null) {
         colorType = img.getColorType();
-      } else if (!colorType.equals(img.getColorType())) {
+      } else if (!Objects.equals(colorType, img.getColorType())) {
         // Set back to null to flag the color set as non-singleton
         colorType = null;
         break;

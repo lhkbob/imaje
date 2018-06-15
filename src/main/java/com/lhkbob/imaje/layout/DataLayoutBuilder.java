@@ -32,7 +32,6 @@
 package com.lhkbob.imaje.layout;
 
 /**
- *
  */
 public class DataLayoutBuilder implements Cloneable {
   private int width;
@@ -40,7 +39,7 @@ public class DataLayoutBuilder implements Cloneable {
   private int tileWidth;
   private int tileHeight;
   private int channels;
-  private GeneralLayout.InterleavingUnit interleavingUnit;
+  private TileInterleaveLayout.InterleavingUnit interleavingUnit;
   private boolean flipY;
   private boolean flipX;
 
@@ -51,7 +50,7 @@ public class DataLayoutBuilder implements Cloneable {
     tileWidth = -1;
     tileHeight = -1;
     channels = 1;
-    interleavingUnit = GeneralLayout.InterleavingUnit.PIXEL;
+    interleavingUnit = TileInterleaveLayout.InterleavingUnit.PIXEL;
     flipY = false;
     flipX = false;
   }
@@ -70,7 +69,7 @@ public class DataLayoutBuilder implements Cloneable {
     // Set properties that don't depend on the nesting/wrapping of layouts
     width = layout.getWidth();
     height = layout.getHeight();
-    channels = layout.getChannelCount();
+    channels = layout.getBandCount();
     flipX = !layout.isDataLeftToRight();
     flipY = !layout.isDataBottomToTop();
 
@@ -79,12 +78,12 @@ public class DataLayoutBuilder implements Cloneable {
         layout = ((InvertedLayout) layout).getOriginalLayout();
     }
 
-    if (layout instanceof SimpleLayout) {
+    if (layout instanceof ScanlineLayout) {
       tileWidth = -1;
       tileHeight = -1;
-      interleavingUnit = GeneralLayout.InterleavingUnit.PIXEL;
-    } else if (layout instanceof GeneralLayout) {
-      GeneralLayout l = (GeneralLayout) layout;
+      interleavingUnit = TileInterleaveLayout.InterleavingUnit.PIXEL;
+    } else if (layout instanceof TileInterleaveLayout) {
+      TileInterleaveLayout l = (TileInterleaveLayout) layout;
       tileWidth = l.getTileWidth();
       tileHeight = l.getTileHeight();
       interleavingUnit = l.getInterleavingUnit();
@@ -141,7 +140,7 @@ public class DataLayoutBuilder implements Cloneable {
     return this;
   }
 
-  public DataLayoutBuilder interleave(GeneralLayout.InterleavingUnit interleavingUnit) {
+  public DataLayoutBuilder interleave(TileInterleaveLayout.InterleavingUnit interleavingUnit) {
     this.interleavingUnit = interleavingUnit;
     return this;
   }
@@ -176,11 +175,11 @@ public class DataLayoutBuilder implements Cloneable {
     DataLayout layout;
     // Check if the desired layout cannot be represented by a simple RasterLayout
     if (tileWidth <= 0 && tileHeight <= 0
-        && interleavingUnit == GeneralLayout.InterleavingUnit.PIXEL) {
-      layout = new SimpleLayout(width, height, channels);
+        && interleavingUnit == TileInterleaveLayout.InterleavingUnit.PIXEL) {
+      layout = new ScanlineLayout(width, height, channels);
     } else {
       // Fall back to the general layout that can handle tiles and different interleaving units
-      layout = new GeneralLayout(
+      layout = new TileInterleaveLayout(
           width, height, tileWidth, tileHeight, channels, interleavingUnit);
     }
 

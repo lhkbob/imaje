@@ -47,10 +47,7 @@ public final class Arguments {
   private Arguments() {}
 
   public static void checkIndex(String name, long arrayLength, long index) {
-    if (index < 0L || index >= arrayLength) {
-      throw new IndexOutOfBoundsException(
-          String.format("%s must be in range [0, %d], not: %d", name, arrayLength - 1, index));
-    }
+    inRangeExcludeMax(name, 0, arrayLength, index);
   }
 
   public static void checkArrayRange(
@@ -187,6 +184,62 @@ public final class Arguments {
     if (value > 0L) {
       throw new IllegalArgumentException(
           String.format("%s (%d) must be less than or equal to 0", name, value));
+    }
+  }
+
+  public static void isGreaterThanOrEqualTo(String name, double min, double value) {
+    if (value < min) {
+      throw new IllegalArgumentException(
+          String.format("%s (%.4f) must be greater than or equal to %.4f", name, value, min));
+    }
+  }
+
+  public static void isGreaterThanOrEqualTo(String name, long min, long value) {
+    if (value < min) {
+      throw new IllegalArgumentException(
+          String.format("%s (%d) must be greater than or equal to %d", name, value, min));
+    }
+  }
+
+  public static void isGreaterThan(String name, double min, double value) {
+    if (value <= min) {
+      throw new IllegalArgumentException(
+          String.format("%s (%.4f) must be greater than %.4f", name, value, min));
+    }
+  }
+
+  public static void isGreaterThan(String name, long min, long value) {
+    if (value <= min) {
+      throw new IllegalArgumentException(
+          String.format("%s (%d) must be greater than %d", name, value, min));
+    }
+  }
+
+  public static void isLessThanOrEqualTo(String name, double max, double value) {
+    if (value > max) {
+      throw new IllegalArgumentException(
+          String.format("%s (%.4f) must be less than or equal to %.4f", name, value, max));
+    }
+  }
+
+  public static void isLessThanOrEqualTo(String name, long max, long value) {
+    if (value > max) {
+      throw new IllegalArgumentException(
+          String.format("%s (%d) must be less than or equal to %d", name, value, max));
+    }
+  }
+
+  public static void isLessThan(String name, double max, double value) {
+    if (value >= max) {
+      throw new IllegalArgumentException(
+          String.format("%s (%.4f) must be less than %.4f", name, value, max));
+    }
+  }
+
+  public static void isLessThan(String name, long max, long value) {
+    if (value >= max) {
+      throw new IllegalArgumentException(
+          String.format("%s (%d) must be less than %d", name, value, max));
     }
   }
 

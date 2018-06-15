@@ -31,46 +31,26 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.color.space.depth.DepthStencilSpace;
 
 /**
  *
  */
-@Channels(value = { "Depth", "Stencil Mask" }, shortNames = { "D", "S" })
-public abstract class DepthStencil extends Color {
-  public static class Device extends DepthStencil {
-    public Device() {
+public class DepthStencil<S extends VectorSpace<Depth<S>, S>> extends Vector<DepthStencil<S>, DepthStencilSpace<S>> {
 
-    }
-
-    public Device(double depth, int stencil) {
-      set(depth, stencil);
-    }
-
-    @Override
-    public Device clone() {
-      return (Device) super.clone();
-    }
+  public DepthStencil(DepthStencilSpace<S> space) {
+    super(space, 2);
   }
 
-  public static class Linear extends DepthStencil {
-    public Linear() {
-
-    }
-
-    public Linear(double depth, int stencil) {
-      set(depth, stencil);
-    }
-
-    @Override
-    public Linear clone() {
-      return (Linear) super.clone();
-    }
+  public DepthStencil(DepthStencilSpace<S> space, double z, int stencil) {
+    this(space);
+    setDepth(z);
+    setStencil(stencil);
   }
 
   @Override
-  public DepthStencil clone() {
-    return (DepthStencil) super.clone();
+  public DepthStencil<S> clone() {
+    return (DepthStencil<S>) super.clone();
   }
 
   public double getDepth() {

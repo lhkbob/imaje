@@ -33,7 +33,7 @@ package com.lhkbob.imaje.sampler;
 
 import com.lhkbob.imaje.MipmapVolume;
 import com.lhkbob.imaje.color.Color;
-import com.lhkbob.imaje.op.ColorOps;
+import com.lhkbob.imaje.color.Vectors;
 import com.lhkbob.imaje.util.Arguments;
 import com.lhkbob.imaje.Images;
 
@@ -80,7 +80,7 @@ public class MipmapBilinearSampler3D<T extends Color> implements Sampler3D<T> {
   @Override
   public double sample(double u, double v, double w, double lod, T result) {
     // First zero out the result color since sampleLevel() accumulates into the result
-    ColorOps.zero(result);
+    Vectors.zero(result);
 
     // Select the two mipmap levels that are to be sampled
     int d1 = Samplers.lodToMipmapLow(lod, levelBase, levelMax);
@@ -138,35 +138,35 @@ public class MipmapBilinearSampler3D<T extends Color> implements Sampler3D<T> {
     // (u0, v0, w1), (u1, v0, w1), (u0, v1, w1), (u1, v1, w1) and weighte add them into result.
     double weight000 = weight * (1.0 - alpha) * (1.0 - beta) * (1.0 - gamma);
     double blendedAlpha = weight000 * sample(i0, j0, k0, mipmap, width, height, depth);
-    ColorOps.mul(sample, weight000, result);
+    Vectors.scale(sample, weight000, result);
 
     double weight100 = weight * alpha * (1.0 - beta) * (1.0 - gamma);
     blendedAlpha += weight100 * sample(i1, j0, k0, mipmap, width, height, depth);
-    ColorOps.addScaled(result, sample, weight100, result);
+    Vectors.addScaled(result, sample, weight100, result);
 
     double weight010 = weight * (1.0 - alpha) * beta * (1.0 - gamma);
     blendedAlpha += weight010 * sample(i0, j1, k0, mipmap, width, height, depth);
-    ColorOps.addScaled(result, sample, weight010, result);
+    Vectors.addScaled(result, sample, weight010, result);
 
     double weight110 = weight * alpha * beta * (1.0 - gamma);
     blendedAlpha += weight110 * sample(i1, j1, k0, mipmap, width, height, depth);
-    ColorOps.addScaled(result, sample, weight110, result);
+    Vectors.addScaled(result, sample, weight110, result);
 
     double weight001 = weight * (1.0 - alpha) * (1.0 - beta) * gamma;
     blendedAlpha += weight001 * sample(i0, j0, k1, mipmap, width, height, depth);
-    ColorOps.mul(sample, weight001, result);
+    Vectors.scale(sample, weight001, result);
 
     double weight101 = weight * alpha * (1.0 - beta) * gamma;
     blendedAlpha += weight101 * sample(i1, j0, k1, mipmap, width, height, depth);
-    ColorOps.addScaled(result, sample, weight101, result);
+    Vectors.addScaled(result, sample, weight101, result);
 
     double weight011 = weight * (1.0 - alpha) * beta * gamma;
     blendedAlpha += weight011 * sample(i0, j1, k1, mipmap, width, height, depth);
-    ColorOps.addScaled(result, sample, weight011, result);
+    Vectors.addScaled(result, sample, weight011, result);
 
     double weight111 = weight * alpha * beta * gamma;
     blendedAlpha += weight111 * sample(i1, j1, k1, mipmap, width, height, depth);
-    ColorOps.addScaled(result, sample, weight111, result);
+    Vectors.addScaled(result, sample, weight111, result);
 
     return blendedAlpha;
   }

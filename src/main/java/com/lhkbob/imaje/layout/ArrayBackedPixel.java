@@ -37,6 +37,7 @@ import com.lhkbob.imaje.color.Color;
 import com.lhkbob.imaje.util.Arguments;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
@@ -52,7 +53,7 @@ public class ArrayBackedPixel<T extends Color> implements Pixel<T> {
   private final int level;
 
   private final PixelArray data;
-  private final long[] channels;
+  private final long[] bandOffsets;
 
   private final T cachedColor;
   private transient double cachedAlpha;
@@ -63,7 +64,7 @@ public class ArrayBackedPixel<T extends Color> implements Pixel<T> {
     Arguments.notNull("data", data);
 
     this.data = data;
-    this.channels = new long[data.getLayout().getChannelCount()];
+    this.bandOffsets = new long[data.getBandCount()];
     cachedColor = Color.newInstance(colorType);
     otherCoords = fixedCoords.clone();
     level = mipmap;
@@ -145,7 +146,7 @@ public class ArrayBackedPixel<T extends Color> implements Pixel<T> {
   @Override
   public void persist(double alpha) {
     cachedAlpha = alpha;
-    data.set(x, y, cachedColor.getChannels(), alpha, channels);
+    data.set(x, y, cachedColor.getChannels(), alpha, bandOffsets);
   }
 
   @Override
@@ -154,30 +155,62 @@ public class ArrayBackedPixel<T extends Color> implements Pixel<T> {
   }
 
   public void refreshAt(int x, int y) {
-    cachedAlpha = data.get(x, y, cachedColor.getChannels(), channels);
+    cachedAlpha = data.get(x, y, cachedColor.getChannels(), bandOffsets);
     // The PixelArray validates x and y, so if code reaches here it was a valid coordinate and we
     // can update the pixel's location
     this.x = x;
     this.y = y;
   }
 
+  // FIXME move the window transforming logic into PixelArrays so it can be shared, and update it
+  // so that after each step it is clamped to the dimensions of the next layer (or current layer?)
+  // to prevent the circumstance where a virtual array wraps a subimage array that wraps a real array,
+  // and the window of the virtual array gets transformed (unclamped) until it is passed to the
+  // data layout of the root, which could then access pixel values that are outside of the subimage's
+  // window.
   public static <T extends Color> Iterator<Pixel<T>> iterator(
-      Class<T> colorType, PixelArray data, int layer, int mipmap, int... fixedDims) {
-    return new DefaultIterator<>(colorType, data, layer, mipmap, fixedDims);
+      Class<T> colorType, PixelArray data, ImageWindow window, int layer, int mipmap,
+      int... fixedDims) {
+    List<PixelArray> transformPath = PixelArrays.getHierarchy(data);
+    RootPixelArray root = (RootPixelArray) transformPath.get(transformPath.size() - 1);
+
+    // Convert the image window to the root coordinate space
+    ImageWindow rootWindow = window.clone();
+    for (PixelArray aTransformPath : transformPath) {
+      aTransformPath.toParentWindow(rootWindow);
+    }
+
+    return new DefaultIterator<>(
+        colorType, root.getLayout().iterator(rootWindow), transformPath, layer, mipmap, fixedDims);
   }
 
   public static <T extends Color> Spliterator<Pixel<T>> spliterator(
-      Class<T> colorType, PixelArray data, int layer, int mipmap, int... fixedDims) {
-    return new DefaultSpliterator<>(colorType, data, layer, mipmap, fixedDims);
+      Class<T> colorType, PixelArray data, ImageWindow window, int layer, int mipmap,
+      int... fixedDims) {
+    List<PixelArray> transformPath = PixelArrays.getHierarchy(data);
+    RootPixelArray root = (RootPixelArray) transformPath.get(transformPath.size() - 1);
+
+    // Convert the image window to the root coordinate space
+    ImageWindow rootWindow = window.clone();
+    for (PixelArray aTransformPath : transformPath) {
+      aTransformPath.toParentWindow(rootWindow);
+    }
+
+    return new DefaultSpliterator<>(colorType, root.getLayout().spliterator(rootWindow),
+        transformPath, layer, mipmap, fixedDims);
   }
 
   private static class DefaultIterator<T extends Color> implements Iterator<Pixel<T>> {
     private final Iterator<ImageCoordinate> coords;
     private final ArrayBackedPixel<T> pixel;
+    private final List<PixelArray> transformPath;
 
-    DefaultIterator(Class<T> colorType, PixelArray data, int layer, int mipmap, int... fixedDims) {
-      this.coords = data.getLayout().iterator();
-      pixel = new ArrayBackedPixel<>(colorType, data, layer, mipmap, fixedDims);
+    DefaultIterator(
+        Class<T> colorType, Iterator<ImageCoordinate> iterator, List<PixelArray> transformPath,
+        int layer, int mipmap, int... fixedDims) {
+      this.transformPath = transformPath;
+      coords = iterator;
+      pixel = new ArrayBackedPixel<>(colorType, transformPath.get(0), layer, mipmap, fixedDims);
     }
 
     @Override
@@ -188,6 +221,10 @@ public class ArrayBackedPixel<T extends Color> implements Pixel<T> {
     @Override
     public Pixel<T> next() {
       ImageCoordinate c = coords.next();
+      // Back track to convert from root coordinate space to the top level pixel array
+      for (int i = transformPath.size() - 1; i >= 0; i--) {
+        transformPath.get(i).fromParentCoordinate(c);
+      }
       pixel.refreshAt(c.getX(), c.getY());
       return pixel;
     }
@@ -195,18 +232,17 @@ public class ArrayBackedPixel<T extends Color> implements Pixel<T> {
 
   private static class DefaultSpliterator<T extends Color> implements Spliterator<Pixel<T>> {
     private final Spliterator<ImageCoordinate> coords;
+    private final List<PixelArray> transformPath;
     private final ArrayBackedPixel<T> pixel;
     private final Class<T> colorType;
 
-    DefaultSpliterator(Class<T> colorType, PixelArray data, int layer, int mipmap, int... fixedDims) {
-      this(colorType, data, data.getLayout().spliterator(), layer, mipmap, fixedDims);
-    }
-
     DefaultSpliterator(
-        Class<T> colorType, PixelArray data, Spliterator<ImageCoordinate> coords, int layer, int mipmap, int... fixedDims) {
+        Class<T> colorType, Spliterator<ImageCoordinate> coords, List<PixelArray> transformPath,
+        int layer, int mipmap, int... fixedDims) {
       this.coords = coords;
       this.colorType = colorType;
-      pixel = new ArrayBackedPixel<>(colorType, data, layer, mipmap, fixedDims);
+      this.transformPath = transformPath;
+      pixel = new ArrayBackedPixel<>(colorType, transformPath.get(0), layer, mipmap, fixedDims);
     }
 
     @Override
@@ -222,6 +258,11 @@ public class ArrayBackedPixel<T extends Color> implements Pixel<T> {
     @Override
     public boolean tryAdvance(Consumer<? super Pixel<T>> action) {
       return coords.tryAdvance(coord -> {
+        // Back track to convert from root coordinate space to the top level pixel array
+        for (int i = transformPath.size() - 1; i >= 0; i--) {
+          transformPath.get(i).fromParentCoordinate(coord);
+        }
+
         pixel.refreshAt(coord.getX(), coord.getY());
         action.accept(pixel);
       });
@@ -234,7 +275,7 @@ public class ArrayBackedPixel<T extends Color> implements Pixel<T> {
         return null;
       } else {
         return new DefaultSpliterator<>(
-            colorType, pixel.data, split, pixel.layer, pixel.level, pixel.otherCoords);
+            colorType, split, transformPath, pixel.layer, pixel.level, pixel.otherCoords);
       }
     }
   }

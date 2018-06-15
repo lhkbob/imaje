@@ -97,4 +97,22 @@ public final class ParametricCurveTypeParser implements TagParser<Curve> {
       throw new IllegalStateException("Unknown parametric curve type: " + functionType);
     }
   }
+
+  // FIXME Move these into ICC
+  public static UnitGammaFunction newCIE122_1996Curve(double gamma, double a, double b) {
+    return new UnitGammaFunction(gamma, a, b, 0.0, 0.0, 0.0, -b / a);
+  }
+
+  public static UnitGammaFunction newIEC61966_2_1Curve(
+      double gamma, double a, double b, double c, double d) {
+    return new UnitGammaFunction(gamma, a, b, 0.0, c, 0.0, d);
+  }
+
+  public static UnitGammaFunction newIEC61966_3Curve(double gamma, double a, double b, double c) {
+    return new UnitGammaFunction(gamma, a, b, c, 0.0, c, -b / a);
+  }
+
+  public static UnitGammaFunction newSimpleCurve(double gamma) {
+    return new UnitGammaFunction(gamma, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+  }
 }

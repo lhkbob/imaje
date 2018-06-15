@@ -31,25 +31,27 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.color.space.hsv.HLSSpace;
 
 /**
  *
  */
-@Channels(value = { "Hue", "Lightness", "Saturation" }, shortNames = { "H", "L", "S"})
-public class HLS extends Color {
-
-  public HLS() {
-    this(0.0, 0.0, 0.0);
+public class HLS<S extends ColorSpace<RGB<S>, S>> extends Color<HLS<S>, HLSSpace<S>> {
+  public HLS(HLSSpace<S> space) {
+    super(space, 3);
   }
 
-  public HLS(double h, double l, double s) {
-    set(h, l, s);
+  public HLS(HLSSpace<S> space, double h, double l, double s) {
+    this(space);
+    setHue(h);
+    setLightness(l);
+    setSaturation(s);
   }
 
   @Override
-  public HLS clone() {
-    return (HLS) super.clone();
+  @SuppressWarnings("unchecked")
+  public HLS<S> clone() {
+    return (HLS<S>) super.clone();
   }
 
   public double getHue() {

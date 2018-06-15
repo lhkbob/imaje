@@ -31,25 +31,27 @@
  */
 package com.lhkbob.imaje.color;
 
-import com.lhkbob.imaje.color.annot.Channels;
+import com.lhkbob.imaje.color.space.lab.CIELUVSpace;
+import com.lhkbob.imaje.util.Arguments;
 
 /**
  *
  */
-@Channels({ "L", "u", "v" })
-public class Luv extends Color {
-
-  public Luv() {
-    this(0, 0, 0);
+public class CIELUV extends Color<CIELUV, CIELUVSpace> {
+  public CIELUV(CIELUVSpace space) {
+    super(space, 3);
   }
 
-  public Luv(double l, double u, double v) {
-    set(l, u, v);
+  public CIELUV(CIELUVSpace space, double l, double u, double v) {
+    this(space);
+    setL(l);
+    setU(u);
+    setV(v);
   }
 
   @Override
-  public Luv clone() {
-    return (Luv) super.clone();
+  public CIELUV clone() {
+    return (CIELUV) super.clone();
   }
 
   public double getL() {

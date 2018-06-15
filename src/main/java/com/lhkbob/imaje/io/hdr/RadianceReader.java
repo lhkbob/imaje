@@ -45,7 +45,7 @@ import com.lhkbob.imaje.io.InvalidImageException;
 import com.lhkbob.imaje.layout.DataLayout;
 import com.lhkbob.imaje.layout.PixelFormat;
 import com.lhkbob.imaje.layout.PixelFormatBuilder;
-import com.lhkbob.imaje.layout.SimpleLayout;
+import com.lhkbob.imaje.layout.ScanlineLayout;
 import com.lhkbob.imaje.layout.UnpackedPixelArray;
 import com.lhkbob.imaje.util.Arguments;
 
@@ -114,7 +114,7 @@ public class RadianceReader implements ImageFileReader {
         Data.SFLOAT16, dataFactory.newShortData(h.getWidth() * h.getHeight() * 3));
     PixelFormat format = new PixelFormatBuilder().channels(0, 1, 2).types(PixelFormat.Type.SFLOAT)
         .bits(16).build();
-    DataLayout layout = new SimpleLayout(h.getWidth(), h.getHeight(), 3);
+    DataLayout layout = new ScanlineLayout(h.getWidth(), h.getHeight(), 3);
 
     UnpackedPixelArray pixelArray = new UnpackedPixelArray(format, layout, data);
     // Read the remainder of the file into the pixel array

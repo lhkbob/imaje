@@ -39,7 +39,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 /**
- *
+ * FIXME update this to use Bytes and other data types as necessary
  */
 public final class ICCDataTypeUtil {
   public static class PositionNumber {
